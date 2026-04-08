@@ -1,0 +1,26 @@
+<main class="orquestia-setup">
+  <div class="card">
+    <h1>🎵 {{ title() }}</h1>
+    <p class="subtitle">Business Process Management Studio</p>
+
+    <div class="status-card">
+      <h3>Estado de Conexión</h3>
+      <div class="status-row">
+        <span class="label">Backend:</span>
+        <span class="badge" [class.up]="backendStatus() === 'UP'" [class.error]="backendStatus() === 'ERROR'">
+          {{ backendStatus() }}
+        </span>
+      </div>
+      @if (backendVersion()) {
+        <div class="status-row">
+          <span class="label">Versión:</span>
+          <span>{{ backendVersion() }}</span>
+        </div>
+      }
+    </div>
+
+    <p class="info">✅ Si ves "UP" arriba, Frontend ↔ Backend ↔ MongoDB están conectados.</p>
+  </div>
+
+  <router-outlet />
+</main>
