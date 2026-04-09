@@ -1,0 +1,124 @@
+<div class="login-page">
+  <!-- Left Panel - Branding -->
+  <div class="left-panel">
+    <div class="radial-gradient-1"></div>
+    <div class="radial-gradient-2"></div>
+
+    <div class="brand-content">
+      <div class="brand-logo">
+        <div class="icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="lucide lucide-workflow">
+            <rect width="8" height="8" x="3" y="3" rx="2" />
+            <path d="M7 11v4a2 2 0 0 0 2 2h4" />
+            <rect width="8" height="8" x="13" y="13" rx="2" />
+          </svg>
+        </div>
+        <span class="brand-name">Orquestia</span>
+      </div>
+
+      <div class="brand-text">
+        <h1>Diseña flujos de trabajo que impulsen tu negocio</h1>
+        <p>Crea, diseña y visualiza con nuestro potente diagramador de procesos.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel - Login Form -->
+  <div class="right-panel">
+    <div class="form-container">
+      <!-- Mobile Logo -->
+      <div class="mobile-logo">
+        <div class="icon-box-mobile">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="lucide lucide-workflow">
+            <rect width="8" height="8" x="3" y="3" rx="2" />
+            <path d="M7 11v4a2 2 0 0 0 2 2h4" />
+            <rect width="8" height="8" x="13" y="13" rx="2" />
+          </svg>
+        </div>
+        <span class="brand-name-mobile">Orquestia</span>
+      </div>
+
+      <div class="header-text">
+        <h2>Welcome back</h2>
+        <p>Enter your credentials to access your account</p>
+      </div>
+
+      <form (ngSubmit)="onLogin()" class="login-form">
+        <div class="input-group">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="name@company.com" [(ngModel)]="email" name="email" required>
+        </div>
+
+        <div class="input-group">
+          <div class="label-with-link">
+            <label for="password">Password</label>
+            <a routerLink="/forgot-password" class="forgot-link">Forgot password?</a>
+          </div>
+          <div class="password-wrapper">
+            <input id="password" [type]="showPassword ? 'text' : 'password'" placeholder="Enter your password"
+              [(ngModel)]="password" name="password" required>
+            <button type="button" (click)="togglePasswordVisibility()" class="toggle-password">
+              @if (showPassword) {
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-eye-off">
+                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                <line x1="2" x2="22" y1="2" y2="22" />
+              </svg>
+              } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-eye">
+                <path
+                  d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              }
+            </button>
+          </div>
+        </div>
+
+        @if (error()) {
+        <div class="error-msg">{{ error() }}</div>
+        }
+
+        <div class="checkbox-group">
+          <input type="checkbox" id="remember" [(ngModel)]="rememberMe" name="remember">
+          <label for="remember">Remember me for 30 days</label>
+        </div>
+
+        <button type="submit" class="submit-btn" [disabled]="loading()">
+          @if (loading()) {
+          <span class="btn-content">
+            <svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+            Signing in...
+          </span>
+          } @else {
+          <span class="btn-content">
+            Sign in
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="lucide lucide-arrow-right">
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
+          </span>
+          }
+        </button>
+      </form>
+
+      <p class="signup-link-text">
+        Don't have an account? <a routerLink="/signup">Create an account</a>
+      </p>
+    </div>
+  </div>
+</div>

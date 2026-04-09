@@ -1,0 +1,25 @@
+<!-- Define markers internally if needed, but usually we define them globally in the parent SVG -->
+
+<svg:path 
+  [attr.d]="pathD"
+  fill="none" 
+  [attr.stroke]="isSelected ? '#3b82f6' : '#64748b'"
+  [attr.stroke-width]="isSelected ? '2.5' : '1.5'"
+  [attr.stroke-dasharray]="conexion.tipo === 'RETORNO' ? '5,5' : 'none'"
+  [attr.marker-end]="isSelected ? 'url(#arrowhead-selected)' : 'url(#arrowhead)'"
+  class="svg-path"
+  (mousedown)="onMouseDown($event)"
+  (touchstart)="onMouseDown($event)">
+</svg:path>
+
+<!-- Etiqueta de la flecha (mitad del camino aproximada) -->
+@if (conexion.label || conexion.tipo !== 'NORMAL') {
+  <svg:text 
+    [attr.x]="labelX"
+    [attr.y]="labelY"
+    [attr.fill]="labelColor" 
+    class="path-label"
+    text-anchor="middle">
+    {{ conexion.label || conexion.tipo }}
+  </svg:text>
+}

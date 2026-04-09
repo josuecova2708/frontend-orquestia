@@ -1,0 +1,188 @@
+.node-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: grab;
+  pointer-events: auto;
+  user-select: none;
+  z-index: 10;
+  transition: filter 0.2s;
+
+  &.readonly {
+    cursor: pointer;
+  }
+
+  &.selected {
+    filter: drop-shadow(0 0 0 2px #3b82f6) drop-shadow(0 4px 12px rgba(59, 130, 246, 0.3));
+    z-index: 20;
+  }
+
+  &:active:not(.readonly) {
+    cursor: grabbing;
+  }
+}
+
+/* Ports */
+.port {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border: 2px solid #3b82f6;
+  border-radius: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.1s;
+
+  &.port-top {
+    top: -6px;
+  }
+
+  &.port-bottom {
+    bottom: -6px;
+    cursor: crosshair;
+    
+    &:hover {
+      transform: translateX(-50%) scale(1.3);
+      background: #3b82f6;
+    }
+  }
+
+  /* Multi-ports for AND Gateway */
+  &.port-top-left { top: -6px; left: 20%; }
+  &.port-top-right { top: -6px; left: 80%; }
+  &.port-bottom-left { 
+    bottom: -6px; left: 20%; cursor: crosshair; 
+    &:hover { transform: translateX(-50%) scale(1.3); background: #3b82f6; }
+  }
+  &.port-bottom-right { 
+    bottom: -6px; left: 80%; cursor: crosshair; 
+    &:hover { transform: translateX(-50%) scale(1.3); background: #3b82f6; }
+  }
+}
+
+.node-wrapper:hover .port {
+  opacity: 1;
+}
+
+/* Base Node Content */
+.shape-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.node-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 4px;
+  color: #1e293b;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #64748b;
+  }
+
+  .label-text {
+    font-size: 0.75rem;
+    font-weight: 500;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Specific Shapes */
+
+/* ACTION */
+.ACTIVIDAD .shape-inner {
+  background: #ffffff;
+  border: 2px solid #94a3b8;
+  border-radius: 8px; /* Rounded rectangle */
+  padding: 8px 16px;
+  min-width: 140px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* CONDITIONAL / RHOMBUS */
+.GATEWAY_XOR .shape-inner {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+    border: 2px solid #f59e0b; /* Orange/Yellow for decisions */
+    transform: rotate(45deg); /* Make it a rhombus */
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    z-index: -1;
+  }
+
+  .node-content mat-icon { color: #f59e0b; }
+}
+
+/* PARALLEL / FORK-JOIN BAR */
+.GATEWAY_AND .shape-inner {
+  background: #1e293b; /* Thick black bar */
+  border-radius: 4px;
+  padding: 4px 20px;
+  min-width: 140px;
+  min-height: 16px;
+  
+  .node-content {
+    flex-direction: row;
+    color: #ffffff;
+    
+    mat-icon { color: #ffffff; width: 16px; height: 16px; font-size: 16px; }
+  }
+}
+
+/* INICIO / FIN CIRCLES */
+.INICIO .shape-inner, .FIN .shape-inner {
+  background: #ffffff;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+
+  .label-text { display: none; /* Hide label inside circles to keep them small */ }
+  mat-icon { font-size: 32px; width: 32px; height: 32px; }
+}
+
+.INICIO .shape-inner {
+  border: 3px solid #22c55e;
+  mat-icon { color: #22c55e; }
+}
+
+.FIN .shape-inner {
+  border: 3px solid #ef4444;
+  mat-icon { color: #ef4444; }
+}
+
+/* Selected state overrides */
+.node-wrapper.selected .shape-inner {
+  border-color: #3b82f6 !important;
+}
+.node-wrapper.selected.GATEWAY_XOR .shape-inner::before {
+  border-color: #3b82f6 !important;
+}

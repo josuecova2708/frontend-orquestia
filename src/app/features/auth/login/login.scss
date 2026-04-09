@@ -1,0 +1,387 @@
+/* Variables & Base Styles matching v0 aesthetic */
+$primary: #0f172a;
+$primary-foreground: #ffffff;
+$background: #ffffff;
+$foreground: #020817;
+$muted: #f1f5f9;
+$muted-foreground: #64748b;
+$border: #e2e8f0;
+$input: #e2e8f0;
+$ring: #0f172a;
+$radius: 0.5rem;
+
+.login-page {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  font-family: 'Geist', 'Segoe UI', Roboto, sans-serif;
+  background-color: $background;
+  color: $foreground;
+}
+
+/* Left Panel - Branding */
+.left-panel {
+  display: none;
+  width: 50%;
+  background-color: $primary;
+  position: relative;
+  overflow: hidden;
+
+  @media (min-width: 1024px) {
+    display: flex;
+  }
+
+  .radial-gradient-1 {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  }
+
+  .radial-gradient-2 {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 40%);
+  }
+
+  .brand-content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    padding-inline-start: 5rem;
+    color: $primary-foreground;
+    height: 100%;
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .icon-box {
+        display: flex;
+        height: 2.5rem;
+        width: 2.5rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: $radius;
+        background-color: rgba(255, 255, 255, 0.2);
+
+        svg {
+          height: 1.5rem;
+          width: 1.5rem;
+        }
+      }
+
+      .brand-name {
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+      }
+    }
+
+    .brand-text {
+      h1 {
+        font-size: 2.25rem;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 1.5rem;
+        max-width: 32rem;
+      }
+
+      p {
+        font-size: 1.125rem;
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.625;
+        max-width: 28rem;
+        margin: 0;
+      }
+    }
+  }
+}
+
+/* Right Panel - Login Form */
+.right-panel {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: $background;
+
+  @media (min-width: 1024px) {
+    width: 50%;
+  }
+
+  .form-container {
+    width: 100%;
+    max-width: 28rem;
+
+    .mobile-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+
+      @media (min-width: 1024px) {
+        display: none;
+      }
+
+      .icon-box-mobile {
+        display: flex;
+        height: 2.5rem;
+        width: 2.5rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: $radius;
+        background-color: $primary;
+        color: $primary-foreground;
+
+        svg {
+          height: 1.5rem;
+          width: 1.5rem;
+        }
+      }
+
+      .brand-name-mobile {
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        color: $foreground;
+      }
+    }
+
+    .header-text {
+      text-align: center;
+      margin-bottom: 2rem;
+
+      @media (min-width: 1024px) {
+        text-align: left;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        margin: 0 0 0.5rem 0;
+        color: $foreground;
+      }
+
+      p {
+        color: $muted-foreground;
+        margin: 0;
+        font-size: 0.875rem;
+      }
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        label {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: $foreground;
+          line-height: 1;
+        }
+
+        .label-with-link {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          .forgot-link {
+            font-size: 0.875rem;
+            color: $primary;
+            text-decoration: none;
+            transition: color 0.15s;
+
+            &:hover {
+              color: rgba(15, 23, 42, 0.8);
+            }
+          }
+        }
+
+        input[type="email"],
+        input[type="text"],
+        input[type="password"] {
+          display: flex;
+          height: 2.75rem;
+          width: 100%;
+          border-radius: $radius;
+          border: 1px solid $input;
+          background-color: transparent;
+          padding: 0.5rem 0.75rem;
+          font-size: 0.875rem;
+          color: $foreground;
+          transition: border-color 0.15s, box-shadow 0.15s;
+          box-sizing: border-box;
+
+          &::placeholder {
+            color: $muted-foreground;
+          }
+
+          &:focus {
+            outline: none;
+            border-color: $ring;
+            box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
+          }
+        }
+
+        .password-wrapper {
+          position: relative;
+
+          input {
+            padding-right: 2.5rem;
+          }
+
+          .toggle-password {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: $muted-foreground;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: color 0.15s;
+
+            &:hover {
+              color: $foreground;
+            }
+          }
+        }
+      }
+
+      .error-msg {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        padding: 0.75rem;
+        border-radius: $radius;
+        font-size: 0.875rem;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        text-align: center;
+      }
+
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        input[type="checkbox"] {
+          appearance: none;
+          width: 1rem;
+          height: 1rem;
+          border: 1px solid $primary;
+          border-radius: 0.25rem;
+          background-color: transparent;
+          display: grid;
+          place-content: center;
+          cursor: pointer;
+          margin: 0;
+
+          &::before {
+            content: "";
+            width: 0.65em;
+            height: 0.65em;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em white;
+            background-color: white;
+            transform-origin: center;
+            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+          }
+
+          &:checked {
+            background-color: $primary;
+
+            &::before {
+              transform: scale(1);
+            }
+          }
+        }
+
+        label {
+          font-size: 0.875rem;
+          color: $muted-foreground;
+          cursor: pointer;
+          line-height: none;
+        }
+      }
+
+      .submit-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: $radius;
+        font-weight: 500;
+        font-size: 1rem;
+        height: 2.75rem;
+        background-color: $primary;
+        color: $primary-foreground;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.15s;
+        width: 100%;
+
+        &:hover {
+          background-color: rgba(15, 23, 42, 0.9);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .btn-content {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .spinner {
+          animation: spin 1s linear infinite;
+        }
+      }
+    }
+
+    .signup-link-text {
+      text-align: center;
+      font-size: 0.875rem;
+      color: $muted-foreground;
+      margin-top: 1.5rem;
+
+      a {
+        color: $primary;
+        font-weight: 500;
+        text-decoration: none;
+        transition: color 0.15s;
+
+        &:hover {
+          color: rgba(15, 23, 42, 0.8);
+        }
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

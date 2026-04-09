@@ -1,0 +1,162 @@
+.diagramador-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.toolbar {
+  font-size: 1rem;
+  padding: 0 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+
+  .title { margin-left: 8px; font-weight: 600; color: #0f172a; }
+  .spacer { flex: 1; }
+  .zoom-level { font-size: 0.85rem; margin: 0 8px; font-family: monospace; color: #64748b; }
+  .divider { width: 1px; height: 24px; background: #e2e8f0; margin: 0 16px; }
+
+  .badge {
+    margin-left: 12px;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    &[data-estado="BORRADOR"] { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    &[data-estado="PUBLICADO"] { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+  }
+
+  button { color: #334155; }
+  .mat-primary { color: #ffffff !important; }
+}
+
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* SIDEBARS */
+.paleta-sidebar, .properties-sidebar {
+  width: 280px;
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  padding: 16px;
+  overflow-y: auto;
+  flex-shrink: 0;
+
+  h3 { margin-top: 0; color: #1e293b; font-size: 1.1rem; font-weight: 600; }
+}
+
+.properties-sidebar {
+  border-left: 1px solid #e2e8f0;
+  border-right: none;
+  background: #ffffff;
+}
+
+.paleta-hint {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.paleta-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: grab;
+  color: #334155;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+
+  &:hover { background: #f1f5f9; border-color: #cbd5e1; }
+  mat-icon { color: #3b82f6; }
+}
+
+/* CANVAS */
+.canvas-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  background-color: #f8fafc; /* Color de fondo claro como en la imagen */
+  background-image: 
+    linear-gradient(#e2e8f0 1px, transparent 1px),
+    linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+  background-size: 20px 20px;
+  cursor: crosshair;
+}
+
+.canvas-container {
+  width: 4000px;
+  height: 4000px;
+  position: relative;
+  transform-origin: 0 0;
+}
+
+.swimlanes-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Allows picking nodes/paths */
+}
+
+.swimlane {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-right: 2px dashed #cbd5e1;
+  background-color: rgba(248, 250, 252, 0.5); 
+  z-index: 1;
+
+  .swimlane-header {
+    background: #e2e8f0;
+    padding: 12px;
+    text-align: center;
+    font-weight: 600;
+    color: #334155;
+    border-bottom: 2px solid #cbd5e1;
+    z-index: 5;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+}
+
+.connections-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none; 
+
+  .svg-path {
+    pointer-events: stroke;
+    cursor: pointer;
+    transition: stroke 0.2s, stroke-width 0.2s;
+    &:hover { stroke-width: 3 !important; stroke: #3b82f6 !important; } /* Highlight on hover */
+  }
+}
+
+.path-label {
+  font-size: 12px;
+  text-anchor: middle;
+  fill: #ef4444; /* Rojo para el label "No" del ejemplo */
+  font-weight: 500;
+}
+
+.nodes-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Let clicks pass through to svg unless hitting a node */
+}
+
+/* UTILIDADES */
+.w-100 { width: 100%; margin-bottom: 8px; }

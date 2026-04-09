@@ -1,0 +1,47 @@
+<!-- Dynamic geometrical wrapper based on nodo.tipo -->
+<div class="node-wrapper"
+     [ngClass]="[nodo.tipo, isSelected ? 'selected' : '', !isDraft ? 'readonly' : '']"
+     [style.transform]="'translate(' + nodo.posX + 'px, ' + nodo.posY + 'px)'"
+     (mousedown)="onMouseDown($event)"
+     (touchstart)="onMouseDown($event)"
+     (mouseup)="onMouseUp()"
+     (touchend)="onMouseUp()">
+  
+  <!-- Geometric Shape Container -->
+  <div class="shape-container">
+    <div class="shape-inner">
+      <div class="node-content">
+        @if (nodo.tipo === 'INICIO') { <mat-icon>play_circle</mat-icon> }
+        @else if (nodo.tipo === 'FIN') { <mat-icon>stop_circle</mat-icon> }
+        @else if (nodo.tipo === 'GATEWAY_XOR') { <mat-icon>call_split</mat-icon> }
+        @else if (nodo.tipo === 'GATEWAY_AND') { <mat-icon>linear_scale</mat-icon> }
+        @else { <mat-icon>task</mat-icon> }
+        <span class="label-text">{{ nodo.label }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Puertos (Solo mostrados si es borrador) -->
+  @if (isDraft) {
+    @if (nodo.tipo === 'GATEWAY_AND') {
+      <div class="port port-top-left" title="Conectar Aquí"></div>
+      <div class="port port-top-right" title="Conectar Aquí"></div>
+      <div class="port port-bottom-left" title="Arrastrar para conectar"
+           (mousedown)="onPortMouseDown($event)" (touchstart)="onPortMouseDown($event)"></div>
+      <div class="port port-bottom-right" title="Arrastrar para conectar"
+           (mousedown)="onPortMouseDown($event)" (touchstart)="onPortMouseDown($event)"></div>
+    } @else {
+      <!-- Input Port (Top) -->
+      @if (nodo.tipo !== 'INICIO') {
+        <div class="port port-top" title="Conectar Aquí"></div>
+      }
+      
+      <!-- Output Port (Bottom) -->
+      @if (nodo.tipo !== 'FIN') {
+        <div class="port port-bottom" title="Arrastrar para conectar"
+             (mousedown)="onPortMouseDown($event)"
+             (touchstart)="onPortMouseDown($event)"></div>
+      }
+    }
+  }
+</div>

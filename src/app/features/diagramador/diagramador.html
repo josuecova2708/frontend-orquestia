@@ -1,0 +1,183 @@
+<div class="diagramador-layout">
+  
+  <!-- TOOLBAR SUPERIOR -->
+  <mat-toolbar color="primary" class="toolbar">
+    <button mat-icon-button (click)="router.navigate(['/dashboard'])">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span class="title">{{ proceso()?.nombre || 'Cargando...' }}</span>
+    <span class="badge" [attr.data-estado]="proceso()?.estado">{{ proceso()?.estado }}</span>
+    
+    <span class="spacer"></span>
+    
+    <button mat-icon-button (click)="zoom.set(zoom() - 0.1)" title="Zoom Out"><mat-icon>zoom_out</mat-icon></button>
+    <span class="zoom-level">{{ (zoom() * 100) | number:'1.0-0' }}%</span>
+    <button mat-icon-button (click)="zoom.set(zoom() + 0.1)" title="Zoom In"><mat-icon>zoom_in</mat-icon></button>
+
+    <div class="divider"></div>
+
+    <button mat-button (click)="guardarBorrador()" [disabled]="proceso()?.estado !== 'BORRADOR'">
+      <mat-icon>save</mat-icon> Guardar a Borrador
+    </button>
+    
+    <button mat-flat-button color="accent" (click)="publicar()" [disabled]="proceso()?.estado !== 'BORRADOR'">
+      <mat-icon>rocket_launch</mat-icon> Publicar Proceso
+    </button>
+  </mat-toolbar>
+
+  <div class="workspace">
+    
+    <!-- LEFT SIDEBAR: PALETA -->
+    @if (proceso()?.estado === 'BORRADOR') {
+      <div class="paleta-sidebar">
+        <h3>Elementos</h3>
+        <p class="paleta-hint">Arrastra al canvas</p>
+        
+        @for (nt of nodeTypes; track nt.type) {
+          <div class="paleta-item" 
+               draggable="true" 
+               (dragstart)="onDragStart($event, nt.type)">
+            <mat-icon>{{ nt.icon }}</mat-icon>
+            <span>{{ nt.label }}</span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- CENTER: CANVAS -->
+    <div class="canvas-wrapper" (click)="unselect()">
+      <div class="canvas-container" 
+           [style.transform]="'scale(' + zoom() + ')'"
+           (dragover)="onDragOver($event)" 
+           (drop)="onDrop($event)">
+        
+        <!-- LAYER 0: SWIMLANES -->
+        <div class="swimlanes-layer">
+          @for (dept of departamentos(); track dept.id; let i = $index) {
+            <div class="swimlane" [style.left.px]="i * 400" [style.width.px]="400">
+              <div class="swimlane-header">{{ dept.nombre }}</div>
+            </div>
+          }
+        </div>
+
+        <!-- LAYER 1: SVG CONNECTIONS -->
+        <svg class="connections-layer" width="4000" height="4000" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#64748b" />
+            </marker>
+            <marker id="arrowhead-selected" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
+            </marker>
+          </defs>
+
+          <!-- Flechas guardadas usando componente orq-flecha -->
+          @for (c of conexiones(); track c.id) {
+            <g orq-flecha 
+               [conexion]="c"
+               [isSelected]="selectedItem().id === c.id"
+               [sourceNode]="getNode(c.origenId)!"
+               [targetNode]="getNode(c.destinoId)!"
+               (actionMouseDown)="seleccionarConexion(c.id)">
+            </g>
+          }
+
+          <!-- Flecha de dibujo temporal (Orthogonal approx) -->
+          @if (drawingConnection()) {
+            <path [attr.d]="'M ' + drawingConnection()!.startX + ' ' + drawingConnection()!.startY + ' L ' + drawingConnection()!.startX + ' ' + (drawingConnection()!.startY + (drawingConnection()!.currentY - drawingConnection()!.startY)/2) + ' L ' + drawingConnection()!.currentX + ' ' + (drawingConnection()!.startY + (drawingConnection()!.currentY - drawingConnection()!.startY)/2) + ' L ' + drawingConnection()!.currentX + ' ' + drawingConnection()!.currentY"
+                  fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,4" />
+          }
+        </svg>
+
+        <!-- LAYER 2: HTML NODES -->
+        <div class="nodes-layer">
+          @for (n of nodos(); track n.id) {
+            <orq-nodo 
+               [nodo]="n"
+               [isSelected]="selectedItem().id === n.id"
+               [isDraft]="proceso()?.estado === 'BORRADOR'"
+               (actionMouseDown)="proceso()?.estado === 'BORRADOR' ? startNodeMove($event, n.id) : seleccionarNodo(n.id)"
+               (actionMouseUp)="finishConnection(n.id)"
+               (actionPortMouseDown)="startConnection($event, n.id)">
+            </orq-nodo>
+          }
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR: PROPIEDADES -->
+    @if (selectedItem().type) {
+      <div class="properties-sidebar">
+        <h3>Propiedades</h3>
+        
+        <!-- PROPIEDADES NODO -->
+        @if (selectedItem().type === 'NODO' && selectedNode) {
+          <div class="prop-form">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>ID Nodo</mat-label>
+              <input matInput [value]="selectedNode.id" disabled>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Etiqueta</mat-label>
+              <input matInput [value]="selectedNode.label || ''" (input)="updateSelectedNode({label: $any($event.target).value})" [disabled]="proceso()?.estado !== 'BORRADOR'">
+            </mat-form-field>
+
+            @if (selectedNode.tipo === 'ACTIVIDAD') {
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Departamento Responsable</mat-label>
+                <mat-select [ngModel]="selectedNode.departamentoId" (ngModelChange)="updateSelectedNode({departamentoId: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'">
+                  @for (d of departamentos(); track d.id) {
+                    <mat-option [value]="d.id">{{ d.nombre }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+
+            @if (proceso()?.estado === 'BORRADOR') {
+              <button mat-stroked-button color="warn" class="w-100" (click)="eliminarNodo(selectedNode.id)">Eliminar Nodo</button>
+            }
+          </div>
+        }
+
+        <!-- PROPIEDADES CONEXIÓN -->
+        @if (selectedItem().type === 'CONEXION' && selectedConexion) {
+          <div class="prop-form">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Tipo de Flecha</mat-label>
+              <mat-select [ngModel]="selectedConexion.tipo" (ngModelChange)="updateSelectedConexion({tipo: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'">
+                <mat-option value="NORMAL">Normal (Secuencial)</mat-option>
+                <mat-option value="CONDICIONAL">Condicional (XOR gateway)</mat-option>
+                <mat-option value="RETORNO">Retorno (Bucle)</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Etiqueta en flecha (Ej: Sí, No)</mat-label>
+              <input matInput [value]="selectedConexion.label || ''" (input)="updateSelectedConexion({label: $any($event.target).value})" [disabled]="proceso()?.estado !== 'BORRADOR'">
+            </mat-form-field>
+
+            @if (selectedConexion.tipo === 'CONDICIONAL') {
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Fórmula condición (ej: data.aprobado == true)</mat-label>
+                <input matInput [ngModel]="selectedConexion.condicion" (ngModelChange)="updateSelectedConexion({condicion: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'">
+              </mat-form-field>
+            }
+
+            @if (selectedConexion.tipo === 'RETORNO') {
+              <mat-form-field appearance="outline" class="w-100">
+                <mat-label>Max Reintentos Loop</mat-label>
+                <input matInput type="number" [ngModel]="selectedConexion.maxReintentos" (ngModelChange)="updateSelectedConexion({maxReintentos: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'">
+              </mat-form-field>
+            }
+
+            @if (proceso()?.estado === 'BORRADOR') {
+              <button mat-stroked-button color="warn" class="w-100" (click)="eliminarConexion(selectedConexion.id)">Eliminar Conexión</button>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

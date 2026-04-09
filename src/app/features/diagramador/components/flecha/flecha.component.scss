@@ -1,0 +1,18 @@
+.svg-path {
+  cursor: pointer;
+  pointer-events: stroke;
+  
+  &:hover {
+    stroke: #3b82f6;
+    stroke-width: 2.5;
+  }
+}
+
+.path-label {
+  font-size: 12px;
+  font-weight: 500;
+  text-anchor: middle;
+  cursor: pointer;
+  user-select: none;
+  background-color: white; /* Not working natively in raw svg text without filters, but kept for intent */
+}
