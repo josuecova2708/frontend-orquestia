@@ -1,0 +1,8 @@
+/* Reutiliza los estilos del login — solo sobreescribimos lo específico */
+@import '../login/login.scss';
+
+.row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}

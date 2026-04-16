@@ -4,22 +4,21 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../shared/services/auth';
 
 @Component({
-  selector: 'orq-login',
+  selector: 'orq-register',
   standalone: true,
-  imports: [
-    FormsModule,
-    RouterLink
-  ],
-  templateUrl: './login.html',
-  styleUrl: './login.scss'
+  imports: [FormsModule, RouterLink],
+  templateUrl: './register.html',
+  styleUrl: './register.scss'
 })
-export class Login {
+export class Register {
+  nombre = '';
+  apellido = '';
   email = '';
   password = '';
+  confirmPassword = '';
+  showPassword = false;
   loading = signal(false);
   error = signal('');
-  showPassword = false;
-  rememberMe = false;
 
   constructor(private auth: AuthService, private router: Router) {
     if (this.auth.isLoggedIn()) {
@@ -27,21 +26,34 @@ export class Login {
     }
   }
 
-  togglePasswordVisibility() {
-    this.showPassword = !this.showPassword;
-  }
+  togglePassword() { this.showPassword = !this.showPassword; }
 
-  onLogin() {
+  onRegister() {
+    if (this.password !== this.confirmPassword) {
+      this.error.set('Las contraseñas no coinciden');
+      return;
+    }
+    if (this.password.length < 6) {
+      this.error.set('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
     this.loading.set(true);
     this.error.set('');
-    this.auth.login(this.email, this.password).subscribe({
+
+    this.auth.register({
+      nombre: this.nombre,
+      apellido: this.apellido,
+      email: this.email,
+      password: this.password
+    }).subscribe({
       next: () => {
         this.loading.set(false);
         this.redirectAfterLogin();
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err.error?.error || 'Error al iniciar sesión');
+        this.error.set(err.error?.error || 'Error al crear la cuenta');
       }
     });
   }

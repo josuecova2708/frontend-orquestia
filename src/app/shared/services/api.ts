@@ -23,6 +23,14 @@ export class ApiService {
     return this.http.get<Empresa[]>(`${this.baseUrl}/empresas`, { headers: this.headers() });
   }
 
+  getEmpresa(id: string) {
+    return this.http.get<Empresa>(`${this.baseUrl}/empresas/${id}`, { headers: this.headers() });
+  }
+
+  crearEmpresa(data: { nombre: string; descripcion: string; rubro: string }) {
+    return this.http.post<Empresa>(`${this.baseUrl}/empresas`, data, { headers: this.headers() });
+  }
+
   // === Departamentos ===
 
   getDepartamentos(empresaId: string) {
@@ -30,5 +38,17 @@ export class ApiService {
       `${this.baseUrl}/empresas/${empresaId}/departamentos`,
       { headers: this.headers() }
     );
+  }
+
+  crearDepartamento(empresaId: string, data: { nombre: string; descripcion: string }) {
+    return this.http.post<Departamento>(
+      `${this.baseUrl}/empresas/${empresaId}/departamentos`,
+      data,
+      { headers: this.headers() }
+    );
+  }
+
+  eliminarDepartamento(id: string) {
+    return this.http.delete<void>(`${this.baseUrl}/departamentos/${id}`, { headers: this.headers() });
   }
 }

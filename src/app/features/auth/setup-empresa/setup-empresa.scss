@@ -1,0 +1,199 @@
+$primary: #0f172a;
+$primary-foreground: #ffffff;
+$border: #e2e8f0;
+$muted: #f1f5f9;
+$muted-foreground: #64748b;
+$radius: 0.5rem;
+
+.setup-page {
+  min-height: 100vh;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  font-family: 'Geist', 'Segoe UI', Roboto, sans-serif;
+}
+
+.setup-card {
+  background: #ffffff;
+  border: 1px solid $border;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 520px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+}
+
+.setup-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid $border;
+  background: $primary;
+
+  .icon-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.15);
+    border-radius: $radius;
+    color: white;
+  }
+
+  .brand {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    letter-spacing: -0.02em;
+  }
+}
+
+.setup-body {
+  padding: 2rem;
+}
+
+/* Step indicator */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+
+  .step {
+    font-size: 0.75rem;
+    color: $muted-foreground;
+    white-space: nowrap;
+    font-weight: 500;
+
+    &.done { color: #22c55e; }
+    &.active { color: $primary; font-weight: 600; }
+  }
+
+  .step-line {
+    flex: 1;
+    height: 1px;
+    background: $border;
+  }
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: $primary;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.025em;
+}
+
+.subtitle {
+  color: $muted-foreground;
+  font-size: 0.9rem;
+  margin: 0 0 1.75rem;
+  line-height: 1.5;
+}
+
+.setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: $primary;
+
+    .optional {
+      color: $muted-foreground;
+      font-weight: 400;
+      font-size: 0.8rem;
+    }
+  }
+
+  input, select, textarea {
+    height: 2.75rem;
+    width: 100%;
+    border-radius: $radius;
+    border: 1px solid $border;
+    background: transparent;
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    color: $primary;
+    font-family: inherit;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+
+    &::placeholder { color: $muted-foreground; }
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08);
+    }
+  }
+
+  textarea {
+    height: auto;
+    padding: 0.6rem 0.75rem;
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  select {
+    cursor: pointer;
+    appearance: auto; /* Dejamos el look nativo del select */
+  }
+}
+
+.error-msg {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #ef4444;
+  padding: 0.75rem;
+  border-radius: $radius;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius;
+  font-weight: 500;
+  font-size: 1rem;
+  height: 2.75rem;
+  background-color: $primary;
+  color: $primary-foreground;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  width: 100%;
+  font-family: inherit;
+  margin-top: 0.5rem;
+
+  &:hover { background-color: rgba(15, 23, 42, 0.9); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

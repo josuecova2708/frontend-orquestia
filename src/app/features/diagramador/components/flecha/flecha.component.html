@@ -9,7 +9,8 @@
   [attr.marker-end]="isSelected ? 'url(#arrowhead-selected)' : 'url(#arrowhead)'"
   class="svg-path"
   (mousedown)="onMouseDown($event)"
-  (touchstart)="onMouseDown($event)">
+  (touchstart)="onMouseDown($event)"
+  (click)="onClick($event)">
 </svg:path>
 
 <!-- Etiqueta de la flecha (mitad del camino aproximada) -->

@@ -27,6 +27,10 @@ export class FlechaComponent implements OnChanges {
     }
   }
 
+  onClick(event: MouseEvent) {
+    event.stopPropagation();
+  }
+
   onMouseDown(event: MouseEvent | TouchEvent) {
     event.stopPropagation();
     this.actionMouseDown.emit(event);

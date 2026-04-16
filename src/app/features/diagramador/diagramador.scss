@@ -160,3 +160,34 @@
 
 /* UTILIDADES */
 .w-100 { width: 100%; margin-bottom: 8px; }
+
+/* Botón crear departamento en panel de propiedades */
+.depto-add-btn {
+  width: 100%;
+  font-size: 0.8rem;
+  color: #3b82f6;
+  border-color: #bfdbfe;
+  margin-bottom: 8px;
+
+  &:hover { background: #eff6ff; }
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
+
+/* Mini formulario inline de nuevo departamento */
+.new-depto-form {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 8px;
+
+  .new-depto-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    margin-top: -0.5rem;
+
+    button { font-size: 0.8rem; }
+  }
+}

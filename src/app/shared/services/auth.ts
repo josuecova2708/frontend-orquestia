@@ -1,26 +1,20 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthResponse } from '../models/interfaces';
 import { tap } from 'rxjs';
 
-/**
- * Servicio de autenticación.
- *
- * Maneja login, registro, y el almacenamiento del token JWT en localStorage.
- * Usa Angular Signals para estado reactivo (el UI se actualiza solo cuando cambia).
- */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 
   private apiUrl = 'http://localhost:8080/api/auth';
 
-  // Signal = estado reactivo. Cuando cambia, los componentes que lo usan se re-renderizan.
   private currentUser = signal<AuthResponse | null>(this.loadUser());
 
-  // Computed signals — se derivan del currentUser automáticamente
   user = this.currentUser.asReadonly();
   isLoggedIn = computed(() => !!this.currentUser());
   token = computed(() => this.currentUser()?.token ?? '');
+  // Computed que el guard usa para detectar si necesita onboarding
+  needsSetup = computed(() => this.isLoggedIn() && !this.currentUser()?.empresaId);
 
   constructor(private http: HttpClient) {}
 
@@ -29,9 +23,19 @@ export class AuthService {
       .pipe(tap(res => this.saveUser(res)));
   }
 
-  register(data: { email: string; password: string; nombre: string; apellido: string; rol?: string }) {
+  register(data: { email: string; password: string; nombre: string; apellido: string }) {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data)
       .pipe(tap(res => this.saveUser(res)));
+  }
+
+  /**
+   * Onboarding: crea la empresa y actualiza el token local con el nuevo empresaId.
+   * Requiere que el usuario ya esté logueado (tiene token).
+   */
+  setupEmpresa(data: { nombre: string; descripcion?: string; rubro: string }) {
+    const headers = new HttpHeaders({ Authorization: `Bearer ${this.token()}` });
+    return this.http.post<AuthResponse>(`${this.apiUrl}/setup-empresa`, data, { headers })
+      .pipe(tap(res => this.saveUser(res))); // Reemplaza el token viejo con el nuevo
   }
 
   logout() {
@@ -47,10 +51,6 @@ export class AuthService {
   private loadUser(): AuthResponse | null {
     const stored = localStorage.getItem('orquestia_user');
     if (!stored) return null;
-    try {
-      return JSON.parse(stored);
-    } catch {
-      return null;
-    }
+    try { return JSON.parse(stored); } catch { return null; }
   }
 }

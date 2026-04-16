@@ -1,11 +1,11 @@
 <div class="dashboard">
-  <!-- Toolbar -->
+
+  <!-- TOOLBAR -->
   <mat-toolbar class="toolbar">
     <div class="brand-logo">
       <div class="icon-box">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-          class="lucide lucide-workflow">
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect width="8" height="8" x="3" y="3" rx="2" />
           <path d="M7 11v4a2 2 0 0 0 2 2h4" />
           <rect width="8" height="8" x="13" y="13" rx="2" />
@@ -21,9 +21,7 @@
         <span class="user-name">{{ auth.user()?.nombre }}</span>
         <span class="user-role">{{ auth.user()?.rol }}</span>
       </div>
-      <div class="user-avatar">
-        {{ auth.user()?.nombre | slice:0:1 }}
-      </div>
+      <div class="user-avatar">{{ auth.user()?.nombre?.charAt(0) }}</div>
       <button mat-icon-button class="logout-btn" (click)="logout()">
         <mat-icon>logout</mat-icon>
       </button>
@@ -31,69 +29,134 @@
   </mat-toolbar>
 
   <div class="content">
-    <!-- Header -->
-    <div class="page-header">
+
+    <!-- EMPRESA HEADER -->
+    <div class="empresa-header">
       <div>
-        <h2>
-          @if (empresaActual()) {
-            {{ empresaActual()!.nombre }}
-          } @else {
-            Procesos
-          }
-        </h2>
-        <p class="hint">Diseña y gestiona tus workflows de negocio</p>
+        <h2>{{ empresa()?.nombre || 'Mi Empresa' }}</h2>
+        <p class="hint">{{ empresa()?.rubro }} · Diseña y gestiona tus workflows de negocio</p>
       </div>
-      <button mat-flat-button (click)="showCreateForm.set(true)">
-        <mat-icon>add</mat-icon>
-        Nuevo Proceso
-      </button>
     </div>
 
-    <!-- Form crear proceso -->
-    @if (showCreateForm()) {
-      <mat-card class="create-card">
-        <h3>Crear nuevo proceso</h3>
-        <mat-form-field appearance="outline">
-          <mat-label>Nombre del proceso</mat-label>
-          <input matInput [(ngModel)]="newNombre" placeholder="Ej: Solicitud de Instalación">
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Descripción</mat-label>
-          <input matInput [(ngModel)]="newDescripcion">
-        </mat-form-field>
-        <div class="form-actions">
-          <button mat-button (click)="showCreateForm.set(false)">Cancelar</button>
-          <button mat-flat-button [disabled]="!newNombre" (click)="crearProceso()">
+    <!-- ============================================= -->
+    <!-- SECCIÓN 1: DEPARTAMENTOS -->
+    <!-- ============================================= -->
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h3 class="section-title">
+            <mat-icon>corporate_fare</mat-icon>
+            Departamentos
+          </h3>
+          <p class="section-subtitle">Organiza quién se encarga de cada actividad en tus procesos</p>
+        </div>
+        <button mat-stroked-button (click)="showCreateDepto.set(!showCreateDepto())">
+          <mat-icon>{{ showCreateDepto() ? 'close' : 'add' }}</mat-icon>
+          {{ showCreateDepto() ? 'Cancelar' : 'Nuevo departamento' }}
+        </button>
+      </div>
+
+      <!-- Formulario crear departamento (inline) -->
+      @if (showCreateDepto()) {
+        <div class="inline-form">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Nombre del departamento</mat-label>
+            <input matInput [(ngModel)]="newDeptoNombre" placeholder="Ej: Atención al Cliente" (keyup.enter)="crearDepartamento()">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Descripción (opcional)</mat-label>
+            <input matInput [(ngModel)]="newDeptoDesc" placeholder="Función de este departamento">
+          </mat-form-field>
+          <button mat-flat-button [disabled]="!newDeptoNombre.trim() || savingDepto()" (click)="crearDepartamento()">
+            <mat-icon>check</mat-icon>
+            {{ savingDepto() ? 'Guardando...' : 'Crear departamento' }}
+          </button>
+        </div>
+      }
+
+      <!-- Lista de departamentos -->
+      <div class="deptos-list">
+        @for (d of departamentos(); track d.id) {
+          <div class="depto-chip">
+            <mat-icon class="depto-icon">group</mat-icon>
+            <div class="depto-info">
+              <span class="depto-nombre">{{ d.nombre }}</span>
+              @if (d.descripcion) {
+                <span class="depto-desc">{{ d.descripcion }}</span>
+              }
+            </div>
+            <button mat-icon-button class="depto-delete" (click)="eliminarDepartamento(d.id, $event)" title="Eliminar">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </div>
+        } @empty {
+          <div class="depto-empty">
+            <mat-icon>corporate_fare</mat-icon>
+            <span>Aún no hay departamentos. Crea uno para asignarlo a las actividades de tus procesos.</span>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- ============================================= -->
+    <!-- SECCIÓN 2: PROCESOS / WORKFLOWS -->
+    <!-- ============================================= -->
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <h3 class="section-title">
+            <mat-icon>account_tree</mat-icon>
+            Workflows
+          </h3>
+          <p class="section-subtitle">Diseña y gestiona los procesos de negocio de tu organización</p>
+        </div>
+        <button mat-flat-button (click)="showCreateProceso.set(!showCreateProceso())">
+          <mat-icon>{{ showCreateProceso() ? 'close' : 'add' }}</mat-icon>
+          {{ showCreateProceso() ? 'Cancelar' : 'Nuevo proceso' }}
+        </button>
+      </div>
+
+      <!-- Formulario crear proceso -->
+      @if (showCreateProceso()) {
+        <div class="inline-form">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Nombre del proceso</mat-label>
+            <input matInput [(ngModel)]="newNombre" placeholder="Ej: Solicitud de Instalación Eléctrica" (keyup.enter)="crearProceso()">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Descripción (opcional)</mat-label>
+            <input matInput [(ngModel)]="newDescripcion">
+          </mat-form-field>
+          <button mat-flat-button [disabled]="!newNombre.trim()" (click)="crearProceso()">
             <mat-icon>arrow_forward</mat-icon>
             Crear y diseñar
           </button>
         </div>
-      </mat-card>
-    }
-
-    <!-- Lista de procesos -->
-    <div class="procesos-grid">
-      @for (proceso of procesos(); track proceso.id) {
-        <mat-card class="proceso-card" (click)="abrirDiagramador(proceso)">
-          <div class="card-header">
-            <mat-icon class="card-icon">account_tree</mat-icon>
-            <span class="estado-badge" [attr.data-estado]="proceso.estado">
-              {{ proceso.estado }}
-            </span>
-          </div>
-          <h3>{{ proceso.nombre }}</h3>
-          <p class="card-desc">{{ proceso.descripcion || 'Sin descripción' }}</p>
-          <div class="card-meta">
-            <span>{{ proceso.nodos.length }} nodos</span>
-            <span>v{{ proceso.version }}</span>
-          </div>
-        </mat-card>
-      } @empty {
-        <div class="empty-state">
-          <mat-icon>draw</mat-icon>
-          <p>No hay procesos aún. ¡Crea tu primer workflow!</p>
-        </div>
       }
-    </div>
+
+      <!-- Grid de procesos -->
+      <div class="procesos-grid">
+        @for (proceso of procesos(); track proceso.id) {
+          <mat-card class="proceso-card" (click)="abrirDiagramador(proceso)">
+            <div class="card-header">
+              <mat-icon class="card-icon">account_tree</mat-icon>
+              <span class="estado-badge" [attr.data-estado]="proceso.estado">{{ proceso.estado }}</span>
+            </div>
+            <h4>{{ proceso.nombre }}</h4>
+            <p class="card-desc">{{ proceso.descripcion || 'Sin descripción' }}</p>
+            <div class="card-meta">
+              <span>{{ proceso.nodos?.length ?? 0 }} nodos</span>
+              <span>v{{ proceso.version }}</span>
+            </div>
+          </mat-card>
+        } @empty {
+          <div class="empty-state">
+            <mat-icon>draw</mat-icon>
+            <p>No hay procesos aún. ¡Crea tu primer workflow!</p>
+          </div>
+        }
+      </div>
+    </section>
+
   </div>
 </div>

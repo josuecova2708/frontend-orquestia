@@ -97,6 +97,31 @@ export class Diagramador implements OnInit {
     });
   }
 
+  // Estado para el mini-formulario de crear departamento dentro del diagramador
+  showNewDepto = signal(false);
+  newDeptoNombre = '';
+
+  crearDepartamentoInline() {
+    const empresaId = this.proceso()?.empresaId;
+    if (!empresaId || !this.newDeptoNombre.trim()) return;
+    this.apiService.crearDepartamento(empresaId, {
+      nombre: this.newDeptoNombre.trim(),
+      descripcion: ''
+    }).subscribe({
+      next: (d) => {
+        this.departamentos.update(list => [...list, d]);
+        this.newDeptoNombre = '';
+        this.showNewDepto.set(false);
+        // Asignar el nuevo departamento al nodo seleccionado si es ACTIVIDAD
+        const nodo = this.selectedNode;
+        if (nodo?.tipo === 'ACTIVIDAD') {
+          this.updateSelectedNode({ departamentoId: d.id });
+        }
+      }
+    });
+  }
+
+
   // === PALETA DRAG & DROP ===
 
   onDragStart(event: DragEvent, type: string) {

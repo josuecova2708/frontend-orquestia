@@ -19,6 +19,10 @@ export class NodoComponent {
   @Output() actionMouseUp = new EventEmitter<void>();
   @Output() actionPortMouseDown = new EventEmitter<MouseEvent | TouchEvent>();
 
+  onClick(event: MouseEvent) {
+    event.stopPropagation();
+  }
+
   onMouseDown(event: MouseEvent | TouchEvent) {
     event.stopPropagation();
     this.actionMouseDown.emit(event);
@@ -34,3 +38,4 @@ export class NodoComponent {
     this.actionPortMouseDown.emit(event);
   }
 }
+

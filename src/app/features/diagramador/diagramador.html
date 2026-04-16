@@ -131,9 +131,40 @@
                   @for (d of departamentos(); track d.id) {
                     <mat-option [value]="d.id">{{ d.nombre }}</mat-option>
                   }
+                  @if (departamentos().length === 0) {
+                    <mat-option disabled>— Sin departamentos —</mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
+
+              <!-- Mini-formulario para crear departamento inline -->
+              @if (proceso()?.estado === 'BORRADOR') {
+                @if (!showNewDepto()) {
+                  <button mat-stroked-button class="w-100 depto-add-btn"
+                          (click)="showNewDepto.set(true)">
+                    <mat-icon>add</mat-icon>
+                    Crear nuevo departamento
+                  </button>
+                } @else {
+                  <div class="new-depto-form">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label>Nombre del departamento</mat-label>
+                      <input matInput [(ngModel)]="newDeptoNombre" placeholder="Ej: Legal"
+                             (keyup.enter)="crearDepartamentoInline()"
+                             (keyup.escape)="showNewDepto.set(false)">
+                    </mat-form-field>
+                    <div class="new-depto-actions">
+                      <button mat-button (click)="showNewDepto.set(false)">Cancelar</button>
+                      <button mat-flat-button [disabled]="!newDeptoNombre.trim()"
+                              (click)="crearDepartamentoInline()">
+                        <mat-icon>check</mat-icon> Crear
+                      </button>
+                    </div>
+                  </div>
+                }
+              }
             }
+
 
             @if (proceso()?.estado === 'BORRADOR') {
               <button mat-stroked-button color="warn" class="w-100" (click)="eliminarNodo(selectedNode.id)">Eliminar Nodo</button>
