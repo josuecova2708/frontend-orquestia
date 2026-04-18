@@ -71,6 +71,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/panel-funcionario/dashboard/dashboard').then(m => m.Dashboard)
   },
   {
+    path: 'mis-tareas',
+    canActivate: [empresaSetupGuard],
+    loadComponent: () => import('./features/panel-funcionario/mis-tareas/mis-tareas').then(m => m.MisTareas)
+  },
+  {
     path: 'diagramador/:id',
     canActivate: [empresaSetupGuard],
     loadComponent: () => import('./features/diagramador/diagramador').then(m => m.Diagramador)

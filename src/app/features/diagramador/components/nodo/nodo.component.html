@@ -19,6 +19,12 @@
         @else { <mat-icon>task</mat-icon> }
         <span class="label-text">{{ nodo.label }}</span>
       </div>
+      <!-- Indicador de advertencia: tarea sin departamento -->
+      @if (nodo.tipo === 'ACTIVIDAD' && !nodo.departamentoId) {
+        <div class="sin-depto-badge" title="Sin departamento asignado — asigna uno en el panel lateral">
+          <mat-icon>warning</mat-icon>
+        </div>
+      }
     </div>
   </div>
 

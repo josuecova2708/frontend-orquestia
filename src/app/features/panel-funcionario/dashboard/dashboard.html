@@ -16,6 +16,11 @@
 
     <span class="spacer"></span>
 
+    <button mat-stroked-button class="tareas-btn" (click)="irMisTareas()">
+      <mat-icon>assignment</mat-icon>
+      Mis Tareas
+    </button>
+
     <div class="user-profile">
       <div class="user-details">
         <span class="user-name">{{ auth.user()?.nombre }}</span>
@@ -140,14 +145,27 @@
           <mat-card class="proceso-card" (click)="abrirDiagramador(proceso)">
             <div class="card-header">
               <mat-icon class="card-icon">account_tree</mat-icon>
-              <span class="estado-badge" [attr.data-estado]="proceso.estado">{{ proceso.estado }}</span>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <span class="estado-badge" [attr.data-estado]="proceso.estado">{{ proceso.estado }}</span>
+                <button mat-icon-button (click)="eliminarProceso(proceso, $event)" title="Eliminar proceso y sus ejecuciones" class="btn-delete-proceso">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
             </div>
             <h4>{{ proceso.nombre }}</h4>
             <p class="card-desc">{{ proceso.descripcion || 'Sin descripción' }}</p>
             <div class="card-meta">
-              <span>{{ proceso.nodos?.length ?? 0 }} nodos</span>
+              <span>{{ proceso.nodos.length || 0 }} nodos</span>
               <span>v{{ proceso.version }}</span>
             </div>
+            @if (proceso.estado === 'PUBLICADO') {
+              <button mat-flat-button class="exec-btn"
+                      (click)="iniciarProceso(proceso, $event)"
+                      title="Crear nueva ejecución de este proceso">
+                <mat-icon>play_arrow</mat-icon>
+                Ejecutar proceso
+              </button>
+            }
           </mat-card>
         } @empty {
           <div class="empty-state">
@@ -156,6 +174,40 @@
           </div>
         }
       </div>
+    </section>
+
+    <!-- ============================================= -->
+    <!-- SECCIÓN 3: EJECUCIONES ACTIVAS -->
+    <!-- ============================================= -->
+    <section class="section">
+      <div class="section-header">
+        <h3><mat-icon>play_circle</mat-icon> Ejecuciones Activas</h3>
+        <button mat-stroked-button (click)="verInstancias()">
+          <mat-icon>refresh</mat-icon> Ver / Actualizar
+        </button>
+      </div>
+
+      @if (instanciasActivas().length > 0) {
+        <div class="instancias-lista">
+          @for (inst of instanciasActivas(); track inst.id) {
+            <div class="instancia-row">
+              <div class="inst-info">
+                <span class="inst-proceso">{{ getNombreProceso(inst.procesoId) }}</span>
+                <span class="inst-id">#{{ inst.id.slice(-8) }}</span>
+                <span class="inst-fecha">
+                  <mat-icon>schedule</mat-icon>
+                  {{ inst.fechaInicio | date:'dd/MM/yy HH:mm' }}
+                </span>
+              </div>
+              <button mat-stroked-button class="cancel-btn" (click)="cancelarInstancia(inst.id)">
+                <mat-icon>cancel</mat-icon> Cancelar
+              </button>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="no-instancias">Haz clic en "Ver / Actualizar" para cargar las ejecuciones activas.</p>
+      }
     </section>
 
   </div>

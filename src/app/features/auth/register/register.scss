@@ -1,5 +1,5 @@
 /* Reutiliza los estilos del login — solo sobreescribimos lo específico */
-@import '../login/login.scss';
+@use '../login/login.scss';
 
 .row-2 {
   display: grid;

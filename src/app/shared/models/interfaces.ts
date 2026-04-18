@@ -31,13 +31,22 @@ export interface Departamento {
   activo: boolean;
 }
 
+// Un campo del formulario dinámico embebido en una Actividad
+export interface CampoFormulario {
+  nombre: string;      // Clave de la variable (ej: "decision")
+  tipo: 'TEXTO' | 'NUMERO' | 'BOOLEANO' | 'OPCIONES' | 'FECHA';
+  label: string;       // Texto visible
+  requerido: boolean;
+  opciones?: string[]; // Solo para tipo OPCIONES
+}
+
 export interface Nodo {
   id: string;
   tipo: 'INICIO' | 'FIN' | 'ACTIVIDAD' | 'GATEWAY_XOR' | 'GATEWAY_AND';
   label: string;
   descripcion?: string;
   departamentoId?: string;
-  formularioId?: string;
+  formulario?: CampoFormulario[];  // Formulario embebido en la actividad
   posX: number;
   posY: number;
 }
@@ -66,3 +75,35 @@ export interface Proceso {
   fechaCreacion: string;
   fechaModificacion: string;
 }
+
+// =========================================================================
+// Motor BPM
+// =========================================================================
+
+export interface InstanciaProceso {
+  id: string;
+  procesoId: string;
+  empresaId: string;
+  creadoPor: string;
+  estado: 'ACTIVA' | 'COMPLETADA' | 'CANCELADA' | 'ERROR';
+  variables: Record<string, unknown>;
+  fechaInicio: string;
+  fechaFin?: string;
+}
+
+export interface TareaInstancia {
+  id: string;
+  instanciaId: string;
+  nodoId: string;
+  nodoLabel: string;
+  departamentoId: string;
+  asignadoA?: string;
+  estado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'RECHAZADA';
+  intentos: number;
+  datos: Record<string, unknown>;
+  comentario?: string;
+  formularioCampos?: CampoFormulario[]; // Inyectado por el motor al crear la tarea
+  fechaCreacion: string;
+  fechaCompletado?: string;
+}
+

@@ -31,14 +31,17 @@
     @if (proceso()?.estado === 'BORRADOR') {
       <div class="paleta-sidebar">
         <h3>Elementos</h3>
-        <p class="paleta-hint">Arrastra al canvas</p>
+        <p class="paleta-hint">Arrastra al canvas ↓</p>
         
         @for (nt of nodeTypes; track nt.type) {
           <div class="paleta-item" 
                draggable="true" 
                (dragstart)="onDragStart($event, nt.type)">
             <mat-icon>{{ nt.icon }}</mat-icon>
-            <span>{{ nt.label }}</span>
+            <div class="paleta-item-info">
+              <span class="paleta-item-label">{{ nt.label }}</span>
+              <span class="paleta-item-desc">{{ nt.desc }}</span>
+            </div>
           </div>
         }
       </div>
@@ -53,9 +56,23 @@
         
         <!-- LAYER 0: SWIMLANES -->
         <div class="swimlanes-layer">
-          @for (dept of departamentos(); track dept.id; let i = $index) {
+          @for (dept of departamentosCanvas(); track dept.id; let i = $index) {
             <div class="swimlane" [style.left.px]="i * 400" [style.width.px]="400">
               <div class="swimlane-header">{{ dept.nombre }}</div>
+            </div>
+          }
+          
+          <!-- Botón para añadir swimlanes -->
+          @if (proceso()?.estado === 'BORRADOR' && getDepartamentosNoUsados().length > 0) {
+            <div class="add-swimlane-btn" [style.left.px]="departamentosCanvas().length * 400">
+              <button mat-button [matMenuTriggerFor]="addLaneMenu">
+                <mat-icon>add</mat-icon> Añadir departamento
+              </button>
+              <mat-menu #addLaneMenu="matMenu">
+                @for (d of getDepartamentosNoUsados(); track d.id) {
+                  <button mat-menu-item (click)="agregarLaneCanvas(d)">{{ d.nombre }}</button>
+                }
+              </mat-menu>
             </div>
           }
         </div>
@@ -68,6 +85,12 @@
             </marker>
             <marker id="arrowhead-selected" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
               <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
+            </marker>
+            <marker id="arrowhead-condicional" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#f59e0b" />
+            </marker>
+            <marker id="arrowhead-retorno" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444" />
             </marker>
           </defs>
 
@@ -128,10 +151,10 @@
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>Departamento Responsable</mat-label>
                 <mat-select [ngModel]="selectedNode.departamentoId" (ngModelChange)="updateSelectedNode({departamentoId: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'">
-                  @for (d of departamentos(); track d.id) {
+                  @for (d of departamentosEmpresa(); track d.id) {
                     <mat-option [value]="d.id">{{ d.nombre }}</mat-option>
                   }
-                  @if (departamentos().length === 0) {
+                  @if (departamentosEmpresa().length === 0) {
                     <mat-option disabled>— Sin departamentos —</mat-option>
                   }
                 </mat-select>
@@ -175,32 +198,53 @@
         <!-- PROPIEDADES CONEXIÓN -->
         @if (selectedItem().type === 'CONEXION' && selectedConexion) {
           <div class="prop-form">
+
+            <div class="conexion-type-info">
+              @switch (selectedConexion.tipo) {
+                @case ('NORMAL') {
+                  <div class="info-chip chip-normal"><mat-icon>arrow_forward</mat-icon> Secuencial</div>
+                  <p class="prop-hint">El flujo avanza automáticamente al completar la tarea anterior.</p>
+                }
+                @case ('CONDICIONAL') {
+                  <div class="info-chip chip-cond"><mat-icon>call_split</mat-icon> Condicional</div>
+                  <p class="prop-hint">Activa este camino si la respuesta coincide con la etiqueta o la fórmula.</p>
+                }
+                @case ('RETORNO') {
+                  <div class="info-chip chip-ret"><mat-icon>replay</mat-icon> Retorno</div>
+                  <p class="prop-hint">Devuelve el flujo hacia atrás si la respuesta es "rechazado". Se limita a N reintentos.</p>
+                }
+              }
+            </div>
+
             <mat-form-field appearance="outline" class="w-100">
               <mat-label>Tipo de Flecha</mat-label>
               <mat-select [ngModel]="selectedConexion.tipo" (ngModelChange)="updateSelectedConexion({tipo: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'">
-                <mat-option value="NORMAL">Normal (Secuencial)</mat-option>
-                <mat-option value="CONDICIONAL">Condicional (XOR gateway)</mat-option>
-                <mat-option value="RETORNO">Retorno (Bucle)</mat-option>
+                <mat-option value="NORMAL">→ Normal (Secuencial)</mat-option>
+                <mat-option value="CONDICIONAL">◇ Condicional (si/no, aprobado/rechazado)</mat-option>
+                <mat-option value="RETORNO">↩ Retorno (Bucle/Re-trabajo)</mat-option>
               </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-100">
-              <mat-label>Etiqueta en flecha (Ej: Sí, No)</mat-label>
-              <input matInput [value]="selectedConexion.label || ''" (input)="updateSelectedConexion({label: $any($event.target).value})" [disabled]="proceso()?.estado !== 'BORRADOR'">
+              <mat-label>Etiqueta visible en flecha</mat-label>
+              <input matInput [value]="selectedConexion.label || ''" (input)="updateSelectedConexion({label: $any($event.target).value})" [disabled]="proceso()?.estado !== 'BORRADOR'" placeholder="Ej: Aprobado, Sí, No">
             </mat-form-field>
+            <p class="prop-hint-small">Texto visible sobre la flecha en el lienzo.</p>
 
             @if (selectedConexion.tipo === 'CONDICIONAL') {
               <mat-form-field appearance="outline" class="w-100">
-                <mat-label>Fórmula condición (ej: data.aprobado == true)</mat-label>
-                <input matInput [ngModel]="selectedConexion.condicion" (ngModelChange)="updateSelectedConexion({condicion: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'">
+                <mat-label>Fórmula de condición (opcional)</mat-label>
+                <input matInput [ngModel]="selectedConexion.condicion" (ngModelChange)="updateSelectedConexion({condicion: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'" placeholder="#decision == 'Aprobado'">
               </mat-form-field>
+              <p class="prop-hint-small">SpEL: Opcional. Si lo omites, evaluaremos usando la etiqueta visual de arriba.</p>
             }
 
             @if (selectedConexion.tipo === 'RETORNO') {
               <mat-form-field appearance="outline" class="w-100">
-                <mat-label>Max Reintentos Loop</mat-label>
-                <input matInput type="number" [ngModel]="selectedConexion.maxReintentos" (ngModelChange)="updateSelectedConexion({maxReintentos: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'">
+                <mat-label>Máximo de reintentos</mat-label>
+                <input matInput type="number" [ngModel]="selectedConexion.maxReintentos ?? 2" (ngModelChange)="updateSelectedConexion({maxReintentos: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'" min="1" max="10">
               </mat-form-field>
+              <p class="prop-hint-small">Número de veces permitidas antes de cancelar el bucle cíclico.</p>
             }
 
             @if (proceso()?.estado === 'BORRADOR') {

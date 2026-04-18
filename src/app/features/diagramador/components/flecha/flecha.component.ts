@@ -5,7 +5,6 @@ import { NgClass } from '@angular/common';
 @Component({
   selector: 'g[orq-flecha]',
   standalone: true,
-  imports: [NgClass],
   templateUrl: './flecha.component.html',
   styleUrl: './flecha.component.scss'
 })
@@ -148,9 +147,23 @@ export class FlechaComponent implements OnChanges {
     }
   }
 
+  get strokeColor(): string {
+    if (this.conexion.tipo === 'CONDICIONAL') return '#f59e0b'; // Naranja
+    if (this.conexion.tipo === 'RETORNO')     return '#ef4444'; // Rojo
+    return '#64748b'; // Gris para NORMAL
+  }
+
+  get arrowMarkerId(): string {
+    if (this.conexion.tipo === 'CONDICIONAL') return 'arrowhead-condicional';
+    if (this.conexion.tipo === 'RETORNO')     return 'arrowhead-retorno';
+    return 'arrowhead';
+  }
+
   get labelColor(): string {
     const lbl = this.conexion.label?.toLowerCase() || '';
-    if (lbl === 'no') return '#ef4444';
+    if (this.conexion.tipo === 'RETORNO')     return '#ef4444';
+    if (this.conexion.tipo === 'CONDICIONAL') return '#f59e0b';
+    if (lbl === 'no')  return '#ef4444';
     if (lbl === 'si' || lbl === 'yes') return '#22c55e';
     return '#64748b';
   }

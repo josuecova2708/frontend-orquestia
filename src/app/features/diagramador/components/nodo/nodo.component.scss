@@ -76,6 +76,10 @@
   min-height: 40px;
 }
 
+.shape-inner {
+  position: relative; /* Necesario para .sin-depto-badge */
+}
+
 .node-content {
   display: flex;
   flex-direction: column;
@@ -185,4 +189,27 @@
 }
 .node-wrapper.selected.GATEWAY_XOR .shape-inner::before {
   border-color: #3b82f6 !important;
+}
+
+/* Indicador de tarea sin departamento */
+.sin-depto-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #fef3c7;
+  border: 1.5px solid #f59e0b;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+
+  mat-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+    color: #b45309;
+  }
 }

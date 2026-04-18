@@ -216,26 +216,58 @@
 }
 
 .proceso-card {
-  padding: 1.25rem;
-  cursor: pointer;
+  padding: 1.5rem;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  border: 1px solid transparent;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: all 0.2s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
     border-color: #cbd5e1;
+
+    .btn-delete-proceso {
+      opacity: 1;
+    }
   }
 
   .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
-  }
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    
+    .card-icon {
+      color: #3b82f6;
+      background: #eff6ff;
+      padding: 8px;
+      border-radius: 8px;
+      width: auto; height: auto;
+    }
 
-  .card-icon { color: #3b82f6; font-size: 24px; width: 24px; height: 24px; }
+    .btn-delete-proceso {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ef4444; /* color rojo */
+      opacity: 0.3;
+      transition: opacity 0.2s, background-color 0.2s;
+      mat-icon { font-size: 18px; width: 18px; height: 18px; }
+      
+      &:hover {
+        background: #fef2f2;
+        opacity: 1 !important;
+      }
+    }
+  }
 
   .estado-badge {
     font-size: 0.68rem;
@@ -273,3 +305,75 @@
   mat-icon { font-size: 40px; width: 40px; height: 40px; margin-bottom: 0.75rem; }
   p { font-size: 0.95rem; margin: 0; }
 }
+
+/* Botón ejecutar proceso en la tarjeta */
+.exec-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 0.82rem;
+  height: 34px;
+  gap: 4px;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  &:hover { opacity: 0.85; }
+}
+
+/* Botón "Mis Tareas" en la toolbar */
+.tareas-btn {
+  border-color: #e2e8f0;
+  color: #0f172a;
+  font-size: 0.875rem;
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+  &:hover { background: #f1f5f9; }
+}
+
+/* Ejecuciones activas */
+.instancias-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.instancia-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+
+  .inst-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.875rem;
+  }
+
+  .inst-proceso { font-weight: 600; color: #0f172a; }
+  .inst-id { color: #64748b; font-family: monospace; font-size: 0.78rem; }
+  .inst-fecha {
+    display: flex; align-items: center; gap: 4px;
+    color: #64748b;
+    mat-icon { font-size: 14px; width: 14px; height: 14px; }
+  }
+
+  .cancel-btn {
+    border-color: #fecaca;
+    color: #dc2626;
+    font-size: 0.8rem;
+    height: 32px;
+    mat-icon { font-size: 15px; width: 15px; height: 15px; }
+    &:hover { background: #fef2f2; }
+  }
+}
+
+.no-instancias {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+

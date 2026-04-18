@@ -8,12 +8,13 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { ProcesoService } from '../../shared/services/proceso';
 import { ApiService } from '../../shared/services/api';
 import { AuthService } from '../../shared/services/auth';
 import { Proceso, Nodo, Conexion, Departamento } from '../../shared/models/interfaces';
-import { NgClass, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { NodoComponent } from './components/nodo/nodo.component';
 import { FlechaComponent } from './components/flecha/flecha.component';
 
@@ -23,7 +24,7 @@ import { FlechaComponent } from './components/flecha/flecha.component';
   imports: [
     FormsModule, MatToolbarModule, MatButtonModule, MatIconModule,
     MatSidenavModule, MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatSnackBarModule, NgClass, DecimalPipe, NodoComponent, FlechaComponent
+    MatSnackBarModule, MatMenuModule, DecimalPipe, NodoComponent, FlechaComponent
   ],
   templateUrl: './diagramador.html',
   styleUrl: './diagramador.scss'
@@ -32,7 +33,8 @@ export class Diagramador implements OnInit {
   proceso = signal<Proceso | null>(null);
   nodos = signal<Nodo[]>([]);
   conexiones = signal<Conexion[]>([]);
-  departamentos = signal<Departamento[]>([]);
+  departamentosEmpresa = signal<Departamento[]>([]);
+  departamentosCanvas = signal<Departamento[]>([]);
 
   // Estado del UI
   selectedItem = signal<{ type: 'NODO' | 'CONEXION' | null, id: string | null }>({ type: null, id: null });
@@ -52,11 +54,11 @@ export class Diagramador implements OnInit {
 
   // Paleta de nodos permitidos
   nodeTypes = [
-    { type: 'INICIO', label: 'Inicio', icon: 'play_circle' },
-    { type: 'ACTIVIDAD', label: 'Actividad', icon: 'task' },
-    { type: 'GATEWAY_XOR', label: 'Decisión (XOR)', icon: 'call_split' },
-    { type: 'GATEWAY_AND', label: 'Paralelo (AND)', icon: 'linear_scale' },
-    { type: 'FIN', label: 'Fin', icon: 'stop_circle' },
+    { type: 'INICIO',       label: 'Inicio',        icon: 'play_circle',   desc: 'Punto de entrada del proceso' },
+    { type: 'ACTIVIDAD',    label: 'Tarea',          icon: 'task',          desc: 'Trabajo que realiza un departamento' },
+    { type: 'GATEWAY_XOR', label: 'Decisión',       icon: 'call_split',    desc: 'Bifurcación: solo UN camino se toma' },
+    { type: 'GATEWAY_AND', label: 'Paralelo',       icon: 'linear_scale',  desc: 'Divide en tareas simultáneas o espera que todas terminen' },
+    { type: 'FIN',          label: 'Fin',            icon: 'stop_circle',   desc: 'Punto de cierre del proceso' },
   ];
 
   constructor(
@@ -93,8 +95,39 @@ export class Diagramador implements OnInit {
 
   cargarDepartamentos(empresaId: string) {
     this.apiService.getDepartamentos(empresaId).subscribe({
-      next: (depts) => this.departamentos.set(depts)
+      next: (depts) => {
+        this.departamentosEmpresa.set(depts);
+        this.computarLanesVisibles();
+      }
     });
+  }
+
+  computarLanesVisibles() {
+    const todos = this.departamentosEmpresa();
+    if (todos.length === 0) return;
+
+    // Extraer IDs que ya se están usando en los nodos
+    const usados = new Set(this.nodos().map(n => n.departamentoId).filter(id => !!id));
+
+    // Agregar a los visibles los departamentos que tienen nodos
+    const activos = todos.filter(d => usados.has(d.id));
+
+    // Si es un lienzo en blanco o ninguno aplicó, agregamos el primer departamento por defecto para no dejarlo vacío
+    if (activos.length === 0) {
+      activos.push(todos[0]);
+    }
+
+    this.departamentosCanvas.set(activos);
+  }
+
+  agregarLaneCanvas(depto: Departamento) {
+    // Si ya está, no hacer nada
+    if (this.departamentosCanvas().some(d => d.id === depto.id)) return;
+    this.departamentosCanvas.update(l => [...l, depto]);
+  }
+
+  getDepartamentosNoUsados() {
+    return this.departamentosEmpresa().filter(d => !this.departamentosCanvas().some(c => c.id === d.id));
   }
 
   // Estado para el mini-formulario de crear departamento dentro del diagramador
@@ -109,7 +142,8 @@ export class Diagramador implements OnInit {
       descripcion: ''
     }).subscribe({
       next: (d) => {
-        this.departamentos.update(list => [...list, d]);
+        this.departamentosEmpresa.update(list => [...list, d]);
+        this.agregarLaneCanvas(d); // Asegurar que el nuevo depto se agregue al canvas
         this.newDeptoNombre = '';
         this.showNewDepto.set(false);
         // Asignar el nuevo departamento al nodo seleccionado si es ACTIVIDAD
@@ -143,17 +177,25 @@ export class Diagramador implements OnInit {
     const x = (event.clientX - rect.left) / this.zoom();
     const y = (event.clientY - rect.top) / this.zoom();
 
+    // Auto-numerado inteligente por tipo
+    const nt = this.nodeTypes.find(n => n.type === type);
+    const baseLabel = nt?.label || 'Nuevo';
+    const countSameType = this.nodos().filter(n => n.tipo === type).length;
+    const autoLabel = (type === 'INICIO' || type === 'FIN') 
+      ? baseLabel 
+      : `${baseLabel} ${countSameType + 1}`;
+
     const nuevoNodo: Nodo = {
       id: 'node_' + Math.random().toString(36).substr(2, 9),
       tipo: type,
-      label: this.nodeTypes.find(n => n.type === type)?.label || 'Nuevo',
+      label: autoLabel,
       posX: Math.round(x),
       posY: Math.round(y)
     };
 
     // Asignación automática por carril
     const laneIndex = Math.floor(x / 400);
-    const depts = this.departamentos();
+    const depts = this.departamentosCanvas();
     if (type === 'ACTIVIDAD' && depts[laneIndex]) {
       nuevoNodo.departamentoId = depts[laneIndex].id;
     } else if (type === 'ACTIVIDAD') {
@@ -328,7 +370,7 @@ export class Diagramador implements OnInit {
     if (data.departamentoId) {
       const node = this.nodos().find(x => x.id === id);
       if (node && node.departamentoId !== data.departamentoId) {
-         const newIndex = this.departamentos().findIndex(d => d.id === data.departamentoId);
+         const newIndex = this.departamentosCanvas().findIndex((d: Departamento) => d.id === data.departamentoId);
          if (newIndex >= 0) {
             data.posX = (newIndex * 400) + 110; // Centrar en el carril (400 width)
          }
@@ -341,7 +383,7 @@ export class Diagramador implements OnInit {
   // Helper para asignar departamento según carril si se arrastra
   autoAssignDepartment(nodeId: string, x: number) {
     const laneIndex = Math.floor(x / 400);
-    const depts = this.departamentos();
+    const depts = this.departamentosCanvas();
     if (depts[laneIndex]) {
       this.nodos.update(ns => ns.map(n => n.id === nodeId ? { ...n, departamentoId: depts[laneIndex].id } : n));
     }
@@ -405,9 +447,55 @@ export class Diagramador implements OnInit {
     });
   }
 
+  validarDiagrama(): string | null {
+    const nodos = this.nodos();
+    const conexiones = this.conexiones();
+
+    if (!nodos.some(n => n.tipo === 'INICIO')) return '⛔ Falta un nodo de Inicio.';
+    if (!nodos.some(n => n.tipo === 'FIN')) return '⛔ Falta un nodo de Fin.';
+
+    const inicios = nodos.filter(n => n.tipo === 'INICIO');
+    for (const inicio of inicios) {
+      if (!conexiones.some(c => c.origenId === inicio.id)) {
+        return `⛔ El nodo Inicio no tiene ninguna conexión saliente.`;
+      }
+    }
+
+    const actividades = nodos.filter(n => n.tipo === 'ACTIVIDAD');
+    const sinDepto = actividades.filter(n => !n.departamentoId);
+    if (sinDepto.length > 0) {
+      return `⚠️ ${sinDepto.length} tarea(s) sin departamento: ${sinDepto.map(n => n.label).join(', ')}. Asigna un departamento a cada tarea.`;
+    }
+
+    const xors = nodos.filter(n => n.tipo === 'GATEWAY_XOR');
+    for (const xor of xors) {
+      const salientes = conexiones.filter(c => c.origenId === xor.id);
+      if (salientes.length < 2) {
+        return `⛔ La Decisión "${xor.label}" debe tener al menos 2 flechas salientes.`;
+      }
+    }
+
+    const ands = nodos.filter(n => n.tipo === 'GATEWAY_AND');
+    for (const and of ands) {
+      const salientes = conexiones.filter(c => c.origenId === and.id);
+      const entrantes = conexiones.filter(c => c.destinoId === and.id);
+      if (salientes.length < 2 && entrantes.length < 2) {
+        return `⛔ El Paralelo "${and.label}" necesita múltiples flechas entrantes o salientes.`;
+      }
+    }
+
+    return null; // Todo OK
+  }
+
   publicar() {
     const p = this.proceso();
     if (!p) return;
+
+    const error = this.validarDiagrama();
+    if (error) {
+      this.snackBar.open(error, 'Cerrar', { duration: 6000, panelClass: 'snack-warn' });
+      return;
+    }
     
     // Auto-save antes de publicar
     this.procesoService.guardar(p.id, {

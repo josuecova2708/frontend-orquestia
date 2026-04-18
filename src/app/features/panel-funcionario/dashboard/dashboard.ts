@@ -12,14 +12,16 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../shared/services/auth';
 import { ProcesoService } from '../../../shared/services/proceso';
 import { ApiService } from '../../../shared/services/api';
-import { Proceso, Empresa, Departamento } from '../../../shared/models/interfaces';
+import { MotorService } from '../../../shared/services/motor';
+import { Proceso, Empresa, Departamento, InstanciaProceso } from '../../../shared/models/interfaces';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'orq-dashboard',
   standalone: true,
   imports: [
     MatToolbarModule, MatButtonModule, MatIconModule, MatCardModule,
-    MatMenuModule, MatDialogModule, MatFormFieldModule, MatInputModule, FormsModule
+    MatMenuModule, MatDialogModule, MatFormFieldModule, MatInputModule, FormsModule, DatePipe
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
@@ -28,6 +30,8 @@ export class Dashboard implements OnInit {
   procesos = signal<Proceso[]>([]);
   empresa = signal<Empresa | null>(null);
   departamentos = signal<Departamento[]>([]);
+  instanciasActivas = signal<InstanciaProceso[]>([]);
+  showInstancias = signal(false);
 
   // Formulario "Nuevo proceso"
   showCreateProceso = signal(false);
@@ -44,6 +48,7 @@ export class Dashboard implements OnInit {
     public auth: AuthService,
     private procesoService: ProcesoService,
     private apiService: ApiService,
+    private motorService: MotorService,
     private router: Router
   ) {}
 
@@ -97,6 +102,53 @@ export class Dashboard implements OnInit {
 
   abrirDiagramador(proceso: Proceso) {
     this.router.navigate(['/diagramador', proceso.id]);
+  }
+
+  irMisTareas() {
+    this.router.navigate(['/mis-tareas']);
+  }
+
+  iniciarProceso(proceso: Proceso, event: Event) {
+    event.stopPropagation();
+    this.motorService.iniciarProceso(proceso.id).subscribe({
+      next: () => {
+        this.router.navigate(['/mis-tareas']);
+      }
+    });
+  }
+
+  eliminarProceso(proceso: Proceso, event: Event) {
+    event.stopPropagation();
+    if (confirm('¿Seguro que deseas eliminar este proceso definitivamente?')) {
+      this.procesoService.eliminar(proceso.id).subscribe({
+        next: () => {
+          this.procesos.update(list => list.filter(p => p.id !== proceso.id));
+        }
+      });
+    }
+  }
+
+  verInstancias() {
+    const empresaId = this.auth.user()?.empresaId;
+    if (!empresaId) return;
+    this.motorService.listarInstanciasActivas(empresaId).subscribe({
+      next: (instancias) => {
+        this.instanciasActivas.set(instancias);
+        this.showInstancias.set(true);
+      }
+    });
+  }
+
+  cancelarInstancia(instanciaId: string) {
+    this.motorService.cancelarInstancia(instanciaId).subscribe({
+      next: () => {
+        this.instanciasActivas.update(list => list.filter(i => i.id !== instanciaId));
+      }
+    });
+  }
+
+  getNombreProceso(procesoId: string): string {
+    return this.procesos().find(p => p.id === procesoId)?.nombre ?? procesoId.slice(-6);
   }
 
   // === Departamentos ===

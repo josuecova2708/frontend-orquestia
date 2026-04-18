@@ -1,0 +1,193 @@
+<div class="mis-tareas-page">
+
+  <!-- TOOLBAR -->
+  <mat-toolbar class="toolbar">
+    <button mat-icon-button (click)="irDashboard()" title="Volver al Dashboard">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="brand-logo">
+      <div class="icon-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2"><rect width="8" height="8" x="3" y="3" rx="2"/>
+          <path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/>
+        </svg>
+      </div>
+      <span class="brand-name">Orquestia</span>
+    </div>
+    <span class="spacer"></span>
+    <div class="user-info">
+      <span class="user-name">{{ auth.user()?.nombre }}</span>
+      <div class="user-avatar">{{ auth.user()?.nombre?.charAt(0) }}</div>
+      <button mat-icon-button (click)="logout()" title="Cerrar sesión">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
+  </mat-toolbar>
+
+  <div class="content">
+    <!-- Header de sección -->
+    <div class="section-header">
+      <div>
+        <h2>
+          <mat-icon>assignment</mat-icon>
+          Mis Tareas Pendientes
+        </h2>
+        <div class="hint">
+          @if (departamento()) {
+            Departamento: 
+            <select class="depto-select" [ngModel]="departamento()?.id" (ngModelChange)="onDepartamentoChange($event)">
+              <option value="SIN_ASIGNAR">-- Tareas Sin Departamento --</option>
+              @for (d of departamentos(); track d.id) {
+                <option [value]="d.id">{{ d.nombre }}</option>
+              }
+            </select>
+          }
+        </div>
+      </div>
+      <button mat-stroked-button (click)="cargarTareas(departamento()!.id)" [disabled]="!departamento()">
+        <mat-icon>refresh</mat-icon>
+        Actualizar
+      </button>
+    </div>
+
+    <!-- Estado carga -->
+    @if (loading()) {
+      <div class="loading-state">
+        <mat-icon class="spin">autorenew</mat-icon>
+        <p>Cargando tareas...</p>
+      </div>
+    }
+
+    <!-- Lista de tareas -->
+    @if (!loading()) {
+      <div class="tareas-grid">
+        @for (tarea of tareas(); track tarea.id) {
+          <div class="tarea-card" [class]="'estado-' + tarea.estado" (click)="abrirTarea(tarea)">
+
+            <div class="card-top">
+              <div class="estado-badge" [class]="'badge-' + tarea.estado">
+                <mat-icon>{{ getEstadoIcon(tarea.estado) }}</mat-icon>
+                {{ tarea.estado }}
+              </div>
+              @if (tarea.intentos > 0) {
+                <span class="reintentos-badge">🔄 Intento {{ tarea.intentos + 1 }}</span>
+              }
+            </div>
+
+            <h3 class="tarea-nombre">{{ tarea.nodoLabel }}</h3>
+
+            <div class="card-meta">
+              <span>
+                <mat-icon>schedule</mat-icon>
+                {{ tarea.fechaCreacion | date:'dd/MM/yy HH:mm' }}
+              </span>
+              <span class="instance-id" title="ID de ejecución: {{ tarea.instanciaId }}">
+                #{{ tarea.instanciaId.slice(-6) }}
+              </span>
+            </div>
+
+            <button mat-flat-button class="btn-abrir" (click)="abrirTarea(tarea); $event.stopPropagation()">
+              {{ tarea.estado === 'EN_PROGRESO' ? 'Continuar' : 'Abrir tarea' }}
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        } @empty {
+          <div class="empty-state">
+            <mat-icon>task_alt</mat-icon>
+            <h3>¡Todo al día!</h3>
+            <p>No hay tareas pendientes para tu departamento en este momento.</p>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODAL — Formulario de la tarea -->
+  <!-- ================================================================= -->
+  @if (tareaActiva()) {
+    <div class="modal-overlay" (click)="cerrarModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+
+        <div class="modal-header">
+          <div>
+            <p class="modal-label">Completar tarea</p>
+            <h3 class="modal-title">{{ tareaActiva()!.nodoLabel }}</h3>
+          </div>
+          <button mat-icon-button (click)="cerrarModal()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Formulario dinámico: un campo por cada CampoFormulario -->
+          @for (campo of campos(); track campo.nombre) {
+            <div class="campo-grupo">
+              <label [for]="campo.nombre">
+                {{ campo.label }}
+                @if (campo.requerido) { <span class="required">*</span> }
+              </label>
+
+              @switch (campo.tipo) {
+
+                @case ('BOOLEANO') {
+                  <div class="bool-group">
+                    <button class="bool-btn" [class.active]="respuestas[campo.nombre] === true"
+                            (click)="setRespuesta(campo.nombre, true)">
+                      <mat-icon>check</mat-icon> Sí
+                    </button>
+                    <button class="bool-btn" [class.active]="respuestas[campo.nombre] === false"
+                            (click)="setRespuesta(campo.nombre, false)">
+                      <mat-icon>close</mat-icon> No
+                    </button>
+                  </div>
+                }
+
+                @case ('OPCIONES') {
+                  <div class="opciones-group">
+                    @for (op of campo.opciones; track op) {
+                      <button class="opcion-btn" [class.active]="respuestas[campo.nombre] === op"
+                              (click)="setRespuesta(campo.nombre, op)">
+                        {{ op }}
+                      </button>
+                    }
+                  </div>
+                }
+
+                @default {
+                  <input [id]="campo.nombre" [type]="getInputType(campo.tipo)"
+                         [value]="getRespuestaStr(campo.nombre)"
+                         (input)="setRespuesta(campo.nombre, $any($event.target).value)"
+                         class="campo-input"
+                         [placeholder]="campo.tipo === 'NUMERO' ? '0' : 'Escribe aquí...'">
+                }
+              }
+            </div>
+          }
+
+          <!-- Comentario opcional siempre disponible -->
+          <div class="campo-grupo">
+            <label for="comentario">Comentarios u observaciones</label>
+            <textarea id="comentario" [(ngModel)]="comentario" rows="3"
+                      placeholder="Observaciones adicionales (opcional)..."
+                      class="campo-input textarea"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button mat-button (click)="cerrarModal()">Cancelar</button>
+          @if (guardando()) {
+            <button mat-flat-button disabled>
+              <mat-icon class="spin">autorenew</mat-icon> Procesando...
+            </button>
+          } @else {
+            <button mat-flat-button (click)="completar()">
+              <mat-icon>send</mat-icon> Completar y avanzar proceso
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
