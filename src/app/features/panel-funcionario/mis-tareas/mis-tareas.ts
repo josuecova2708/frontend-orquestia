@@ -30,6 +30,7 @@ export class MisTareas implements OnInit {
   respuestas: Record<string, unknown> = {};
   comentario = '';
   guardando = signal(false);
+  uploadEstados = signal<Record<string, 'idle' | 'uploading' | 'done' | 'error'>>({});
 
   constructor(
     public auth: AuthService,
@@ -96,15 +97,64 @@ export class MisTareas implements OnInit {
     }
   }
 
-  cerrarModal() { this.tareaActiva.set(null); }
+  cerrarModal() {
+    this.tareaActiva.set(null);
+    this.uploadEstados.set({});
+  }
+
+  subirArchivo(campoNombre: string, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'uploading' }));
+
+    this.api.getPresignUrl(file.name, file.type).subscribe({
+      next: ({ uploadUrl, publicUrl }) => {
+        fetch(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: file
+        }).then(res => {
+          if (res.ok) {
+            this.setRespuesta(campoNombre, publicUrl);
+            this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'done' }));
+          } else {
+            this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'error' }));
+          }
+        }).catch(() => {
+          this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'error' }));
+        });
+      },
+      error: () => this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'error' }))
+    });
+  }
+
+  getUploadEstado(nombre: string): 'idle' | 'uploading' | 'done' | 'error' {
+    return this.uploadEstados()[nombre] ?? 'idle';
+  }
 
   completar() {
     const tarea = this.tareaActiva();
     if (!tarea) return;
 
-    // Validar requeridos
-    const incompleto = this.campos().some(c => c.requerido && !this.respuestas[c.nombre]);
-    if (incompleto) return;
+    // Bloquear si hay archivos subiendo
+    const haySubiendo = this.campos().some(c => c.tipo === 'ARCHIVO' && this.getUploadEstado(c.nombre) === 'uploading');
+    if (haySubiendo) {
+      alert('Espera a que todos los archivos terminen de subirse.');
+      return;
+    }
+
+    // Validar requeridos (cuidado de no bloquear el valor booleano "false")
+    const incompleto = this.campos().some(c => {
+      if (!c.requerido) return false;
+      const v = this.respuestas[c.nombre];
+      return v === undefined || v === null || v === '';
+    });
+    if (incompleto) {
+      alert('Por favor completa todos los campos requeridos.');
+      return;
+    }
 
     this.guardando.set(true);
     this.motor.completarTarea(tarea.id, this.respuestas, this.comentario).subscribe({

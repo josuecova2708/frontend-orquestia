@@ -360,3 +360,64 @@ $radius: 8px;
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+// ── ARCHIVO UPLOAD ──────────────────────────────────────────────────────────
+.archivo-upload {
+  margin-top: 4px;
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1.5px dashed $border;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: $muted;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  justify-content: center;
+
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+
+  &:hover {
+    border-color: $blue;
+    color: $blue;
+    background: #eff6ff;
+  }
+}
+
+.upload-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+  &.uploading { background: #eff6ff; color: #1d4ed8; mat-icon { animation: spin 1s linear infinite; } }
+  &.done      { background: #f0fdf4; color: #15803d; }
+  &.error     { background: #fef2f2; color: #b91c1c; }
+
+  a { color: inherit; font-weight: 600; }
+}
+
+.btn-cambiar {
+  margin-left: auto;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+
+  &:hover { opacity: 1; }
+}
+// ────────────────────────────────────────────────────────────────────────────

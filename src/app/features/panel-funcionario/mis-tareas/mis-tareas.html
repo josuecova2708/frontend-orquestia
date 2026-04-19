@@ -154,6 +154,37 @@
                   </div>
                 }
 
+                @case ('ARCHIVO') {
+                  <div class="archivo-upload">
+                    @if (getUploadEstado(campo.nombre) === 'uploading') {
+                      <div class="upload-status uploading">
+                        <mat-icon class="spin">autorenew</mat-icon>
+                        <span>Subiendo archivo...</span>
+                      </div>
+                    } @else if (getUploadEstado(campo.nombre) === 'done') {
+                      <div class="upload-status done">
+                        <mat-icon>check_circle</mat-icon>
+                        <a [href]="getRespuestaStr(campo.nombre)" target="_blank" rel="noopener">Ver archivo</a>
+                        <button class="btn-cambiar" (click)="fileInput.click()">Cambiar</button>
+                      </div>
+                    } @else if (getUploadEstado(campo.nombre) === 'error') {
+                      <div class="upload-status error">
+                        <mat-icon>error</mat-icon>
+                        <span>Error al subir.</span>
+                        <button class="btn-cambiar" (click)="fileInput.click()">Reintentar</button>
+                      </div>
+                    } @else {
+                      <button class="upload-btn" (click)="fileInput.click()">
+                        <mat-icon>upload_file</mat-icon>
+                        Seleccionar archivo
+                      </button>
+                    }
+                    <input #fileInput type="file" hidden
+                           accept="image/*,application/pdf"
+                           (change)="subirArchivo(campo.nombre, $event)">
+                  </div>
+                }
+
                 @default {
                   <input [id]="campo.nombre" [type]="getInputType(campo.tipo)"
                          [value]="getRespuestaStr(campo.nombre)"

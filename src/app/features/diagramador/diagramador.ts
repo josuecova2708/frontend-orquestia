@@ -13,7 +13,7 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { ProcesoService } from '../../shared/services/proceso';
 import { ApiService } from '../../shared/services/api';
 import { AuthService } from '../../shared/services/auth';
-import { Proceso, Nodo, Conexion, Departamento } from '../../shared/models/interfaces';
+import { Proceso, Nodo, Conexion, Departamento, CampoFormulario } from '../../shared/models/interfaces';
 import { DecimalPipe } from '@angular/common';
 import { NodoComponent } from './components/nodo/nodo.component';
 import { FlechaComponent } from './components/flecha/flecha.component';
@@ -133,6 +133,72 @@ export class Diagramador implements OnInit {
   // Estado para el mini-formulario de crear departamento dentro del diagramador
   showNewDepto = signal(false);
   newDeptoNombre = '';
+
+  // ── FORM BUILDER ──────────────────────────────────────────────────────────
+  // null = oculto, 'new' = añadiendo, number = editando índice
+  editingCampoIndex = signal<number | 'new' | null>(null);
+
+  // Objeto mutable que ngModel va a bindear directamente (sin signals)
+  campoForm: { nombre: string; tipo: CampoFormulario['tipo']; label: string; requerido: boolean; opcionesTexto: string } = {
+    nombre: '', tipo: 'TEXTO', label: '', requerido: false, opcionesTexto: ''
+  };
+
+  get camposActuales(): CampoFormulario[] {
+    return this.selectedNode?.formulario ?? [];
+  }
+
+  abrirNuevoCampo() {
+    this.campoForm = { nombre: '', tipo: 'TEXTO', label: '', requerido: false, opcionesTexto: '' };
+    this.editingCampoIndex.set('new');
+  }
+
+  abrirEditarCampo(i: number) {
+    const c = this.camposActuales[i];
+    this.campoForm = {
+      nombre: c.nombre,
+      tipo: c.tipo,
+      label: c.label,
+      requerido: c.requerido,
+      opcionesTexto: c.opciones?.join(', ') ?? ''
+    };
+    this.editingCampoIndex.set(i);
+  }
+
+  guardarCampo() {
+    const idx = this.editingCampoIndex();
+    if (idx === null || !this.campoForm.nombre.trim() || !this.campoForm.label.trim()) return;
+
+    const campo: CampoFormulario = {
+      nombre: this.campoForm.nombre.trim().toLowerCase().replace(/\s+/g, '_'),
+      tipo: this.campoForm.tipo,
+      label: this.campoForm.label.trim(),
+      requerido: this.campoForm.requerido,
+      opciones: this.campoForm.tipo === 'OPCIONES'
+        ? this.campoForm.opcionesTexto.split(',').map(s => s.trim()).filter(Boolean)
+        : []
+    };
+
+    const campos = [...this.camposActuales];
+    if (idx === 'new') {
+      campos.push(campo);
+    } else {
+      campos[idx] = campo;
+    }
+
+    this.updateSelectedNode({ formulario: campos });
+    this.editingCampoIndex.set(null);
+  }
+
+  eliminarCampo(i: number) {
+    const campos = this.camposActuales.filter((_, idx) => idx !== i);
+    this.updateSelectedNode({ formulario: campos });
+    if (this.editingCampoIndex() === i) this.editingCampoIndex.set(null);
+  }
+
+  cancelarCampo() {
+    this.editingCampoIndex.set(null);
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   crearDepartamentoInline() {
     const empresaId = this.proceso()?.empresaId;
@@ -392,6 +458,41 @@ export class Diagramador implements OnInit {
   updateSelectedConexion(data: Partial<Conexion>) {
     const id = this.selectedItem().id;
     this.conexiones.update(cs => cs.map(c => c.id === id ? { ...c, ...data } : c));
+  }
+
+  // Devuelve los campos de los nodos ACTIVIDAD que alimentan la conexión seleccionada.
+  // Si el origen es un GATEWAY, sube un nivel para encontrar el ACTIVIDAD upstream.
+  get variablesDisponibles(): CampoFormulario[] {
+    const conn = this.selectedConexion;
+    if (!conn) return [];
+
+    const sourceNode = this.getNode(conn.origenId);
+    if (!sourceNode) return [];
+
+    if (sourceNode.tipo === 'ACTIVIDAD') {
+      return sourceNode.formulario ?? [];
+    }
+
+    if (sourceNode.tipo === 'GATEWAY_XOR' || sourceNode.tipo === 'GATEWAY_AND') {
+      const campos: CampoFormulario[] = [];
+      this.conexiones()
+        .filter(c => c.destinoId === sourceNode.id)
+        .forEach(ic => {
+          const upstream = this.getNode(ic.origenId);
+          if (upstream?.tipo === 'ACTIVIDAD') {
+            (upstream.formulario ?? []).forEach(c => {
+              if (!campos.some(e => e.nombre === c.nombre)) campos.push(c);
+            });
+          }
+        });
+      return campos;
+    }
+
+    return [];
+  }
+
+  insertarCondicion(expr: string) {
+    this.updateSelectedConexion({ condicion: expr });
   }
 
   eliminarNodo(id: string) {

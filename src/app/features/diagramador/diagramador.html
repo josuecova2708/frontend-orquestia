@@ -189,6 +189,111 @@
             }
 
 
+            <!-- ══ FORM BUILDER ══ -->
+            @if (selectedNode.tipo === 'ACTIVIDAD') {
+              <div class="form-builder-section">
+                <div class="form-builder-header">
+                  <div class="form-builder-title">
+                    <mat-icon>assignment</mat-icon>
+                    <span>Formulario de la tarea</span>
+                  </div>
+                  @if (proceso()?.estado === 'BORRADOR' && editingCampoIndex() === null) {
+                    <button mat-icon-button class="add-campo-icon-btn" title="Añadir campo" (click)="abrirNuevoCampo()">
+                      <mat-icon>add_circle</mat-icon>
+                    </button>
+                  }
+                </div>
+
+                <!-- Lista de campos existentes -->
+                @if (camposActuales.length === 0 && editingCampoIndex() === null) {
+                  <p class="no-campos-hint">Sin campos. El funcionario verá un campo de decisión genérico al ejecutar.</p>
+                }
+
+                @for (campo of camposActuales; track campo.nombre; let i = $index) {
+                  <div class="campo-row" [class.campo-row-editing]="editingCampoIndex() === i">
+                    <div class="campo-info">
+                      <span class="campo-label">{{ campo.label }}</span>
+                      <div class="campo-meta">
+                        <span class="campo-tipo-badge">{{ campo.tipo }}</span>
+                        @if (campo.requerido) { <span class="campo-req-badge">requerido</span> }
+                      </div>
+                    </div>
+                    @if (proceso()?.estado === 'BORRADOR' && editingCampoIndex() !== i) {
+                      <div class="campo-actions">
+                        <button mat-icon-button title="Editar" (click)="abrirEditarCampo(i)">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn" title="Eliminar" (click)="eliminarCampo(i)">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Editor inline: añadir o editar campo -->
+                @if (editingCampoIndex() !== null && proceso()?.estado === 'BORRADOR') {
+                  <div class="campo-edit-form">
+                    <p class="campo-edit-title">
+                      {{ editingCampoIndex() === 'new' ? 'Nuevo campo' : 'Editar campo' }}
+                    </p>
+
+                    <mat-form-field appearance="outline" class="w-100 mb-0">
+                      <mat-label>Clave interna</mat-label>
+                      <input matInput [(ngModel)]="campoForm.nombre" placeholder="ej: decision">
+                    </mat-form-field>
+                    <p class="prop-hint-small">Sin espacios. SpEL usará este nombre.</p>
+
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label>Etiqueta visible</mat-label>
+                      <input matInput [(ngModel)]="campoForm.label" placeholder="ej: ¿Aprobar solicitud?">
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label>Tipo de campo</mat-label>
+                      <mat-select [(ngModel)]="campoForm.tipo">
+                        <mat-option value="TEXTO">Texto libre</mat-option>
+                        <mat-option value="NUMERO">Número</mat-option>
+                        <mat-option value="BOOLEANO">Sí / No (booleano)</mat-option>
+                        <mat-option value="OPCIONES">Lista de opciones</mat-option>
+                        <mat-option value="FECHA">Fecha</mat-option>
+                        <mat-option value="ARCHIVO">Archivo (imagen / PDF)</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+
+                    @if (campoForm.tipo === 'OPCIONES') {
+                      <mat-form-field appearance="outline" class="w-100">
+                        <mat-label>Opciones (separadas por coma)</mat-label>
+                        <input matInput [(ngModel)]="campoForm.opcionesTexto" placeholder="Aprobado, Rechazado, Pendiente">
+                      </mat-form-field>
+                    }
+
+                    <label class="campo-requerido-toggle">
+                      <input type="checkbox" [(ngModel)]="campoForm.requerido">
+                      <span>Campo obligatorio</span>
+                    </label>
+
+                    <div class="campo-edit-actions">
+                      <button mat-button (click)="cancelarCampo()">Cancelar</button>
+                      <button mat-flat-button color="primary"
+                              [disabled]="!campoForm.nombre.trim() || !campoForm.label.trim()"
+                              (click)="guardarCampo()">
+                        <mat-icon>check</mat-icon> Guardar
+                      </button>
+                    </div>
+                  </div>
+                }
+
+                <!-- Botón añadir al final (cuando ya hay campos y no está editando) -->
+                @if (camposActuales.length > 0 && editingCampoIndex() === null && proceso()?.estado === 'BORRADOR') {
+                  <button mat-stroked-button class="w-100 add-campo-btn" (click)="abrirNuevoCampo()">
+                    <mat-icon>add</mat-icon> Añadir campo
+                  </button>
+                }
+              </div>
+            }
+            <!-- ══════════════════ -->
+
             @if (proceso()?.estado === 'BORRADOR') {
               <button mat-stroked-button color="warn" class="w-100" (click)="eliminarNodo(selectedNode.id)">Eliminar Nodo</button>
             }
@@ -232,11 +337,49 @@
             <p class="prop-hint-small">Texto visible sobre la flecha en el lienzo.</p>
 
             @if (selectedConexion.tipo === 'CONDICIONAL') {
+              @let vars = variablesDisponibles;
+
+              <!-- Panel de ayuda de variables -->
+              @if (vars.length > 0) {
+                <div class="variables-hint-panel">
+                  <p class="variables-hint-title">
+                    <mat-icon>auto_fix_high</mat-icon>
+                    Variables disponibles — clic para insertar
+                  </p>
+                  @for (v of vars; track v.nombre) {
+                    <div class="variable-group">
+                      <div class="variable-header">
+                        <code class="variable-key">#{{ v.nombre }}</code>
+                        <span class="variable-tipo-badge">{{ v.tipo }}</span>
+                        <span class="variable-label-hint">{{ v.label }}</span>
+                      </div>
+                      <div class="variable-chips">
+                        @if (v.tipo === 'BOOLEANO') {
+                          <button class="cond-chip chip-true" (click)="insertarCondicion('#' + v.nombre + ' == true')">== true</button>
+                          <button class="cond-chip chip-false" (click)="insertarCondicion('#' + v.nombre + ' == false')">== false</button>
+                        } @else if (v.tipo === 'OPCIONES' && v.opciones && v.opciones.length > 0) {
+                          @for (op of v.opciones; track op) {
+                            <button class="cond-chip chip-opcion" (click)="insertarCondicion('#' + v.nombre + ' == \'' + op + '\'')">== '{{ op }}'</button>
+                          }
+                        } @else {
+                          <button class="cond-chip chip-generic" (click)="insertarCondicion('#' + v.nombre + ' == ')">insertar #{{ v.nombre }}</button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="variables-empty-hint">
+                  <mat-icon>info</mat-icon>
+                  Define campos en el formulario del nodo anterior para ver sugerencias aquí.
+                </p>
+              }
+
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>Fórmula de condición (opcional)</mat-label>
                 <input matInput [ngModel]="selectedConexion.condicion" (ngModelChange)="updateSelectedConexion({condicion: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'" placeholder="#decision == 'Aprobado'">
               </mat-form-field>
-              <p class="prop-hint-small">SpEL: Opcional. Si lo omites, evaluaremos usando la etiqueta visual de arriba.</p>
+              <p class="prop-hint-small">SpEL: Usa los chips de arriba o escribe directo. Si omites, el motor usa la etiqueta de la flecha.</p>
             }
 
             @if (selectedConexion.tipo === 'RETORNO') {

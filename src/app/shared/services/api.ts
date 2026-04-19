@@ -51,4 +51,13 @@ export class ApiService {
   eliminarDepartamento(id: string) {
     return this.http.delete<void>(`${this.baseUrl}/departamentos/${id}`, { headers: this.headers() });
   }
+
+  // === Uploads MinIO ===
+
+  getPresignUrl(filename: string, contentType: string) {
+    return this.http.get<{ uploadUrl: string; publicUrl: string; key: string }>(
+      `${this.baseUrl}/uploads/presign`,
+      { params: { filename, contentType }, headers: this.headers() }
+    );
+  }
 }

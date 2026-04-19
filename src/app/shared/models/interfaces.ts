@@ -34,7 +34,7 @@ export interface Departamento {
 // Un campo del formulario dinámico embebido en una Actividad
 export interface CampoFormulario {
   nombre: string;      // Clave de la variable (ej: "decision")
-  tipo: 'TEXTO' | 'NUMERO' | 'BOOLEANO' | 'OPCIONES' | 'FECHA';
+  tipo: 'TEXTO' | 'NUMERO' | 'BOOLEANO' | 'OPCIONES' | 'FECHA' | 'ARCHIVO';
   label: string;       // Texto visible
   requerido: boolean;
   opciones?: string[]; // Solo para tipo OPCIONES
