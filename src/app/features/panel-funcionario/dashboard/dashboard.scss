@@ -377,3 +377,45 @@
 }
 
 
+
+// ── Asignaciones por proceso ──────────────────────────────────────────────────
+.assign-btn {
+  margin-top: 8px;
+  width: 100%;
+  font-size: 0.8rem;
+}
+
+.asignacion-panel {
+  margin-top: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.asign-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  .asign-depto {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    min-width: 100px;
+    flex-shrink: 0;
+  }
+  .asign-select {
+    flex: 1;
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+    ::ng-deep .mat-mdc-text-field-wrapper { padding: 0 8px; }
+  }
+}
+
+.asign-save-btn {
+  background: #0f172a !important;
+  color: #fff !important;
+  margin-top: 4px;
+}

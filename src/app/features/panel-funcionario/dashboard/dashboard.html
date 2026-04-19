@@ -16,6 +16,11 @@
 
     <span class="spacer"></span>
 
+    <button mat-stroked-button class="tareas-btn" (click)="router.navigate(['/usuarios'])">
+      <mat-icon>group</mat-icon>
+      Funcionarios
+    </button>
+
     <button mat-stroked-button class="tareas-btn" (click)="irMisTareas()">
       <mat-icon>assignment</mat-icon>
       Mis Tareas
@@ -158,13 +163,36 @@
               <span>{{ proceso.nodos.length || 0 }} nodos</span>
               <span>v{{ proceso.version }}</span>
             </div>
-            @if (proceso.estado === 'PUBLICADO') {
-              <button mat-flat-button class="exec-btn"
-                      (click)="iniciarProceso(proceso, $event)"
-                      title="Crear nueva ejecución de este proceso">
-                <mat-icon>play_arrow</mat-icon>
-                Ejecutar proceso
-              </button>
+            <button mat-stroked-button class="assign-btn"
+                    (click)="abrirAsignacion(proceso, $event)"
+                    title="Asignar funcionarios a este proceso">
+              <mat-icon>{{ asignandoProcesoId() === proceso.id ? 'close' : 'group' }}</mat-icon>
+              {{ asignandoProcesoId() === proceso.id ? 'Cancelar' : 'Asignar' }}
+            </button>
+
+            @if (asignandoProcesoId() === proceso.id) {
+              <div class="asignacion-panel" (click)="$event.stopPropagation()">
+                @for (depto of getDeptosDelProceso(proceso); track depto.id) {
+                  <div class="asign-row">
+                    <span class="asign-depto">{{ depto.nombre }}</span>
+                    <mat-form-field appearance="outline" class="asign-select">
+                      <mat-select [(ngModel)]="asignacionesTemp[depto.id]"
+                                  placeholder="— Sin asignar —">
+                        <mat-option value="">— Sin asignar —</mat-option>
+                        @for (f of getFuncionariosDeDept(depto.id); track f.id) {
+                          <mat-option [value]="f.id">{{ f.nombre }} {{ f.apellido }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                }
+                <button mat-flat-button class="asign-save-btn"
+                        [disabled]="guardandoAsignacion()"
+                        (click)="guardarAsignacion(proceso)">
+                  <mat-icon>save</mat-icon>
+                  {{ guardandoAsignacion() ? 'Guardando...' : 'Guardar asignaciones' }}
+                </button>
+              </div>
             }
           </mat-card>
         } @empty {

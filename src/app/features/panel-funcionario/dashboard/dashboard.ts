@@ -8,12 +8,13 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../shared/services/auth';
 import { ProcesoService } from '../../../shared/services/proceso';
 import { ApiService } from '../../../shared/services/api';
 import { MotorService } from '../../../shared/services/motor';
-import { Proceso, Empresa, Departamento, InstanciaProceso } from '../../../shared/models/interfaces';
+import { Proceso, Empresa, Departamento, InstanciaProceso, UsuarioResponse } from '../../../shared/models/interfaces';
 import { DatePipe } from '@angular/common';
 
 @Component({
@@ -21,7 +22,7 @@ import { DatePipe } from '@angular/common';
   standalone: true,
   imports: [
     MatToolbarModule, MatButtonModule, MatIconModule, MatCardModule,
-    MatMenuModule, MatDialogModule, MatFormFieldModule, MatInputModule, FormsModule, DatePipe
+    MatMenuModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, FormsModule, DatePipe
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
@@ -30,8 +31,14 @@ export class Dashboard implements OnInit {
   procesos = signal<Proceso[]>([]);
   empresa = signal<Empresa | null>(null);
   departamentos = signal<Departamento[]>([]);
+  funcionarios = signal<UsuarioResponse[]>([]);
   instanciasActivas = signal<InstanciaProceso[]>([]);
   showInstancias = signal(false);
+
+  // Asignaciones por proceso
+  asignandoProcesoId = signal<string | null>(null);
+  asignacionesTemp: Record<string, string> = {};
+  guardandoAsignacion = signal(false);
 
   // Formulario "Nuevo proceso"
   showCreateProceso = signal(false);
@@ -49,7 +56,7 @@ export class Dashboard implements OnInit {
     private procesoService: ProcesoService,
     private apiService: ApiService,
     private motorService: MotorService,
-    private router: Router
+    public router: Router
   ) {}
 
   ngOnInit() {
@@ -61,6 +68,7 @@ export class Dashboard implements OnInit {
     this.cargarEmpresa(empresaId);
     this.cargarProcesos(empresaId);
     this.cargarDepartamentos(empresaId);
+    this.cargarFuncionarios(empresaId);
   }
 
   cargarEmpresa(id: string) {
@@ -78,6 +86,49 @@ export class Dashboard implements OnInit {
   cargarDepartamentos(empresaId: string) {
     this.apiService.getDepartamentos(empresaId).subscribe({
       next: (d) => this.departamentos.set(d)
+    });
+  }
+
+  cargarFuncionarios(empresaId: string) {
+    this.apiService.getFuncionarios(empresaId).subscribe({
+      next: (f) => this.funcionarios.set(f.filter(u => u.rol === 'FUNCIONARIO' && u.activo))
+    });
+  }
+
+  // === Asignaciones ===
+
+  abrirAsignacion(proceso: Proceso, event: Event) {
+    event.stopPropagation();
+    if (this.asignandoProcesoId() === proceso.id) {
+      this.asignandoProcesoId.set(null);
+      return;
+    }
+    this.asignacionesTemp = { ...(proceso.asignaciones ?? {}) };
+    this.asignandoProcesoId.set(proceso.id);
+  }
+
+  getDeptosDelProceso(proceso: Proceso): Departamento[] {
+    const deptoIds = new Set(
+      proceso.nodos
+        .filter(n => n.tipo === 'ACTIVIDAD' && n.departamentoId)
+        .map(n => n.departamentoId!)
+    );
+    return this.departamentos().filter(d => deptoIds.has(d.id));
+  }
+
+  getFuncionariosDeDept(deptoId: string): UsuarioResponse[] {
+    return this.funcionarios().filter(f => f.departamentoId === deptoId);
+  }
+
+  guardarAsignacion(proceso: Proceso) {
+    this.guardandoAsignacion.set(true);
+    this.procesoService.guardarAsignaciones(proceso.id, this.asignacionesTemp).subscribe({
+      next: (p) => {
+        this.procesos.update(list => list.map(pr => pr.id === p.id ? p : pr));
+        this.asignandoProcesoId.set(null);
+        this.guardandoAsignacion.set(false);
+      },
+      error: () => this.guardandoAsignacion.set(false)
     });
   }
 

@@ -11,6 +11,19 @@ export interface AuthResponse {
   apellido: string;
   rol: 'ADMIN' | 'DISEÑADOR' | 'FUNCIONARIO';
   empresaId: string | null;
+  departamentoId: string | null;
+}
+
+export interface UsuarioResponse {
+  id: string;
+  email: string;
+  nombre: string;
+  apellido: string;
+  rol: 'ADMIN' | 'DISEÑADOR' | 'FUNCIONARIO';
+  empresaId: string;
+  departamentoId: string | null;
+  activo: boolean;
+  fechaCreacion: string;
 }
 
 export interface Empresa {
@@ -71,6 +84,8 @@ export interface Proceso {
   estado: 'BORRADOR' | 'PUBLICADO' | 'ARCHIVADO';
   nodos: Nodo[];
   conexiones: Conexion[];
+  /** departamentoId → userId: quién ejecuta las tareas de ese depto en este proceso */
+  asignaciones: Record<string, string>;
   version: number;
   fechaCreacion: string;
   fechaModificacion: string;

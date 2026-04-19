@@ -44,4 +44,19 @@ export class ProcesoService {
   eliminar(id: string) {
     return this.http.delete<void>(`${this.baseUrl}/${id}`, { headers: this.headers() });
   }
+
+  listarIniciables(empresaId: string) {
+    return this.http.get<Proceso[]>(
+      `${this.baseUrl}/iniciables?empresaId=${empresaId}`,
+      { headers: this.headers() }
+    );
+  }
+
+  guardarAsignaciones(id: string, asignaciones: Record<string, string>) {
+    return this.http.put<Proceso>(
+      `${this.baseUrl}/${id}/asignaciones`,
+      asignaciones,
+      { headers: this.headers() }
+    );
+  }
 }

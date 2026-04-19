@@ -1,5 +1,4 @@
 <div class="mis-tareas-page">
-
   <!-- TOOLBAR -->
   <mat-toolbar class="toolbar">
     <button mat-icon-button (click)="irDashboard()" title="Volver al Dashboard">
@@ -7,9 +6,18 @@
     </button>
     <div class="brand-logo">
       <div class="icon-box">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2"><rect width="8" height="8" x="3" y="3" rx="2"/>
-          <path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <rect width="8" height="8" x="3" y="3" rx="2" />
+          <path d="M7 11v4a2 2 0 0 0 2 2h4" />
+          <rect width="8" height="8" x="13" y="13" rx="2" />
         </svg>
       </div>
       <span class="brand-name">Orquestia</span>
@@ -34,21 +42,52 @@
         </h2>
         <div class="hint">
           @if (departamento()) {
-            Departamento: 
-            <select class="depto-select" [ngModel]="departamento()?.id" (ngModelChange)="onDepartamentoChange($event)">
-              <option value="SIN_ASIGNAR">-- Tareas Sin Departamento --</option>
-              @for (d of departamentos(); track d.id) {
-                <option [value]="d.id">{{ d.nombre }}</option>
-              }
-            </select>
+            Departamento: <strong>{{ departamento()!.nombre }}</strong>
           }
         </div>
       </div>
-      <button mat-stroked-button (click)="cargarTareas(departamento()!.id)" [disabled]="!departamento()">
+      <button mat-stroked-button (click)="cargarTareas()">
         <mat-icon>refresh</mat-icon>
         Actualizar
       </button>
     </div>
+
+    <!-- PROCESOS QUE PUEDE INICIAR ESTE FUNCIONARIO -->
+    @if (procesosIniciables().length > 0) {
+      <div class="iniciables-section">
+        <h3 class="iniciables-title">
+          <mat-icon>play_circle_outline</mat-icon>
+          Workflows disponibles para iniciar
+        </h3>
+        <div class="iniciables-grid">
+          @for (proc of procesosIniciables(); track proc.id) {
+            <div class="iniciable-card">
+              <mat-icon class="ic-workflow">account_tree</mat-icon>
+              <div class="iniciable-info">
+                <span class="iniciable-nombre">{{ proc.nombre }}</span>
+                @if (proc.descripcion) {
+                  <span class="iniciable-desc">{{ proc.descripcion }}</span>
+                }
+              </div>
+              <button
+                mat-flat-button
+                class="btn-iniciar"
+                [disabled]="iniciando() === proc.id"
+                (click)="iniciarProceso(proc)"
+              >
+                @if (iniciando() === proc.id) {
+                  <ng-container
+                    ><mat-icon class="spin">autorenew</mat-icon> Iniciando...</ng-container
+                  >
+                } @else {
+                  <ng-container><mat-icon>play_arrow</mat-icon> Iniciar</ng-container>
+                }
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
 
     <!-- Estado carga -->
     @if (loading()) {
@@ -63,7 +102,6 @@
       <div class="tareas-grid">
         @for (tarea of tareas(); track tarea.id) {
           <div class="tarea-card" [class]="'estado-' + tarea.estado" (click)="abrirTarea(tarea)">
-
             <div class="card-top">
               <div class="estado-badge" [class]="'badge-' + tarea.estado">
                 <mat-icon>{{ getEstadoIcon(tarea.estado) }}</mat-icon>
@@ -79,14 +117,18 @@
             <div class="card-meta">
               <span>
                 <mat-icon>schedule</mat-icon>
-                {{ tarea.fechaCreacion | date:'dd/MM/yy HH:mm' }}
+                {{ tarea.fechaCreacion | date: 'dd/MM/yy HH:mm' }}
               </span>
               <span class="instance-id" title="ID de ejecución: {{ tarea.instanciaId }}">
                 #{{ tarea.instanciaId.slice(-6) }}
               </span>
             </div>
 
-            <button mat-flat-button class="btn-abrir" (click)="abrirTarea(tarea); $event.stopPropagation()">
+            <button
+              mat-flat-button
+              class="btn-abrir"
+              (click)="abrirTarea(tarea); $event.stopPropagation()"
+            >
               {{ tarea.estado === 'EN_PROGRESO' ? 'Continuar' : 'Abrir tarea' }}
               <mat-icon>arrow_forward</mat-icon>
             </button>
@@ -108,7 +150,6 @@
   @if (tareaActiva()) {
     <div class="modal-overlay" (click)="cerrarModal()">
       <div class="modal-card" (click)="$event.stopPropagation()">
-
         <div class="modal-header">
           <div>
             <p class="modal-label">Completar tarea</p>
@@ -120,24 +161,69 @@
         </div>
 
         <div class="modal-body">
+          <!-- Contexto del proceso: datos de tareas anteriores -->
+          @if (contextoPrevio.length > 0) {
+            <details class="contexto-panel" open>
+              <summary class="contexto-summary">
+                <mat-icon>history</mat-icon>
+                <span>Información del proceso ({{ contextoPrevio.length }} dato(s) previo(s))</span>
+              </summary>
+              <div class="contexto-items">
+                @for (entry of contextoPrevio; track entry[0]) {
+                  <div class="contexto-item">
+                    <div class="contexto-campo-info">
+                      @if (campoLabels()[entry[0]]) {
+                        <span class="contexto-label">{{ campoLabels()[entry[0]] }}</span>
+                      }
+                      <code class="contexto-key">{{ entry[0] }}</code>
+                    </div>
+                    @if (tipoContexto(entry[1]) === 'archivo') {
+                      <a
+                        [href]="$any(entry[1])"
+                        target="_blank"
+                        rel="noopener"
+                        class="contexto-link"
+                      >
+                        <mat-icon>open_in_new</mat-icon> Ver archivo
+                      </a>
+                    } @else if (tipoContexto(entry[1]) === 'bool') {
+                      <span class="contexto-bool" [class.bool-true]="entry[1] === true">
+                        {{ entry[1] === true ? 'Sí' : 'No' }}
+                      </span>
+                    } @else {
+                      <span class="contexto-valor">{{ entry[1] }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            </details>
+          }
+
           <!-- Formulario dinámico: un campo por cada CampoFormulario -->
           @for (campo of campos(); track campo.nombre) {
             <div class="campo-grupo">
               <label [for]="campo.nombre">
                 {{ campo.label }}
-                @if (campo.requerido) { <span class="required">*</span> }
+                @if (campo.requerido) {
+                  <span class="required">*</span>
+                }
               </label>
 
               @switch (campo.tipo) {
-
                 @case ('BOOLEANO') {
                   <div class="bool-group">
-                    <button class="bool-btn" [class.active]="respuestas[campo.nombre] === true"
-                            (click)="setRespuesta(campo.nombre, true)">
+                    <button
+                      class="bool-btn"
+                      [class.active]="respuestas[campo.nombre] === true"
+                      (click)="setRespuesta(campo.nombre, true)"
+                    >
                       <mat-icon>check</mat-icon> Sí
                     </button>
-                    <button class="bool-btn" [class.active]="respuestas[campo.nombre] === false"
-                            (click)="setRespuesta(campo.nombre, false)">
+                    <button
+                      class="bool-btn"
+                      [class.active]="respuestas[campo.nombre] === false"
+                      (click)="setRespuesta(campo.nombre, false)"
+                    >
                       <mat-icon>close</mat-icon> No
                     </button>
                   </div>
@@ -146,8 +232,11 @@
                 @case ('OPCIONES') {
                   <div class="opciones-group">
                     @for (op of campo.opciones; track op) {
-                      <button class="opcion-btn" [class.active]="respuestas[campo.nombre] === op"
-                              (click)="setRespuesta(campo.nombre, op)">
+                      <button
+                        class="opcion-btn"
+                        [class.active]="respuestas[campo.nombre] === op"
+                        (click)="setRespuesta(campo.nombre, op)"
+                      >
                         {{ op }}
                       </button>
                     }
@@ -164,7 +253,9 @@
                     } @else if (getUploadEstado(campo.nombre) === 'done') {
                       <div class="upload-status done">
                         <mat-icon>check_circle</mat-icon>
-                        <a [href]="getRespuestaStr(campo.nombre)" target="_blank" rel="noopener">Ver archivo</a>
+                        <a [href]="getRespuestaStr(campo.nombre)" target="_blank" rel="noopener"
+                          >Ver archivo</a
+                        >
                         <button class="btn-cambiar" (click)="fileInput.click()">Cambiar</button>
                       </div>
                     } @else if (getUploadEstado(campo.nombre) === 'error') {
@@ -179,18 +270,25 @@
                         Seleccionar archivo
                       </button>
                     }
-                    <input #fileInput type="file" hidden
-                           accept="image/*,application/pdf"
-                           (change)="subirArchivo(campo.nombre, $event)">
+                    <input
+                      #fileInput
+                      type="file"
+                      hidden
+                      accept="image/*,application/pdf"
+                      (change)="subirArchivo(campo.nombre, $event)"
+                    />
                   </div>
                 }
 
                 @default {
-                  <input [id]="campo.nombre" [type]="getInputType(campo.tipo)"
-                         [value]="getRespuestaStr(campo.nombre)"
-                         (input)="setRespuesta(campo.nombre, $any($event.target).value)"
-                         class="campo-input"
-                         [placeholder]="campo.tipo === 'NUMERO' ? '0' : 'Escribe aquí...'">
+                  <input
+                    [id]="campo.nombre"
+                    [type]="getInputType(campo.tipo)"
+                    [value]="getRespuestaStr(campo.nombre)"
+                    (input)="setRespuesta(campo.nombre, $any($event.target).value)"
+                    class="campo-input"
+                    [placeholder]="campo.tipo === 'NUMERO' ? '0' : 'Escribe aquí...'"
+                  />
                 }
               }
             </div>
@@ -199,9 +297,13 @@
           <!-- Comentario opcional siempre disponible -->
           <div class="campo-grupo">
             <label for="comentario">Comentarios u observaciones</label>
-            <textarea id="comentario" [(ngModel)]="comentario" rows="3"
-                      placeholder="Observaciones adicionales (opcional)..."
-                      class="campo-input textarea"></textarea>
+            <textarea
+              id="comentario"
+              [(ngModel)]="comentario"
+              rows="3"
+              placeholder="Observaciones adicionales (opcional)..."
+              class="campo-input textarea"
+            ></textarea>
           </div>
         </div>
 
@@ -220,5 +322,4 @@
       </div>
     </div>
   }
-
 </div>

@@ -49,6 +49,8 @@ export class Login {
   private redirectAfterLogin() {
     if (this.auth.needsSetup()) {
       this.router.navigate(['/setup-empresa']);
+    } else if (this.auth.user()?.rol === 'FUNCIONARIO') {
+      this.router.navigate(['/mis-tareas']);
     } else {
       this.router.navigate(['/dashboard']);
     }

@@ -38,9 +38,9 @@ export class MotorService {
 
   // === Tareas (bandeja del funcionario) ===
 
-  obtenerMisTareas(departamentoId: string) {
+  obtenerMisTareas() {
     return this.http.get<TareaInstancia[]>(
-      `${this.baseUrl}/mis-tareas?departamentoId=${departamentoId}`,
+      `${this.baseUrl}/mis-tareas`,
       { headers: this.headers() }
     );
   }

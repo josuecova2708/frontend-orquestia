@@ -8,7 +8,8 @@ import { DatePipe } from '@angular/common';
 import { AuthService } from '../../../shared/services/auth';
 import { ApiService } from '../../../shared/services/api';
 import { MotorService } from '../../../shared/services/motor';
-import { TareaInstancia, Departamento, CampoFormulario } from '../../../shared/models/interfaces';
+import { ProcesoService } from '../../../shared/services/proceso';
+import { TareaInstancia, Departamento, CampoFormulario, InstanciaProceso, Proceso } from '../../../shared/models/interfaces';
 
 @Component({
   selector: 'orq-mis-tareas',
@@ -20,13 +21,16 @@ import { TareaInstancia, Departamento, CampoFormulario } from '../../../shared/m
 export class MisTareas implements OnInit {
 
   tareas = signal<TareaInstancia[]>([]);
-  departamentos = signal<Departamento[]>([]);
   departamento = signal<Departamento | null>(null);
+  procesosIniciables = signal<Proceso[]>([]);
+  iniciando = signal<string | null>(null); // id del proceso que se está iniciando
   loading = signal(true);
 
-  // La tarea que está abierta en el modal para completar
+  // Modal de tarea
   tareaActiva = signal<TareaInstancia | null>(null);
   campos = signal<CampoFormulario[]>([]);
+  instanciaContexto = signal<Record<string, unknown>>({});
+  campoLabels = signal<Record<string, string>>({});  // clave → etiqueta visible
   respuestas: Record<string, unknown> = {};
   comentario = '';
   guardando = signal(false);
@@ -36,50 +40,63 @@ export class MisTareas implements OnInit {
     public auth: AuthService,
     private api: ApiService,
     private motor: MotorService,
+    private procesoService: ProcesoService,
     private router: Router
   ) {}
 
   ngOnInit() {
-    const empresaId = this.auth.user()?.empresaId;
-    if (!empresaId) { this.router.navigate(['/setup-empresa']); return; }
+    const user = this.auth.user();
+    if (!user?.empresaId) { this.router.navigate(['/setup-empresa']); return; }
 
-    // Por ahora: cargamos el primer departamento de la empresa
-    // En una versión futura: el usuario tendrá un departamentoId asignado en su perfil
-    this.api.getDepartamentos(empresaId).subscribe({
+    const deptoId = user.departamentoId;
+    if (!deptoId) {
+      // Admin sin departamento — puede ver todas las tareas de la empresa o ninguna
+      this.loading.set(false);
+      return;
+    }
+
+    // Cargar nombre del departamento para mostrar en el header
+    this.api.getDepartamentos(user.empresaId).subscribe({
       next: (deptos) => {
-        this.departamentos.set(deptos);
-        if (deptos.length === 0) {
-          this.loading.set(false);
-          return;
-        }
-        const depto = deptos[0];
+        const depto = deptos.find(d => d.id === deptoId) ?? null;
         this.departamento.set(depto);
-        this.cargarTareas(depto.id);
       }
+    });
+
+    this.cargarTareas();
+    this.procesoService.listarIniciables(user.empresaId).subscribe({
+      next: (p) => this.procesosIniciables.set(p)
     });
   }
 
-  onDepartamentoChange(deptoId: string) {
-    const d = this.departamentos().find(x => x.id === deptoId);
-    if (d) {
-      this.departamento.set(d);
-      this.cargarTareas(d.id);
-    }
-  }
-
-  cargarTareas(departamentoId: string) {
+  cargarTareas() {
     this.loading.set(true);
-    this.motor.obtenerMisTareas(departamentoId).subscribe({
+    this.motor.obtenerMisTareas().subscribe({
       next: (t) => { this.tareas.set(t); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
   }
 
-  // Abre el modal con el formulario de la tarea
+  // Abre el modal con el formulario de la tarea + carga el contexto acumulado de la instancia
   abrirTarea(tarea: TareaInstancia) {
     this.tareaActiva.set(tarea);
     this.respuestas = {};
     this.comentario = '';
+    this.instanciaContexto.set({});
+    this.campoLabels.set({});
+
+    // Cargar variables acumuladas + etiquetas de todas las tareas anteriores
+    this.motor.obtenerInstancia(tarea.instanciaId).subscribe({
+      next: (inst: InstanciaProceso) => this.instanciaContexto.set(inst.variables ?? {})
+    });
+
+    this.motor.obtenerTareasDeInstancia(tarea.instanciaId).subscribe({
+      next: (tareas) => {
+        const labels: Record<string, string> = {};
+        tareas.forEach(t => (t.formularioCampos ?? []).forEach(c => { labels[c.nombre] = c.label; }));
+        this.campoLabels.set(labels);
+      }
+    });
 
     // Usa el formulario embebido en la tarea (copiado del nodo por el motor).
     // Si el nodo no tenía formulario definido aún, mostramos el campo genérico "decision".
@@ -100,6 +117,7 @@ export class MisTareas implements OnInit {
   cerrarModal() {
     this.tareaActiva.set(null);
     this.uploadEstados.set({});
+    this.campoLabels.set({});
   }
 
   subirArchivo(campoNombre: string, event: Event) {
@@ -161,7 +179,7 @@ export class MisTareas implements OnInit {
       next: () => {
         this.guardando.set(false);
         this.cerrarModal();
-        this.cargarTareas(this.departamento()!.id);
+        this.cargarTareas();
       },
       error: () => this.guardando.set(false)
     });
@@ -183,6 +201,19 @@ export class MisTareas implements OnInit {
     this.respuestas = { ...this.respuestas, [campo]: value };
   }
 
+  // Devuelve el tipo visual de una variable del contexto para renderizarla correctamente
+  tipoContexto(value: unknown): 'archivo' | 'bool' | 'texto' {
+    if (typeof value === 'string' && value.startsWith('http')) return 'archivo';
+    if (typeof value === 'boolean') return 'bool';
+    return 'texto';
+  }
+
+  // Devuelve las claves del contexto que NO pertenecen al formulario actual
+  get contextoPrevio(): [string, unknown][] {
+    const camposActuales = new Set(this.campos().map(c => c.nombre));
+    return Object.entries(this.instanciaContexto()).filter(([k]) => !camposActuales.has(k));
+  }
+
   getEstadoIcon(estado: string): string {
     const map: Record<string, string> = {
       PENDIENTE: 'schedule',
@@ -193,6 +224,20 @@ export class MisTareas implements OnInit {
     return map[estado] ?? 'help';
   }
 
+  iniciarProceso(proceso: Proceso) {
+    this.iniciando.set(proceso.id);
+    this.motor.iniciarProceso(proceso.id).subscribe({
+      next: () => {
+        this.iniciando.set(null);
+        this.cargarTareas();
+      },
+      error: () => this.iniciando.set(null)
+    });
+  }
+
   logout() { this.auth.logout(); this.router.navigate(['/login']); }
-  irDashboard() { this.router.navigate(['/dashboard']); }
+  irDashboard() {
+    const rol = this.auth.user()?.rol;
+    this.router.navigate([rol === 'FUNCIONARIO' ? '/mis-tareas' : '/dashboard']);
+  }
 }

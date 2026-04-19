@@ -1,0 +1,122 @@
+<div class="usuarios-page">
+
+  <mat-toolbar class="toolbar">
+    <button mat-icon-button (click)="router.navigate(['/dashboard'])">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span class="title">Gestión de Funcionarios</span>
+    <span class="spacer"></span>
+    @if (!showForm()) {
+      <button mat-flat-button (click)="abrirFormulario()">
+        <mat-icon>person_add</mat-icon> Nuevo funcionario
+      </button>
+    }
+  </mat-toolbar>
+
+  <div class="content">
+
+    <!-- FORMULARIO CREAR FUNCIONARIO -->
+    @if (showForm()) {
+      <div class="create-card">
+        <h3><mat-icon>person_add</mat-icon> Crear nuevo funcionario</h3>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Nombre *</mat-label>
+            <input matInput [(ngModel)]="form.nombre">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Apellido *</mat-label>
+            <input matInput [(ngModel)]="form.apellido">
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Email *</mat-label>
+          <input matInput type="email" [(ngModel)]="form.email">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Contraseña temporal *</mat-label>
+          <input matInput type="password" [(ngModel)]="form.password">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Departamento asignado</mat-label>
+          <mat-select [(ngModel)]="form.departamentoId">
+            <mat-option value="">— Sin departamento —</mat-option>
+            @for (d of departamentos(); track d.id) {
+              <mat-option [value]="d.id">{{ d.nombre }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (formError()) {
+          <p class="form-error">{{ formError() }}</p>
+        }
+
+        <div class="form-actions">
+          <button mat-button (click)="showForm.set(false)">Cancelar</button>
+          <button mat-flat-button [disabled]="guardando()" (click)="crearFuncionario()">
+            @if (guardando()) {
+              <ng-container><mat-icon class="spin">autorenew</mat-icon> Creando...</ng-container>
+            } @else {
+              <ng-container><mat-icon>check</mat-icon> Crear funcionario</ng-container>
+            }
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- TABLA DE FUNCIONARIOS -->
+    @if (loading()) {
+      <div class="loading"><mat-icon class="spin">autorenew</mat-icon> Cargando...</div>
+    } @else if (funcionarios().length === 0) {
+      <div class="empty-state">
+        <mat-icon>group</mat-icon>
+        <h3>Aún no hay funcionarios</h3>
+        <p>Crea el primer funcionario de tu empresa para que pueda acceder al sistema y completar tareas.</p>
+        <button mat-flat-button (click)="abrirFormulario()">
+          <mat-icon>person_add</mat-icon> Crear funcionario
+        </button>
+      </div>
+    } @else {
+      <div class="tabla-header">
+        <span>{{ funcionarios().length }} funcionario(s) registrado(s)</span>
+      </div>
+      <div class="funcionarios-list">
+        @for (f of funcionarios(); track f.id) {
+          <div class="funcionario-row" [class.inactivo]="!f.activo">
+            <div class="f-avatar">{{ f.nombre.charAt(0) }}{{ f.apellido.charAt(0) }}</div>
+            <div class="f-info">
+              <span class="f-nombre">{{ f.nombre }} {{ f.apellido }}</span>
+              <span class="f-email">{{ f.email }}</span>
+            </div>
+            <div class="f-depto">
+              <mat-form-field appearance="outline" class="depto-select">
+                <mat-label>Departamento</mat-label>
+                <mat-select [ngModel]="f.departamentoId" (ngModelChange)="cambiarDepartamento(f.id, $event)">
+                  <mat-option value="">— Sin asignar —</mat-option>
+                  @for (d of departamentos(); track d.id) {
+                    <mat-option [value]="d.id">{{ d.nombre }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div class="f-estado">
+              @if (f.activo) {
+                <span class="badge-activo">Activo</span>
+                <button mat-icon-button color="warn" title="Desactivar" (click)="desactivar(f.id)">
+                  <mat-icon>person_off</mat-icon>
+                </button>
+              } @else {
+                <span class="badge-inactivo">Inactivo</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</div>

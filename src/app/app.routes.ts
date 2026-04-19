@@ -38,7 +38,23 @@ const setupGuard = () => {
     return false;
   }
   if (!auth.needsSetup()) {
-    router.navigate(['/dashboard']);
+    const dest = auth.user()?.rol === 'FUNCIONARIO' ? '/mis-tareas' : '/dashboard';
+    router.navigate([dest]);
+    return false;
+  }
+  return true;
+};
+
+// Guard: solo ADMIN puede acceder
+const adminGuard = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isLoggedIn()) {
+    router.navigate(['/login']);
+    return false;
+  }
+  if (auth.user()?.rol !== 'ADMIN') {
+    router.navigate(['/mis-tareas']);
     return false;
   }
   return true;
@@ -67,7 +83,7 @@ export const routes: Routes = [
   // App principal (requiere login Y empresa configurada)
   {
     path: 'dashboard',
-    canActivate: [empresaSetupGuard],
+    canActivate: [adminGuard],
     loadComponent: () => import('./features/panel-funcionario/dashboard/dashboard').then(m => m.Dashboard)
   },
   {
@@ -77,8 +93,14 @@ export const routes: Routes = [
   },
   {
     path: 'diagramador/:id',
-    canActivate: [empresaSetupGuard],
+    canActivate: [adminGuard],
     loadComponent: () => import('./features/diagramador/diagramador').then(m => m.Diagramador)
+  },
+
+  {
+    path: 'usuarios',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/admin/usuarios/usuarios-admin').then(m => m.UsuariosAdmin)
   },
 
   // Fallback
