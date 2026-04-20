@@ -1,0 +1,88 @@
+<div class="admin-page">
+  <app-top-navbar></app-top-navbar>
+
+  <div class="content">
+    <div class="page-header">
+      <div>
+        <h2>
+          <mat-icon>admin_panel_settings</mat-icon>
+          Co-Administradores
+        </h2>
+        <p class="hint">Invita a otros usuarios para colaborar en el diseño y gestión de tu empresa.</p>
+      </div>
+      <button mat-flat-button (click)="showInvitar.set(!showInvitar())" class="action-btn">
+        <mat-icon>{{ showInvitar() ? 'close' : 'person_add' }}</mat-icon>
+        {{ showInvitar() ? 'Cancelar' : 'Invitar co-admin' }}
+      </button>
+    </div>
+
+    <!-- Panel de Invitar Co-Admin -->
+    @if (showInvitar()) {
+      <div class="invitar-panel">
+        <div class="panel-header">
+          <h3>Nueva Invitación</h3>
+        </div>
+        <div class="inline-form">
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Email</mat-label>
+            <input matInput [(ngModel)]="invitarEmail" placeholder="correo@empresa.com">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Nombre</mat-label>
+            <input matInput [(ngModel)]="invitarNombre">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Apellido</mat-label>
+            <input matInput [(ngModel)]="invitarApellido">
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="form-field">
+            <mat-label>Contraseña temporal</mat-label>
+            <input matInput type="password" [(ngModel)]="invitarPassword">
+          </mat-form-field>
+          <button mat-flat-button class="submit-btn"
+            [disabled]="!invitarEmail.trim() || !invitarNombre.trim() || !invitarPassword.trim() || enviandoInvitacion()"
+            (click)="invitarAdmin()">
+            <mat-icon>send</mat-icon>
+            {{ enviandoInvitacion() ? 'Enviando...' : 'Enviar invitación' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (mensajeInvitacion()) {
+      <div class="invitacion-ok">
+        <mat-icon>check_circle</mat-icon>
+        {{ mensajeInvitacion() }}
+      </div>
+    }
+
+    <!-- Grilla de administradores -->
+    <div class="admins-grid">
+      @if (loading()) {
+        <div class="empty-state">
+          <mat-icon class="spin">autorenew</mat-icon>
+          <p>Cargando administradores...</p>
+        </div>
+      } @else {
+        @for (admin of administradores(); track admin.id) {
+          <div class="admin-card" [class.inactive]="!admin.activo">
+            <div class="card-avatar">{{ admin.nombre.charAt(0) }}</div>
+            <div class="card-info">
+              <span class="admin-name">{{ admin.nombre }} {{ admin.apellido }}</span>
+              <span class="admin-email">{{ admin.email }}</span>
+              @if (!admin.activo) {
+                <span class="badge-inactive">Inactivo</span>
+              }
+            </div>
+            <div class="card-role">ADMIN</div>
+          </div>
+        } @empty {
+          <div class="empty-state">
+            <mat-icon>person_off</mat-icon>
+            <p>No hay administradores registrados.</p>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

@@ -1,0 +1,99 @@
+<div class="selector-page">
+
+  <div class="selector-card">
+
+    <div class="card-header">
+      <div class="logo">
+        <mat-icon>account_tree</mat-icon>
+        <span>Orquestia</span>
+      </div>
+      <button class="btn-logout" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Salir
+      </button>
+    </div>
+
+    <div class="welcome">
+      <h1>Selecciona una empresa</h1>
+      <p>Hola, <strong>{{ auth.user()?.nombre }}</strong>. Elige en cuál empresa deseas trabajar hoy.</p>
+    </div>
+
+    <!-- Lista de empresas -->
+    <div class="empresas-grid">
+      @for (empresa of empresas(); track empresa.id) {
+        <button
+          class="empresa-card"
+          [class.loading]="seleccionando() === empresa.id"
+          [disabled]="seleccionando() !== null"
+          (click)="seleccionar(empresa)"
+        >
+          <div class="empresa-icon">
+            <mat-icon>business</mat-icon>
+          </div>
+          <span class="empresa-nombre">{{ empresa.nombre }}</span>
+          @if (seleccionando() === empresa.id) {
+            <mat-icon class="spin">autorenew</mat-icon>
+          } @else {
+            <mat-icon class="arrow">arrow_forward</mat-icon>
+          }
+        </button>
+      }
+    </div>
+
+    <!-- Crear nueva empresa -->
+    <div class="nueva-empresa-section">
+      @if (!showForm()) {
+        <button class="btn-nueva" (click)="showForm.set(true)">
+          <mat-icon>add_business</mat-icon>
+          Registrar nueva empresa
+        </button>
+      } @else {
+        <div class="nueva-form">
+          <h3>Nueva empresa</h3>
+
+          @if (error()) {
+            <div class="form-error">{{ error() }}</div>
+          }
+
+          <div class="field">
+            <label>Nombre de la empresa *</label>
+            <input [(ngModel)]="nombre" placeholder="Ej: Mi Empresa S.A." />
+          </div>
+
+          <div class="field">
+            <label>Rubro *</label>
+            <select [(ngModel)]="rubro">
+              <option value="">-- Seleccionar --</option>
+              @for (r of rubros; track r) {
+                <option [value]="r">{{ r }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Descripción (opcional)</label>
+            <input [(ngModel)]="descripcion" placeholder="Breve descripción" />
+          </div>
+
+          <div class="form-actions">
+            <button class="btn-cancel" (click)="showForm.set(false); error.set('')">
+              Cancelar
+            </button>
+            <button
+              class="btn-crear"
+              [disabled]="!nombre.trim() || !rubro || creando()"
+              (click)="crearEmpresa()"
+            >
+              @if (creando()) {
+                <mat-icon class="spin">autorenew</mat-icon> Creando...
+              } @else {
+                <mat-icon>check</mat-icon> Crear empresa
+              }
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+  </div>
+</div>

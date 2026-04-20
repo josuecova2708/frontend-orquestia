@@ -4,17 +4,26 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { DatePipe } from '@angular/common';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCardModule } from '@angular/material/card';
+import { CommonModule, DatePipe } from '@angular/common';
 import { AuthService } from '../../../shared/services/auth';
 import { ApiService } from '../../../shared/services/api';
 import { MotorService } from '../../../shared/services/motor';
 import { ProcesoService } from '../../../shared/services/proceso';
 import { TareaInstancia, Departamento, CampoFormulario, InstanciaProceso, Proceso } from '../../../shared/models/interfaces';
+import { ProcessContextComponent } from '../../../shared/components/process-context/process-context.component';
+import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-navbar.component';
 
 @Component({
   selector: 'orq-mis-tareas',
   standalone: true,
-  imports: [FormsModule, MatIconModule, MatButtonModule, MatToolbarModule, DatePipe],
+  imports: [
+    CommonModule, FormsModule,
+    MatToolbarModule, MatButtonModule, MatIconModule,
+    MatSelectModule, MatCardModule, DatePipe,
+    ProcessContextComponent, TopNavbarComponent
+  ],
   templateUrl: './mis-tareas.html',
   styleUrl: './mis-tareas.scss'
 })

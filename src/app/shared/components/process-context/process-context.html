@@ -1,0 +1,37 @@
+@if (contextoPrevio.length > 0) {
+  <div class="process-context-container">
+    <div class="context-header">
+      <mat-icon>history</mat-icon>
+      <span class="context-title">Información previa del proceso</span>
+      <span class="badge">{{ contextoPrevio.length }} dato(s)</span>
+    </div>
+    
+    <div class="context-grid">
+      @for (entry of contextoPrevio; track entry[0]) {
+        <div class="context-card">
+          <div class="card-label">
+            @if (campoLabels[entry[0]]) {
+              <span>{{ campoLabels[entry[0]] }}</span>
+            } @else {
+              <span>{{ entry[0] }}</span>
+            }
+          </div>
+          
+          <div class="card-value">
+            @if (tipoContexto(entry[1]) === 'archivo') {
+              <a [href]="$any(entry[1])" target="_blank" rel="noopener" class="attachment-link">
+                <mat-icon>open_in_new</mat-icon> Ver archivo adjunto
+              </a>
+            } @else if (tipoContexto(entry[1]) === 'bool') {
+              <span class="status-pill" [class.true]="entry[1] === true" [class.false]="entry[1] === false">
+                {{ entry[1] === true ? 'Sí' : 'No' }}
+              </span>
+            } @else {
+              <span class="text-value">{{ entry[1] }}</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

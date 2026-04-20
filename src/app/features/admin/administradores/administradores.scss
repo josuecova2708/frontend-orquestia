@@ -1,0 +1,204 @@
+$primary: #0a0a0a;
+$surface: #ffffff;
+$bg: #fafafa;
+$border: #e5e5e5;
+$muted: #737373;
+
+.admin-page {
+  min-height: 100vh;
+  background: $bg;
+  font-family: 'Geist', 'Segoe UI', sans-serif;
+}
+
+.content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid $border;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $primary;
+    letter-spacing: -0.02em;
+
+    mat-icon { color: $primary; }
+  }
+
+  .hint { margin: 0; color: $muted; font-size: 0.95rem; }
+
+  .action-btn {
+    background: $primary;
+    color: #fff;
+    border-radius: 8px;
+    height: 44px;
+    gap: 6px;
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
+  }
+}
+
+.invitar-panel {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 25px -10px rgba(0,0,0,0.05);
+
+  .panel-header {
+    margin-bottom: 1.25rem;
+    h3 { margin: 0; font-size: 1.1rem; color: $primary; font-weight: 600; }
+  }
+}
+
+.inline-form {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  .form-field {
+    flex: 1;
+    min-width: 220px;
+    ::ng-deep .mat-mdc-text-field-wrapper {
+      background: $bg !important;
+    }
+  }
+
+  .submit-btn {
+    margin-top: 4px;
+    height: 56px;
+    background: $primary;
+    color: white;
+    border-radius: 8px;
+    padding: 0 1.5rem;
+  }
+}
+
+.invitacion-ok {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 1rem 1.25rem;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  font-weight: 500;
+}
+
+.admins-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.admin-card {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #d4d4d4;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.04);
+    transform: translateY(-2px);
+  }
+
+  &.inactive {
+    opacity: 0.7;
+    filter: grayscale(1);
+  }
+
+  .card-avatar {
+    width: 48px;
+    height: 48px;
+    background: #f1f5f9;
+    color: $primary;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .admin-name {
+      font-weight: 600;
+      color: $primary;
+      font-size: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .admin-email {
+      color: $muted;
+      font-size: 0.85rem;
+      margin-top: 2px;
+    }
+  }
+
+  .card-role {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 4px 8px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 6px;
+  }
+
+  .badge-inactive {
+    margin-top: 6px;
+    font-size: 0.7rem;
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 2px 6px;
+    border-radius: 4px;
+    width: fit-content;
+  }
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  color: $muted;
+  background: $surface;
+  border: 1px dashed $border;
+  border-radius: 12px;
+
+  mat-icon { font-size: 40px; width: 40px; height: 40px; margin-bottom: 1rem; color: #d4d4d4; }
+  .spin { animation: spin 1s linear infinite; }
+  p { margin: 0; font-size: 0.95rem; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

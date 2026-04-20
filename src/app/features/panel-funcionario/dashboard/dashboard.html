@@ -1,42 +1,6 @@
 <div class="dashboard">
 
-  <!-- TOOLBAR -->
-  <mat-toolbar class="toolbar">
-    <div class="brand-logo">
-      <div class="icon-box">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect width="8" height="8" x="3" y="3" rx="2" />
-          <path d="M7 11v4a2 2 0 0 0 2 2h4" />
-          <rect width="8" height="8" x="13" y="13" rx="2" />
-        </svg>
-      </div>
-      <span class="brand-name">Orquestia</span>
-    </div>
-
-    <span class="spacer"></span>
-
-    <button mat-stroked-button class="tareas-btn" (click)="router.navigate(['/usuarios'])">
-      <mat-icon>group</mat-icon>
-      Funcionarios
-    </button>
-
-    <button mat-stroked-button class="tareas-btn" (click)="irMisTareas()">
-      <mat-icon>assignment</mat-icon>
-      Mis Tareas
-    </button>
-
-    <div class="user-profile">
-      <div class="user-details">
-        <span class="user-name">{{ auth.user()?.nombre }}</span>
-        <span class="user-role">{{ auth.user()?.rol }}</span>
-      </div>
-      <div class="user-avatar">{{ auth.user()?.nombre?.charAt(0) }}</div>
-      <button mat-icon-button class="logout-btn" (click)="logout()">
-        <mat-icon>logout</mat-icon>
-      </button>
-    </div>
-  </mat-toolbar>
+  <app-top-navbar></app-top-navbar>
 
   <div class="content">
 
@@ -204,8 +168,9 @@
       </div>
     </section>
 
+
     <!-- ============================================= -->
-    <!-- SECCIÓN 3: EJECUCIONES ACTIVAS -->
+    <!-- SECCIÓN 4: EJECUCIONES ACTIVAS -->
     <!-- ============================================= -->
     <section class="section">
       <div class="section-header">

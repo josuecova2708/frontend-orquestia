@@ -1,0 +1,54 @@
+<nav class="premium-navbar">
+  <div class="navbar-container">
+    <!-- BRAND -->
+    <div class="brand" (click)="router.navigate(['/dashboard'])">
+      <div class="logo-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="8" height="8" x="3" y="3" rx="2" />
+          <path d="M7 11v4a2 2 0 0 0 2 2h4" />
+          <rect width="8" height="8" x="13" y="13" rx="2" />
+        </svg>
+      </div>
+      <span class="brand-name">Orquestia</span>
+    </div>
+
+    <!-- TABS -->
+    <div class="nav-tabs">
+      @if (auth.user()?.rol === 'ADMIN') {
+        <div class="nav-tab" [class.active]="isActive('/dashboard') && !isActive('/mis-tareas') && !isActive('/usuarios')" (click)="router.navigate(['/dashboard'])">
+          <mat-icon>dashboard</mat-icon>
+          <span>Dashboard</span>
+        </div>
+      }
+      <div class="nav-tab" [class.active]="isActive('/mis-tareas')" (click)="router.navigate(['/mis-tareas'])">
+        <mat-icon>assignment</mat-icon>
+        <span>Mis Tareas</span>
+      </div>
+      @if (auth.user()?.rol === 'ADMIN') {
+        <div class="nav-tab" [class.active]="isActive('/administradores')" (click)="router.navigate(['/administradores'])">
+          <mat-icon>admin_panel_settings</mat-icon>
+          <span>Administradores</span>
+        </div>
+        <div class="nav-tab" [class.active]="isActive('/usuarios')" (click)="router.navigate(['/usuarios'])">
+          <mat-icon>group</mat-icon>
+          <span>Funcionarios</span>
+        </div>
+      }
+    </div>
+
+    <!-- USER ACTIONS -->
+    <div class="user-actions">
+      <div class="user-info">
+        <div class="user-text">
+          <span class="user-name">{{ auth.user()?.nombre }}</span>
+          <span class="user-role">{{ auth.user()?.rol }}</span>
+        </div>
+        <div class="user-avatar">{{ auth.user()?.nombre?.charAt(0) }}</div>
+      </div>
+      <button mat-icon-button class="logout-btn" (click)="logout()" title="Cerrar sesión">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
+  </div>
+</nav>

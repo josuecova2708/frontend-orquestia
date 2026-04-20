@@ -16,13 +16,15 @@ import { ApiService } from '../../../shared/services/api';
 import { MotorService } from '../../../shared/services/motor';
 import { Proceso, Empresa, Departamento, InstanciaProceso, UsuarioResponse } from '../../../shared/models/interfaces';
 import { DatePipe } from '@angular/common';
+import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-navbar.component';
 
 @Component({
   selector: 'orq-dashboard',
   standalone: true,
   imports: [
     MatToolbarModule, MatButtonModule, MatIconModule, MatCardModule,
-    MatMenuModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, FormsModule, DatePipe
+    MatMenuModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, FormsModule, DatePipe,
+    TopNavbarComponent
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
@@ -50,6 +52,7 @@ export class Dashboard implements OnInit {
   newDeptoNombre = '';
   newDeptoDesc = '';
   savingDepto = signal(false);
+
 
   constructor(
     public auth: AuthService,
@@ -229,6 +232,7 @@ export class Dashboard implements OnInit {
       next: () => this.departamentos.update(list => list.filter(d => d.id !== id))
     });
   }
+
 
   logout() {
     this.auth.logout();

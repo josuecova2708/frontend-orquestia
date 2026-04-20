@@ -24,11 +24,8 @@ export class SetupEmpresa {
   ];
 
   constructor(private auth: AuthService, private router: Router) {
-    // Si ya tiene empresa, no debería estar aquí
     if (!this.auth.isLoggedIn()) {
       this.router.navigate(['/login']);
-    } else if (!this.auth.needsSetup()) {
-      this.router.navigate(['/dashboard']);
     }
   }
 

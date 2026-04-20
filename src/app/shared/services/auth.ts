@@ -13,8 +13,18 @@ export class AuthService {
   user = this.currentUser.asReadonly();
   isLoggedIn = computed(() => !!this.currentUser());
   token = computed(() => this.currentUser()?.token ?? '');
-  // Computed que el guard usa para detectar si necesita onboarding
-  needsSetup = computed(() => this.isLoggedIn() && !this.currentUser()?.empresaId);
+
+  // True when logged in, has empresas but no active selection (multi-admin login)
+  needsSelection = computed(() => {
+    const u = this.currentUser();
+    return !!u && (!u.empresaId || u.empresaId === '') && (u.empresasAdmin?.length ?? 0) > 0;
+  });
+
+  // True when logged in but has no empresa at all (brand new user)
+  needsSetup = computed(() => {
+    const u = this.currentUser();
+    return !!u && (!u.empresaId || u.empresaId === '') && (u.empresasAdmin?.length ?? 0) === 0;
+  });
 
   constructor(private http: HttpClient) {}
 
@@ -28,14 +38,21 @@ export class AuthService {
       .pipe(tap(res => this.saveUser(res)));
   }
 
-  /**
-   * Onboarding: crea la empresa y actualiza el token local con el nuevo empresaId.
-   * Requiere que el usuario ya esté logueado (tiene token).
-   */
   setupEmpresa(data: { nombre: string; descripcion?: string; rubro: string }) {
     const headers = new HttpHeaders({ Authorization: `Bearer ${this.token()}` });
     return this.http.post<AuthResponse>(`${this.apiUrl}/setup-empresa`, data, { headers })
-      .pipe(tap(res => this.saveUser(res))); // Reemplaza el token viejo con el nuevo
+      .pipe(tap(res => this.saveUser(res)));
+  }
+
+  switchEmpresa(empresaId: string) {
+    const headers = new HttpHeaders({ Authorization: `Bearer ${this.token()}` });
+    return this.http.post<AuthResponse>(`${this.apiUrl}/switch-empresa/${empresaId}`, {}, { headers })
+      .pipe(tap(res => this.saveUser(res)));
+  }
+
+  invitarAdmin(data: { email: string; nombre: string; apellido: string; password: string; empresaId: string }) {
+    const headers = new HttpHeaders({ Authorization: `Bearer ${this.token()}` });
+    return this.http.post<AuthResponse>(`${this.apiUrl}/invitar-admin`, data, { headers });
   }
 
   logout() {

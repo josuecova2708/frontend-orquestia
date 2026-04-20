@@ -3,41 +3,44 @@ import { inject } from '@angular/core';
 import { AuthService } from './shared/services/auth';
 import { Router } from '@angular/router';
 
-// Guard: requiere login
 const authGuard = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  if (!auth.isLoggedIn()) {
-    router.navigate(['/login']);
-    return false;
-  }
+  if (!auth.isLoggedIn()) { router.navigate(['/login']); return false; }
   return true;
 };
 
-// Guard: requiere que el usuario YA tenga empresa configurada
+// Guard: solo accede si tiene empresa configurada y seleccionada
 const empresaSetupGuard = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  if (!auth.isLoggedIn()) {
-    router.navigate(['/login']);
-    return false;
-  }
-  if (auth.needsSetup()) {
-    router.navigate(['/setup-empresa']);
+  if (!auth.isLoggedIn()) { router.navigate(['/login']); return false; }
+  if (auth.needsSelection()) { router.navigate(['/seleccionar-empresa']); return false; }
+  if (auth.needsSetup()) { router.navigate(['/setup-empresa']); return false; }
+  return true;
+};
+
+// Guard: /setup-empresa solo si está logueado y sin ninguna empresa
+const setupGuard = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isLoggedIn()) { router.navigate(['/login']); return false; }
+  if (!auth.needsSetup()) {
+    if (auth.needsSelection()) { router.navigate(['/seleccionar-empresa']); return false; }
+    const dest = auth.user()?.rol === 'FUNCIONARIO' ? '/mis-tareas' : '/dashboard';
+    router.navigate([dest]);
     return false;
   }
   return true;
 };
 
-// Guard: la página de setup solo se accede si está logueado pero SIN empresa
-const setupGuard = () => {
+// Guard: /seleccionar-empresa solo si está logueado y tiene varias empresas sin seleccionar
+const selectorGuard = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  if (!auth.isLoggedIn()) {
-    router.navigate(['/login']);
-    return false;
-  }
-  if (!auth.needsSetup()) {
+  if (!auth.isLoggedIn()) { router.navigate(['/login']); return false; }
+  if (!auth.needsSelection()) {
+    if (auth.needsSetup()) { router.navigate(['/setup-empresa']); return false; }
     const dest = auth.user()?.rol === 'FUNCIONARIO' ? '/mis-tareas' : '/dashboard';
     router.navigate([dest]);
     return false;
@@ -49,21 +52,16 @@ const setupGuard = () => {
 const adminGuard = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
-  if (!auth.isLoggedIn()) {
-    router.navigate(['/login']);
-    return false;
-  }
-  if (auth.user()?.rol !== 'ADMIN') {
-    router.navigate(['/mis-tareas']);
-    return false;
-  }
+  if (!auth.isLoggedIn()) { router.navigate(['/login']); return false; }
+  if (auth.needsSelection()) { router.navigate(['/seleccionar-empresa']); return false; }
+  if (auth.needsSetup()) { router.navigate(['/setup-empresa']); return false; }
+  if (auth.user()?.rol !== 'ADMIN') { router.navigate(['/mis-tareas']); return false; }
   return true;
 };
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
-  // Páginas de Auth (sin guard — acceso público)
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login/login').then(m => m.Login)
@@ -73,14 +71,17 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/register/register').then(m => m.Register)
   },
 
-  // Onboarding (requiere login pero SIN empresa)
   {
     path: 'setup-empresa',
     canActivate: [setupGuard],
     loadComponent: () => import('./features/auth/setup-empresa/setup-empresa').then(m => m.SetupEmpresa)
   },
+  {
+    path: 'seleccionar-empresa',
+    canActivate: [selectorGuard],
+    loadComponent: () => import('./features/auth/seleccionar-empresa/seleccionar-empresa').then(m => m.SelectorEmpresa)
+  },
 
-  // App principal (requiere login Y empresa configurada)
   {
     path: 'dashboard',
     canActivate: [adminGuard],
@@ -96,13 +97,16 @@ export const routes: Routes = [
     canActivate: [adminGuard],
     loadComponent: () => import('./features/diagramador/diagramador').then(m => m.Diagramador)
   },
-
   {
     path: 'usuarios',
     canActivate: [adminGuard],
     loadComponent: () => import('./features/admin/usuarios/usuarios-admin').then(m => m.UsuariosAdmin)
   },
+  {
+    path: 'administradores',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/admin/administradores/administradores').then(m => m.AdministradoresAdmin)
+  },
 
-  // Fallback
   { path: '**', redirectTo: 'login' }
 ];

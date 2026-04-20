@@ -3,72 +3,6 @@
   background: #f8fafc;
 }
 
-/* TOOLBAR */
-.toolbar {
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 0 2rem;
-  height: 64px;
-
-  .brand-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-
-    .icon-box {
-      display: flex;
-      height: 2.25rem;
-      width: 2.25rem;
-      align-items: center;
-      justify-content: center;
-      border-radius: 0.5rem;
-      background-color: #0f172a;
-      color: #ffffff;
-      svg { height: 1.25rem; width: 1.25rem; }
-    }
-
-    .brand-name {
-      font-size: 1.4rem;
-      font-weight: 600;
-      letter-spacing: -0.025em;
-      color: #0f172a;
-    }
-  }
-
-  .spacer { flex: 1; }
-
-  .user-profile {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-
-    .user-details {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      line-height: 1.2;
-      .user-name { font-size: 0.9rem; font-weight: 600; color: #0f172a; }
-      .user-role { font-size: 0.75rem; color: #64748b; }
-    }
-
-    .user-avatar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 2.25rem;
-      height: 2.25rem;
-      background: #0f172a;
-      color: #ffffff;
-      border-radius: 50%;
-      font-weight: 600;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-    }
-
-    .logout-btn { color: #64748b; &:hover { color: #ef4444; } }
-  }
-}
-
 /* CONTENT */
 .content {
   max-width: 1100px;
@@ -418,4 +352,13 @@
   background: #0f172a !important;
   color: #fff !important;
   margin-top: 4px;
+}
+
+.invitacion-ok {
+  margin-top: 0.75rem;
+  color: #15803d;
+  background: #f0fdf4;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.875rem;
 }

@@ -3,6 +3,11 @@
  * Estos son los "tipos" que TypeScript usa para evitar errores.
  */
 
+export interface EmpresaResumen {
+  id: string;
+  nombre: string;
+}
+
 export interface AuthResponse {
   token: string;
   userId: string;
@@ -12,6 +17,7 @@ export interface AuthResponse {
   rol: 'ADMIN' | 'DISEÑADOR' | 'FUNCIONARIO';
   empresaId: string | null;
   departamentoId: string | null;
+  empresasAdmin?: EmpresaResumen[];
 }
 
 export interface UsuarioResponse {
