@@ -2,14 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth';
 import { Empresa, Departamento, UsuarioResponse } from '../models/interfaces';
+import { environment } from '../../../environments/environment';
 
-/**
- * Servicio genérico para llamadas a la API protegidas con JWT.
- */
 @Injectable({ providedIn: 'root' })
 export class ApiService {
 
-  private baseUrl = 'http://localhost:8080/api';
+  private baseUrl = `${environment.apiUrl}/api`;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 

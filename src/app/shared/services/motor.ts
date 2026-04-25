@@ -2,15 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth';
 import { InstanciaProceso, TareaInstancia } from '../models/interfaces';
+import { environment } from '../../../environments/environment';
 
-/**
- * Servicio que conecta el frontend con el Motor BPM del backend.
- * Gestiona instancias de proceso y tareas asignadas a funcionarios.
- */
 @Injectable({ providedIn: 'root' })
 export class MotorService {
 
-  private baseUrl = 'http://localhost:8080/api';
+  private baseUrl = `${environment.apiUrl}/api`;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 

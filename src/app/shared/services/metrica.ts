@@ -2,11 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth';
 import { MetricasEmpresa } from '../models/interfaces';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class MetricaService {
 
-  private baseUrl = 'http://localhost:8080/api/metricas';
+  private baseUrl = `${environment.apiUrl}/api/metricas`;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 

@@ -3,12 +3,13 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth';
 import { Notificacion } from '../models/interfaces';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class NotificacionService {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
-  private readonly base = 'http://localhost:8080/api/notificaciones';
+  private readonly base = `${environment.apiUrl}/api/notificaciones`;
 
   private headers(): HttpHeaders {
     return new HttpHeaders({ Authorization: `Bearer ${this.auth.token()}` });

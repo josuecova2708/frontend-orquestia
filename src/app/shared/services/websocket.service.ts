@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Subject, Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export type DiagramaEventTipo =
   | 'NODE_MOVED' | 'NODE_ADDED' | 'NODE_DELETED' | 'NODE_UPDATED'
@@ -43,7 +44,7 @@ export class WebSocketService {
     this.desconectar();
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS(`${environment.apiUrl}/ws`),
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       onConnect: () => {
@@ -82,7 +83,7 @@ export class WebSocketService {
     if (this.userClient?.active) return this.userEvents$.asObservable();
 
     this.userClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS(`${environment.apiUrl}/ws`),
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       onConnect: () => {
@@ -111,7 +112,7 @@ export class WebSocketService {
     if (this.empresaClient?.active) return this.empresaEvents$.asObservable();
 
     this.empresaClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS(`${environment.apiUrl}/ws`),
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       onConnect: () => {

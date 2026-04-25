@@ -2,14 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth';
 import { Proceso } from '../models/interfaces';
+import { environment } from '../../../environments/environment';
 
-/**
- * Servicio para CRUD de procesos (workflows).
- */
 @Injectable({ providedIn: 'root' })
 export class ProcesoService {
 
-  private baseUrl = 'http://localhost:8080/api/procesos';
+  private baseUrl = `${environment.apiUrl}/api/procesos`;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 
