@@ -1,0 +1,77 @@
+<div class="page">
+
+  <app-top-navbar></app-top-navbar>
+
+  <div class="content">
+
+    <div class="page-header">
+      <div>
+        <h2>Departamentos</h2>
+        <p class="hint">Organiza los equipos que ejecutan cada actividad en tus procesos</p>
+      </div>
+      <button mat-flat-button (click)="showCreateDepto.set(!showCreateDepto())">
+        <mat-icon>{{ showCreateDepto() ? 'close' : 'add' }}</mat-icon>
+        {{ showCreateDepto() ? 'Cancelar' : 'Nuevo departamento' }}
+      </button>
+    </div>
+
+    <!-- Formulario crear departamento -->
+    @if (showCreateDepto()) {
+      <div class="inline-form">
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Nombre del departamento</mat-label>
+          <input matInput [(ngModel)]="newDeptoNombre" placeholder="Ej: Atención al Cliente" (keyup.enter)="crearDepartamento()">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Descripción (opcional)</mat-label>
+          <input matInput [(ngModel)]="newDeptoDesc" placeholder="Función de este departamento">
+        </mat-form-field>
+        <button mat-flat-button [disabled]="!newDeptoNombre.trim() || savingDepto()" (click)="crearDepartamento()">
+          <mat-icon>check</mat-icon>
+          {{ savingDepto() ? 'Guardando...' : 'Crear' }}
+        </button>
+      </div>
+    }
+
+    <!-- Lista de departamentos -->
+    <div class="deptos-grid">
+      @for (d of departamentos(); track d.id) {
+        <div class="depto-card">
+          <div class="depto-card-header">
+            <div class="depto-icon-wrap">
+              <mat-icon>corporate_fare</mat-icon>
+            </div>
+            <button mat-icon-button class="depto-delete" (click)="eliminarDepartamento(d.id)" title="Eliminar">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </div>
+          <h4 class="depto-nombre">{{ d.nombre }}</h4>
+          @if (d.descripcion) {
+            <p class="depto-desc">{{ d.descripcion }}</p>
+          }
+
+          <!-- Funcionarios asignados a este depto -->
+          @if (getFuncionariosDeDept(d.id).length > 0) {
+            <div class="depto-miembros">
+              @for (f of getFuncionariosDeDept(d.id); track f.id) {
+                <span class="miembro-chip">
+                  <span class="miembro-avatar">{{ f.nombre.charAt(0) }}</span>
+                  {{ f.nombre }} {{ f.apellido }}
+                </span>
+              }
+            </div>
+          } @else {
+            <p class="depto-sin-miembros">Sin funcionarios asignados</p>
+          }
+        </div>
+      } @empty {
+        <div class="empty-state">
+          <mat-icon>corporate_fare</mat-icon>
+          <p>No hay departamentos aún.</p>
+          <p class="hint">Crea uno para asignarlo a las actividades de tus procesos.</p>
+        </div>
+      }
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,208 @@
+<div class="page">
+
+  <app-top-navbar></app-top-navbar>
+
+  <div class="content">
+
+    <div class="page-header">
+      <div>
+        <h2>Mi Historial</h2>
+        <p class="hint">Procesos en los que has participado · haz clic en una fila para ver el detalle</p>
+      </div>
+      <button mat-icon-button (click)="cargarInstancias()" title="Actualizar">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-bar">
+      <mat-form-field appearance="outline" class="filtro-field">
+        <mat-label>Estado</mat-label>
+        <mat-select [ngModel]="filtroEstado()" (ngModelChange)="filtroEstado.set($event)">
+          <mat-option value="">Todos</mat-option>
+          <mat-option value="ACTIVA">Activa</mat-option>
+          <mat-option value="COMPLETADA">Completada</mat-option>
+          <mat-option value="CANCELADA">Cancelada</mat-option>
+          <mat-option value="ERROR">Error</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filtro-field">
+        <mat-label>Proceso</mat-label>
+        <mat-select [ngModel]="filtroProceso()" (ngModelChange)="filtroProceso.set($event)">
+          <mat-option value="">Todos</mat-option>
+          @for (p of procesos(); track p.id) {
+            <mat-option [value]="p.id">{{ p.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filtro-field">
+        <mat-label>Desde</mat-label>
+        <input matInput type="date"
+               [ngModel]="filtroFechaDesde()"
+               (ngModelChange)="filtroFechaDesde.set($event)">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filtro-field">
+        <mat-label>Hasta</mat-label>
+        <input matInput type="date"
+               [ngModel]="filtroFechaHasta()"
+               (ngModelChange)="filtroFechaHasta.set($event)">
+      </mat-form-field>
+
+      @if (hayFiltrosActivos) {
+        <button mat-stroked-button class="limpiar-btn" (click)="limpiarFiltros()">
+          <mat-icon>filter_list_off</mat-icon>
+          Limpiar
+        </button>
+      }
+    </div>
+
+    <div class="resumen-bar">
+      <span class="resumen-total">
+        {{ instanciasFiltradas().length }} proceso{{ instanciasFiltradas().length !== 1 ? 's' : '' }}
+        @if (hayFiltrosActivos) { <span class="resumen-hint">(filtrado de {{ todasInstancias().length }})</span> }
+      </span>
+    </div>
+
+    <!-- Lista -->
+    @if (instanciasFiltradas().length > 0) {
+      <div class="instancias-lista">
+        @for (inst of instanciasFiltradas(); track inst.id) {
+
+          <div class="instancia-wrapper">
+            <!-- Fila principal -->
+            <div class="instancia-row"
+                 [class.is-open]="instanciaAbierta() === inst.id"
+                 (click)="toggleHistorial(inst)">
+              <div class="inst-left">
+                <span class="inst-estado-badge" [attr.data-estado]="inst.estado">{{ inst.estado }}</span>
+              </div>
+              <div class="inst-info">
+                <span class="inst-proceso">{{ getNombreProceso(inst.procesoId) }}</span>
+                <span class="inst-id">#{{ inst.id.slice(-8) }}</span>
+              </div>
+              <div class="inst-fechas">
+                <span class="inst-fecha">
+                  <mat-icon>schedule</mat-icon>
+                  {{ inst.fechaInicio | date:'dd/MM/yy HH:mm' }}
+                </span>
+                @if (inst.fechaFin) {
+                  <span class="inst-fecha inst-fecha-fin">
+                    <mat-icon>flag</mat-icon>
+                    {{ inst.fechaFin | date:'dd/MM/yy HH:mm' }}
+                  </span>
+                }
+              </div>
+              <mat-icon class="expand-icon">
+                {{ instanciaAbierta() === inst.id ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            </div>
+
+            <!-- Timeline inline -->
+            @if (instanciaAbierta() === inst.id) {
+              <div class="timeline-panel">
+                @if (cargandoHistorial()) {
+                  <div class="timeline-loading">
+                    <mat-icon>hourglass_top</mat-icon>
+                    Cargando historial...
+                  </div>
+                } @else if (historialTareas().length === 0) {
+                  <div class="timeline-empty">Sin tareas registradas.</div>
+                } @else {
+                  <div class="timeline">
+                    @for (tarea of historialTareas(); track tarea.id; let last = $last) {
+                      <div class="tl-step" [attr.data-estado]="tarea.estado" [class.tl-mia]="esMiTarea(tarea)">
+
+                        <div class="tl-indicator">
+                          <div class="tl-dot"></div>
+                          @if (!last) { <div class="tl-line"></div> }
+                        </div>
+
+                        <div class="tl-body">
+                          <div class="tl-header">
+                            <span class="tl-label">{{ tarea.nodoLabel }}</span>
+                            <span class="tl-estado-badge" [attr.data-estado]="tarea.estado">{{ tarea.estado }}</span>
+                            @if (esMiTarea(tarea)) {
+                              <span class="tl-mi-badge">
+                                <mat-icon>person_pin</mat-icon>
+                                Tú
+                              </span>
+                            }
+                          </div>
+
+                          <div class="tl-meta">
+                            @if (tarea.departamentoId) {
+                              <span class="tl-meta-item">
+                                <mat-icon>corporate_fare</mat-icon>
+                                {{ getDeptNombre(tarea.departamentoId) }}
+                              </span>
+                            }
+                            @if (tarea.asignadoA) {
+                              <span class="tl-meta-item">
+                                <mat-icon>person</mat-icon>
+                                {{ getNombreUsuario(tarea.asignadoA) }}
+                              </span>
+                            }
+                            <span class="tl-meta-item">
+                              <mat-icon>schedule</mat-icon>
+                              Creada {{ tarea.fechaCreacion | date:'dd/MM/yy HH:mm' }}
+                            </span>
+                            @if (tarea.fechaCompletado) {
+                              <span class="tl-meta-item tl-meta-fin">
+                                <mat-icon>check_circle</mat-icon>
+                                Completada {{ tarea.fechaCompletado | date:'dd/MM/yy HH:mm' }}
+                              </span>
+                            }
+                            @if (tarea.intentos > 1) {
+                              <span class="tl-meta-item tl-meta-warn">
+                                <mat-icon>replay</mat-icon>
+                                {{ tarea.intentos }} intentos
+                              </span>
+                            }
+                          </div>
+
+                          @if (tarea.comentario) {
+                            <div class="tl-comentario">
+                              <mat-icon>chat_bubble_outline</mat-icon>
+                              "{{ tarea.comentario }}"
+                            </div>
+                          }
+
+                          @if (esMiTarea(tarea) && objectEntries(tarea.datos).length > 0) {
+                            <div class="tl-datos">
+                              @for (entry of objectEntries(tarea.datos); track entry[0]) {
+                                <span class="tl-dato">
+                                  <span class="tl-dato-key">{{ entry[0] }}</span>
+                                  <span class="tl-dato-val">{{ formatDatoVal(entry[1]) }}</span>
+                                </span>
+                              }
+                            </div>
+                          }
+                        </div>
+
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <mat-icon>history</mat-icon>
+        @if (todasInstancias().length === 0) {
+          <p>Todavía no has participado en ningún proceso.</p>
+          <p class="hint">Cuando completes tareas, aparecerán aquí.</p>
+        } @else {
+          <p>No hay procesos que coincidan con los filtros.</p>
+        }
+      </div>
+    }
+
+  </div>
+</div>

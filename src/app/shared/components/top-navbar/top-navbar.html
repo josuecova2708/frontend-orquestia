@@ -21,10 +21,16 @@
           <span>Dashboard</span>
         </div>
       }
-      <div class="nav-tab" [class.active]="isActive('/mis-tareas')" (click)="router.navigate(['/mis-tareas'])">
-        <mat-icon>assignment</mat-icon>
-        <span>Mis Tareas</span>
-      </div>
+      @if (auth.user()?.rol !== 'ADMIN') {
+        <div class="nav-tab" [class.active]="isActive('/mis-tareas')" (click)="router.navigate(['/mis-tareas'])">
+          <mat-icon>assignment</mat-icon>
+          <span>Mis Tareas</span>
+        </div>
+        <div class="nav-tab" [class.active]="isActive('/mi-historial')" (click)="router.navigate(['/mi-historial'])">
+          <mat-icon>history</mat-icon>
+          <span>Mi Historial</span>
+        </div>
+      }
       @if (auth.user()?.rol === 'ADMIN') {
         <div class="nav-tab" [class.active]="isActive('/administradores')" (click)="router.navigate(['/administradores'])">
           <mat-icon>admin_panel_settings</mat-icon>
@@ -34,11 +40,68 @@
           <mat-icon>group</mat-icon>
           <span>Funcionarios</span>
         </div>
+        <div class="nav-tab" [class.active]="isActive('/departamentos')" (click)="router.navigate(['/departamentos'])">
+          <mat-icon>corporate_fare</mat-icon>
+          <span>Departamentos</span>
+        </div>
+        <div class="nav-tab" [class.active]="isActive('/ejecuciones')" (click)="router.navigate(['/ejecuciones'])">
+          <mat-icon>play_circle</mat-icon>
+          <span>Ejecuciones</span>
+        </div>
+        <div class="nav-tab" [class.active]="isActive('/reportes')" (click)="router.navigate(['/reportes'])">
+          <mat-icon>analytics</mat-icon>
+          <span>Reportes</span>
+        </div>
       }
     </div>
 
     <!-- USER ACTIONS -->
     <div class="user-actions">
+
+      <!-- CAMPANA DE NOTIFICACIONES -->
+      <div class="notif-wrapper">
+        <button class="notif-btn" (click)="togglePanel()" [class.has-unread]="noLeidas > 0" title="Notificaciones">
+          <mat-icon>notifications</mat-icon>
+          @if (noLeidas > 0) {
+            <span class="notif-badge">{{ noLeidas > 9 ? '9+' : noLeidas }}</span>
+          }
+        </button>
+
+        @if (panelAbierto()) {
+          <div class="notif-backdrop" (click)="cerrarPanel()"></div>
+          <div class="notif-panel">
+            <div class="notif-panel-header">
+              <span class="notif-panel-title">Notificaciones</span>
+              @if (noLeidas > 0) {
+                <button class="notif-leer-todas" (click)="leerTodas()">Marcar todas leídas</button>
+              }
+            </div>
+            <div class="notif-list">
+              @if (notificaciones().length === 0) {
+                <div class="notif-empty">
+                  <mat-icon>notifications_none</mat-icon>
+                  <span>Sin notificaciones</span>
+                </div>
+              }
+              @for (n of notificaciones(); track n.id) {
+                <div class="notif-item" [class.no-leida]="!n.leida" (click)="leerNotificacion(n)">
+                  <div class="notif-item-icon">
+                    <mat-icon>{{ iconoTipo(n.tipo) }}</mat-icon>
+                  </div>
+                  <div class="notif-item-body">
+                    <p class="notif-item-msg">{{ n.mensaje }}</p>
+                    <span class="notif-item-fecha">{{ n.fecha | date:'dd/MM HH:mm' }}</span>
+                  </div>
+                  @if (!n.leida) {
+                    <div class="notif-dot"></div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
       <div class="user-info">
         <div class="user-text">
           <span class="user-name">{{ auth.user()?.nombre }}</span>

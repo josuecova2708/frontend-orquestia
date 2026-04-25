@@ -99,6 +99,52 @@
   }
 }
 
+.paleta-divider {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 1.5rem 0 1rem;
+}
+
+.plantillas-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.plantilla-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 8px;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.2s ease;
+  min-height: 70px;
+
+  mat-icon {
+    color: #8b5cf6;
+    margin: 0;
+  }
+
+  span {
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  &:hover {
+    background: #f3e8ff;
+    border-color: #d8b4fe;
+    color: #6b21a8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+}
+
 /* CANVAS */
 .canvas-wrapper {
   flex: 1;
@@ -140,7 +186,16 @@
     font-weight: 600;
     color: #475569;
     text-align: center;
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    &:hover { background: #f1f5f9; color: #3b82f6; }
     letter-spacing: 0.5px;
     text-transform: uppercase;
   }
@@ -260,6 +315,26 @@
   color: #94a3b8;
   margin: -4px 0 8px;
   line-height: 1.3;
+}
+
+.default-toggle-row {
+  margin: 4px 0 2px;
+}
+
+.default-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: #334155;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    accent-color: #6366f1;
+  }
 }
 
 // ── FORM BUILDER ────────────────────────────────────────────────────────────
@@ -549,3 +624,206 @@
   mat-icon { font-size: 14px; width: 14px; height: 14px; flex-shrink: 0; }
 }
 // ────────────────────────────────────────────────────────────────────────────
+
+
+// ── Cursores colaboradores ──────────────────────────────────────────────────
+.remote-cursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transform: translate(-2px, -2px);
+
+  svg { display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
+
+  .cursor-name {
+    margin-top: 2px;
+    margin-left: 14px;
+    background: var(--cursor-color, #3b82f6);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    font-family: 'Geist', 'Segoe UI', sans-serif;
+  }
+}
+
+// ── Botón IA en toolbar ──────────────────────────────────────────────────────
+.btn-ia {
+  border: 1.5px solid #8b5cf6;
+  color: #8b5cf6;
+  font-weight: 600;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  padding: 0 14px;
+  height: 34px;
+  transition: background 0.15s;
+  &:hover { background: #f5f3ff; }
+}
+
+// ── Modal IA ─────────────────────────────────────────────────────────────────
+.ia-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.ia-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 560px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ia-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ia-modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ia-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 1rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  line-height: 1;
+  &:hover { background: #f1f5f9; color: #475569; }
+}
+
+.ia-modal-body {
+  padding: 20px 24px;
+  flex: 1;
+}
+
+.ia-hint {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+.ia-textarea {
+  width: 100%;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: #1e293b;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+  line-height: 1.5;
+  &:focus { border-color: #8b5cf6; }
+  &:disabled { background: #f8fafc; }
+}
+
+.ia-error {
+  margin: 10px 0 0;
+  font-size: 0.82rem;
+  color: #ef4444;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.ia-confirm-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 12px;
+}
+
+.ia-depts-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ia-dept-badge {
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1.5px solid #c4b5fd;
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.ia-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.ia-btn-secondary {
+  background: none;
+  border: 1.5px solid #e2e8f0;
+  color: #475569;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  &:hover:not(:disabled) { background: #f8fafc; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.ia-btn-primary {
+  background: #7c3aed;
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 22px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+  &:hover:not(:disabled) { background: #6d28d9; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+@keyframes ia-spin { to { transform: rotate(360deg); } }
+
+.ia-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ia-spin 0.7s linear infinite;
+}

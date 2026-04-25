@@ -16,6 +16,12 @@
 
     <div class="divider"></div>
 
+    @if (proceso()?.estado === 'BORRADOR') {
+      <button mat-stroked-button class="btn-ia" (click)="abrirModalIA()">
+        ✨ Generar con IA
+      </button>
+    }
+
     <button mat-button (click)="guardarBorrador()" [disabled]="proceso()?.estado !== 'BORRADOR'">
       <mat-icon>save</mat-icon> Guardar a Borrador
     </button>
@@ -44,6 +50,30 @@
             </div>
           </div>
         }
+
+        <hr class="paleta-divider">
+        
+        <h3>Plantillas Rápidas</h3>
+        <p class="paleta-hint">Borradores automáticos</p>
+        
+        <div class="plantillas-grid">
+          <button (click)="cargarPlantilla('SECUENCIAL')" class="plantilla-btn">
+            <mat-icon>trending_flat</mat-icon>
+            <span>Secuencial</span>
+          </button>
+          <button (click)="cargarPlantilla('CONDICIONAL')" class="plantilla-btn">
+            <mat-icon>call_split</mat-icon>
+            <span>Condicional</span>
+          </button>
+          <button (click)="cargarPlantilla('PARALELO')" class="plantilla-btn">
+            <mat-icon>linear_scale</mat-icon>
+            <span>Paralelo</span>
+          </button>
+          <button (click)="cargarPlantilla('BUCLE')" class="plantilla-btn">
+            <mat-icon>sync</mat-icon>
+            <span>Retorno</span>
+          </button>
+        </div>
       </div>
     }
 
@@ -58,7 +88,21 @@
         <div class="swimlanes-layer">
           @for (dept of departamentosCanvas(); track dept.id; let i = $index) {
             <div class="swimlane" [style.left.px]="i * 400" [style.width.px]="400">
-              <div class="swimlane-header">{{ dept.nombre }}</div>
+              <div class="swimlane-header" [matMenuTriggerFor]="proceso()?.estado === 'BORRADOR' ? editLaneMenu : null" [class.hover-active]="proceso()?.estado === 'BORRADOR'">
+                {{ dept.nombre }}
+                @if (proceso()?.estado === 'BORRADOR') {
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px; margin-top: 2px;">arrow_drop_down</mat-icon>
+                }
+              </div>
+              <mat-menu #editLaneMenu="matMenu">
+                @for (d of getDepartamentosNoUsados(); track d.id) {
+                  <button mat-menu-item (click)="cambiarLaneCanvas(i, d)">Reemplazar con {{ d.nombre }}</button>
+                }
+                <button mat-menu-item (click)="removerLaneCanvas(i)">
+                  <mat-icon color="warn">delete_outline</mat-icon> 
+                  <span style="color: #ef4444">Eliminar carril</span>
+                </button>
+              </mat-menu>
             </div>
           }
           
@@ -115,7 +159,7 @@
         <!-- LAYER 2: HTML NODES -->
         <div class="nodes-layer">
           @for (n of nodos(); track n.id) {
-            <orq-nodo 
+            <orq-nodo
                [nodo]="n"
                [isSelected]="selectedItem().id === n.id"
                [isDraft]="proceso()?.estado === 'BORRADOR'"
@@ -125,6 +169,16 @@
             </orq-nodo>
           }
         </div>
+
+        <!-- LAYER 3: CURSORES COLABORADORES -->
+        @for (cursor of remoteCursorsArray(); track cursor.userId) {
+          <div class="remote-cursor" [style.left.px]="cursor.x" [style.top.px]="cursor.y" [style.--cursor-color]="cursor.color">
+            <svg width="16" height="20" viewBox="0 0 16 20" fill="none">
+              <path d="M0 0L0 16L4.5 12L7 18L9 17L6.5 11L12 11Z" [attr.fill]="cursor.color"/>
+            </svg>
+            <span class="cursor-name">{{ cursor.name }}</span>
+          </div>
+        }
 
       </div>
     </div>
@@ -390,6 +444,19 @@
               <p class="prop-hint-small">Número de veces permitidas antes de cancelar el bucle cíclico.</p>
             }
 
+            @if (selectedConexion.tipo !== 'RETORNO') {
+              <div class="default-toggle-row">
+                <label class="default-toggle-label">
+                  <input type="checkbox"
+                    [checked]="selectedConexion.esDefault"
+                    (change)="updateSelectedConexion({esDefault: $any($event.target).checked})"
+                    [disabled]="proceso()?.estado !== 'BORRADOR'">
+                  Ruta por defecto al agotar reintentos
+                </label>
+              </div>
+              <p class="prop-hint-small">Si hay un bucle RETORNO en este XOR, esta flecha se usa cuando se agotan los intentos.</p>
+            }
+
             @if (proceso()?.estado === 'BORRADOR') {
               <button mat-stroked-button color="warn" class="w-100" (click)="eliminarConexion(selectedConexion.id)">Eliminar Conexión</button>
             }
@@ -399,3 +466,80 @@
     }
   </div>
 </div>
+
+<!-- MODAL IA -->
+@if (iaModalVisible()) {
+  <div class="ia-overlay" (click)="cerrarModalIA()">
+    <div class="ia-modal" (click)="$event.stopPropagation()">
+
+      <div class="ia-modal-header">
+        <span class="ia-modal-title">✨ Generar diagrama con IA</span>
+        <button class="ia-close-btn" (click)="cerrarModalIA()">✕</button>
+      </div>
+
+      @if (iaFase() === 'input') {
+        <div class="ia-modal-body">
+          <p class="ia-hint">
+            Describe el proceso en lenguaje natural. Menciona quién hace qué, qué decisiones se toman y si hay pasos que se repiten.
+          </p>
+          <textarea
+            class="ia-textarea"
+            [(ngModel)]="iaDescripcion"
+            placeholder="Ej: Proceso de aprobación de compras — el empleado envía la solicitud, el jefe de área la revisa y aprueba o rechaza. Si rechaza, el empleado puede corregirla y reenviarla hasta 3 veces. Si aprueba, contabilidad emite el pago y finaliza."
+            rows="7"
+            [disabled]="iaGenerando()">
+          </textarea>
+
+          @if (iaError()) {
+            <p class="ia-error">{{ iaError() }}</p>
+          }
+        </div>
+
+        <div class="ia-modal-footer">
+          <button class="ia-btn-secondary" (click)="cerrarModalIA()" [disabled]="iaGenerando()">
+            Cancelar
+          </button>
+          <button class="ia-btn-primary" (click)="generarConIA()"
+                  [disabled]="!iaDescripcion.trim() || iaGenerando()">
+            @if (iaGenerando()) {
+              <span class="ia-spinner"></span> Generando...
+            } @else {
+              ⚡ Generar
+            }
+          </button>
+        </div>
+      }
+
+      @if (iaFase() === 'confirmar') {
+        <div class="ia-modal-body">
+          <p class="ia-confirm-title">Gemini sugiere crear estos nuevos departamentos:</p>
+          <div class="ia-depts-list">
+            @for (d of iaDeptsNuevos; track d) {
+              <span class="ia-dept-badge">{{ d }}</span>
+            }
+          </div>
+          <p class="ia-hint">
+            Se crearán automáticamente en tu empresa. Podrás reasignar los nodos libremente en el diagramador.
+          </p>
+        </div>
+
+        <div class="ia-modal-footer">
+          <button class="ia-btn-secondary" (click)="iaFase.set('input')" [disabled]="iaGenerando()">
+            ← Volver
+          </button>
+          <button class="ia-btn-secondary" (click)="aplicarSinCrearDeptsIA()" [disabled]="iaGenerando()">
+            Continuar sin crear
+          </button>
+          <button class="ia-btn-primary" (click)="confirmarYAplicarIA()" [disabled]="iaGenerando()">
+            @if (iaGenerando()) {
+              <span class="ia-spinner"></span> Aplicando...
+            } @else {
+              ✓ Confirmar y aplicar
+            }
+          </button>
+        </div>
+      }
+
+    </div>
+  </div>
+}

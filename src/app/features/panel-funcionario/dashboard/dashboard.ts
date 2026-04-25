@@ -4,8 +4,6 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -14,8 +12,7 @@ import { AuthService } from '../../../shared/services/auth';
 import { ProcesoService } from '../../../shared/services/proceso';
 import { ApiService } from '../../../shared/services/api';
 import { MotorService } from '../../../shared/services/motor';
-import { Proceso, Empresa, Departamento, InstanciaProceso, UsuarioResponse } from '../../../shared/models/interfaces';
-import { DatePipe } from '@angular/common';
+import { Proceso, Empresa, Departamento, UsuarioResponse } from '../../../shared/models/interfaces';
 import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-navbar.component';
 
 @Component({
@@ -23,19 +20,19 @@ import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-na
   standalone: true,
   imports: [
     MatToolbarModule, MatButtonModule, MatIconModule, MatCardModule,
-    MatMenuModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, FormsModule, DatePipe,
+    MatFormFieldModule, MatInputModule, MatSelectModule, FormsModule,
     TopNavbarComponent
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
 export class Dashboard implements OnInit {
-  procesos = signal<Proceso[]>([]);
-  empresa = signal<Empresa | null>(null);
+  procesos      = signal<Proceso[]>([]);
+  empresa       = signal<Empresa | null>(null);
   departamentos = signal<Departamento[]>([]);
-  funcionarios = signal<UsuarioResponse[]>([]);
-  instanciasActivas = signal<InstanciaProceso[]>([]);
-  showInstancias = signal(false);
+  funcionarios  = signal<UsuarioResponse[]>([]);
+
+  creandoVersionId = signal<string | null>(null);
 
   // Asignaciones por proceso
   asignandoProcesoId = signal<string | null>(null);
@@ -44,15 +41,8 @@ export class Dashboard implements OnInit {
 
   // Formulario "Nuevo proceso"
   showCreateProceso = signal(false);
-  newNombre = '';
+  newNombre    = '';
   newDescripcion = '';
-
-  // Formulario "Nuevo departamento"
-  showCreateDepto = signal(false);
-  newDeptoNombre = '';
-  newDeptoDesc = '';
-  savingDepto = signal(false);
-
 
   constructor(
     public auth: AuthService,
@@ -64,35 +54,10 @@ export class Dashboard implements OnInit {
 
   ngOnInit() {
     const empresaId = this.auth.user()?.empresaId;
-    if (!empresaId) {
-      this.router.navigate(['/setup-empresa']);
-      return;
-    }
-    this.cargarEmpresa(empresaId);
-    this.cargarProcesos(empresaId);
-    this.cargarDepartamentos(empresaId);
-    this.cargarFuncionarios(empresaId);
-  }
-
-  cargarEmpresa(id: string) {
-    this.apiService.getEmpresa(id).subscribe({
-      next: (e) => this.empresa.set(e)
-    });
-  }
-
-  cargarProcesos(empresaId: string) {
-    this.procesoService.listar(empresaId).subscribe({
-      next: (p) => this.procesos.set(p)
-    });
-  }
-
-  cargarDepartamentos(empresaId: string) {
-    this.apiService.getDepartamentos(empresaId).subscribe({
-      next: (d) => this.departamentos.set(d)
-    });
-  }
-
-  cargarFuncionarios(empresaId: string) {
+    if (!empresaId) { this.router.navigate(['/setup-empresa']); return; }
+    this.apiService.getEmpresa(empresaId).subscribe({ next: (e) => this.empresa.set(e) });
+    this.procesoService.listar(empresaId).subscribe({ next: (p) => this.procesos.set(p) });
+    this.apiService.getDepartamentos(empresaId).subscribe({ next: (d) => this.departamentos.set(d) });
     this.apiService.getFuncionarios(empresaId).subscribe({
       next: (f) => this.funcionarios.set(f.filter(u => u.rol === 'FUNCIONARIO' && u.activo))
     });
@@ -135,6 +100,15 @@ export class Dashboard implements OnInit {
     });
   }
 
+  getAsignacionEntries(proceso: Proceso): { deptNombre: string; userName: string }[] {
+    return Object.entries(proceso.asignaciones ?? {})
+      .filter(([, userId]) => !!userId)
+      .map(([deptId, userId]) => ({
+        deptNombre: this.departamentos().find(d => d.id === deptId)?.nombre ?? deptId,
+        userName:   (() => { const f = this.funcionarios().find(f => f.id === userId); return f ? f.nombre : ''; })()
+      }));
+  }
+
   // === Procesos ===
 
   crearProceso() {
@@ -147,7 +121,7 @@ export class Dashboard implements OnInit {
     }).subscribe({
       next: (proceso) => {
         this.showCreateProceso.set(false);
-        this.newNombre = '';
+        this.newNombre     = '';
         this.newDescripcion = '';
         this.router.navigate(['/diagramador', proceso.id]);
       }
@@ -158,15 +132,22 @@ export class Dashboard implements OnInit {
     this.router.navigate(['/diagramador', proceso.id]);
   }
 
-  irMisTareas() {
-    this.router.navigate(['/mis-tareas']);
-  }
-
-  iniciarProceso(proceso: Proceso, event: Event) {
+  crearNuevaVersion(proceso: Proceso, event: Event) {
     event.stopPropagation();
-    this.motorService.iniciarProceso(proceso.id).subscribe({
-      next: () => {
-        this.router.navigate(['/mis-tareas']);
+    if (!confirm(
+      `¿Crear nueva versión de "${proceso.nombre}"?\n\n` +
+      `El proceso actual será archivado y no se podrán iniciar nuevas ejecuciones con él. ` +
+      `Las instancias activas continuarán normalmente.`
+    )) return;
+    this.creandoVersionId.set(proceso.id);
+    this.procesoService.crearNuevaVersion(proceso.id).subscribe({
+      next: (nuevo) => {
+        this.creandoVersionId.set(null);
+        this.router.navigate(['/diagramador', nuevo.id]);
+      },
+      error: () => {
+        this.creandoVersionId.set(null);
+        alert('Error al crear nueva versión.');
       }
     });
   }
@@ -175,64 +156,17 @@ export class Dashboard implements OnInit {
     event.stopPropagation();
     if (confirm('¿Seguro que deseas eliminar este proceso definitivamente?')) {
       this.procesoService.eliminar(proceso.id).subscribe({
-        next: () => {
-          this.procesos.update(list => list.filter(p => p.id !== proceso.id));
+        next: () => this.procesos.update(list => list.filter(p => p.id !== proceso.id)),
+        error: (err) => {
+          if (err.status === 409) {
+            alert('No se puede eliminar: el proceso tiene instancias activas en curso.');
+          } else {
+            alert('Error al eliminar el proceso.');
+          }
         }
       });
     }
   }
-
-  verInstancias() {
-    const empresaId = this.auth.user()?.empresaId;
-    if (!empresaId) return;
-    this.motorService.listarInstanciasActivas(empresaId).subscribe({
-      next: (instancias) => {
-        this.instanciasActivas.set(instancias);
-        this.showInstancias.set(true);
-      }
-    });
-  }
-
-  cancelarInstancia(instanciaId: string) {
-    this.motorService.cancelarInstancia(instanciaId).subscribe({
-      next: () => {
-        this.instanciasActivas.update(list => list.filter(i => i.id !== instanciaId));
-      }
-    });
-  }
-
-  getNombreProceso(procesoId: string): string {
-    return this.procesos().find(p => p.id === procesoId)?.nombre ?? procesoId.slice(-6);
-  }
-
-  // === Departamentos ===
-
-  crearDepartamento() {
-    const empresaId = this.auth.user()?.empresaId;
-    if (!empresaId || !this.newDeptoNombre.trim()) return;
-    this.savingDepto.set(true);
-    this.apiService.crearDepartamento(empresaId, {
-      nombre: this.newDeptoNombre.trim(),
-      descripcion: this.newDeptoDesc
-    }).subscribe({
-      next: (d) => {
-        this.departamentos.update(list => [...list, d]);
-        this.showCreateDepto.set(false);
-        this.newDeptoNombre = '';
-        this.newDeptoDesc = '';
-        this.savingDepto.set(false);
-      },
-      error: () => this.savingDepto.set(false)
-    });
-  }
-
-  eliminarDepartamento(id: string, event: Event) {
-    event.stopPropagation(); // No hacer bubbling al card
-    this.apiService.eliminarDepartamento(id).subscribe({
-      next: () => this.departamentos.update(list => list.filter(d => d.id !== id))
-    });
-  }
-
 
   logout() {
     this.auth.logout();

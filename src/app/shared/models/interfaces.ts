@@ -3,6 +3,16 @@
  * Estos son los "tipos" que TypeScript usa para evitar errores.
  */
 
+export interface Notificacion {
+  id: string;
+  userId: string;
+  tipo: 'TAREA_ASIGNADA' | 'DEPT_INVITACION' | 'PROCESO_ASIGNADO';
+  mensaje: string;
+  leida: boolean;
+  fecha: string;
+  metadata: Record<string, unknown>;
+}
+
 export interface EmpresaResumen {
   id: string;
   nombre: string;
@@ -126,5 +136,16 @@ export interface TareaInstancia {
   formularioCampos?: CampoFormulario[]; // Inyectado por el motor al crear la tarea
   fechaCreacion: string;
   fechaCompletado?: string;
+}
+
+// =========================================================================
+// Módulo BI / Reportes
+// =========================================================================
+
+export interface MetricasEmpresa {
+  instanciasPorEstado: Record<string, number>;
+  cuellosBottela: { nodoLabel: string; avgMinutos: number; total: number }[];
+  cargaFuncionarios: { userId: string; pendientes: number }[];
+  actividadReciente: { fecha: string; total: number }[];
 }
 

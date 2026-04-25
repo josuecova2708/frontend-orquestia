@@ -39,10 +39,11 @@ export class MotorService {
   // === Tareas (bandeja del funcionario) ===
 
   obtenerMisTareas() {
-    return this.http.get<TareaInstancia[]>(
-      `${this.baseUrl}/mis-tareas`,
-      { headers: this.headers() }
-    );
+    return this.http.get<TareaInstancia[]>(`${this.baseUrl}/mis-tareas`, { headers: this.headers() });
+  }
+
+  obtenerMisInstancias() {
+    return this.http.get<InstanciaProceso[]>(`${this.baseUrl}/mis-instancias`, { headers: this.headers() });
   }
 
   iniciarTarea(tareaId: string) {
@@ -60,11 +61,10 @@ export class MotorService {
     );
   }
 
-  listarInstanciasActivas(empresaId: string) {
-    return this.http.get<InstanciaProceso[]>(
-      `${this.baseUrl}/instancias?empresaId=${empresaId}`,
-      { headers: this.headers() }
-    );
+  listarInstancias(empresaId: string, estado?: string) {
+    let url = `${this.baseUrl}/instancias?empresaId=${empresaId}`;
+    if (estado) url += `&estado=${estado}`;
+    return this.http.get<InstanciaProceso[]>(url, { headers: this.headers() });
   }
 
   cancelarInstancia(instanciaId: string) {

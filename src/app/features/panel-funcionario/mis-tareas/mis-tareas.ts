@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,6 +12,7 @@ import { AuthService } from '../../../shared/services/auth';
 import { ApiService } from '../../../shared/services/api';
 import { MotorService } from '../../../shared/services/motor';
 import { ProcesoService } from '../../../shared/services/proceso';
+import { WebSocketService } from '../../../shared/services/websocket.service';
 import { TareaInstancia, Departamento, CampoFormulario, InstanciaProceso, Proceso } from '../../../shared/models/interfaces';
 import { ProcessContextComponent } from '../../../shared/components/process-context/process-context.component';
 import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-navbar.component';
@@ -27,7 +29,8 @@ import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-na
   templateUrl: './mis-tareas.html',
   styleUrl: './mis-tareas.scss'
 })
-export class MisTareas implements OnInit {
+export class MisTareas implements OnInit, OnDestroy {
+  private wsSub: Subscription | null = null;
 
   tareas = signal<TareaInstancia[]>([]);
   departamento = signal<Departamento | null>(null);
@@ -50,6 +53,7 @@ export class MisTareas implements OnInit {
     private api: ApiService,
     private motor: MotorService,
     private procesoService: ProcesoService,
+    private wsService: WebSocketService,
     private router: Router
   ) {}
 
@@ -76,6 +80,25 @@ export class MisTareas implements OnInit {
     this.procesoService.listarIniciables(user.empresaId).subscribe({
       next: (p) => this.procesosIniciables.set(p)
     });
+
+    // Suscribirse al canal personal para auto-actualizar cuando llegue una tarea nueva
+    const token = this.auth.token();
+    if (token) {
+      this.wsSub = this.wsService.conectarUsuario(user.userId, token).subscribe(event => {
+        if (event.tipo === 'TAREA_ASIGNADA') {
+          this.cargarTareas();
+        }
+        if ((event.tipo === 'PROCESO_ASIGNADO' || event.tipo === 'DEPT_INVITACION') && user.empresaId) {
+          this.procesoService.listarIniciables(user.empresaId).subscribe({
+            next: (p) => this.procesosIniciables.set(p)
+          });
+        }
+      });
+    }
+  }
+
+  ngOnDestroy() {
+    this.wsSub?.unsubscribe();
   }
 
   cargarTareas() {

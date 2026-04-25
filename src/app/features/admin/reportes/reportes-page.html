@@ -1,0 +1,128 @@
+<div class="reportes">
+
+  <app-top-navbar></app-top-navbar>
+
+  <div class="content">
+
+    <div class="page-header">
+      <div>
+        <h2>Reportes y Analítica</h2>
+        <p class="hint">Métricas en tiempo real de los procesos de tu organización</p>
+      </div>
+      <button mat-stroked-button (click)="recargar()" [disabled]="cargando()">
+        <mat-icon>refresh</mat-icon>
+        Actualizar
+      </button>
+    </div>
+
+    <!-- LOADING -->
+    @if (cargando()) {
+      <div class="loading-state">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Calculando métricas...</p>
+      </div>
+    }
+
+    <!-- ERROR -->
+    @if (error()) {
+      <div class="error-state">
+        <mat-icon>error_outline</mat-icon>
+        <p>No se pudieron cargar las métricas.</p>
+        <button mat-flat-button (click)="recargar()">Reintentar</button>
+      </div>
+    }
+
+    <!-- CONTENIDO -->
+    @if (!cargando() && !error() && metricas()) {
+
+      <!-- KPI CARDS -->
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <span class="kpi-label">Total ejecuciones</span>
+          <span class="kpi-value">{{ totalInstancias }}</span>
+        </div>
+        <div class="kpi-card accent-green">
+          <span class="kpi-label">Tasa de éxito</span>
+          <span class="kpi-value">{{ tasaExito }}</span>
+        </div>
+        <div class="kpi-card accent-blue">
+          <span class="kpi-label">En curso ahora</span>
+          <span class="kpi-value">{{ activas }}</span>
+        </div>
+        <div class="kpi-card accent-amber">
+          <span class="kpi-label">Nodo más lento (prom.)</span>
+          <span class="kpi-value">{{ avgCuello }}</span>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW 1 -->
+      <div class="charts-row">
+
+        <!-- Doughnut: tasa de éxito -->
+        <div class="chart-card chart-sm">
+          <div class="chart-title">
+            <mat-icon>donut_large</mat-icon>
+            Estado de ejecuciones
+          </div>
+          <div class="chart-body">
+            <canvas #chartEstado></canvas>
+          </div>
+        </div>
+
+        <!-- Line: actividad reciente -->
+        <div class="chart-card chart-lg">
+          <div class="chart-title">
+            <mat-icon>show_chart</mat-icon>
+            Actividad reciente (últimos 30 días)
+          </div>
+          <div class="chart-body">
+            <canvas #chartActividad></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CHARTS ROW 2 -->
+      <div class="charts-row">
+
+        <!-- Horizontal bar: cuello de botella -->
+        <div class="chart-card chart-md">
+          <div class="chart-title">
+            <mat-icon>hourglass_top</mat-icon>
+            Cuellos de botella (nodos más lentos)
+          </div>
+          @if (metricas()!.cuellosBottela.length === 0) {
+            <div class="chart-empty">
+              <mat-icon>bar_chart</mat-icon>
+              <p>Sin datos suficientes todavía</p>
+            </div>
+          } @else {
+            <div class="chart-body">
+              <canvas #chartCuello></canvas>
+            </div>
+          }
+        </div>
+
+        <!-- Bar: carga por funcionario -->
+        <div class="chart-card chart-md">
+          <div class="chart-title">
+            <mat-icon>people</mat-icon>
+            Carga actual por funcionario
+          </div>
+          @if (metricas()!.cargaFuncionarios.length === 0) {
+            <div class="chart-empty">
+              <mat-icon>person_off</mat-icon>
+              <p>No hay tareas activas asignadas</p>
+            </div>
+          } @else {
+            <div class="chart-body">
+              <canvas #chartCarga></canvas>
+            </div>
+          }
+        </div>
+
+      </div>
+
+    }
+  </div>
+</div>

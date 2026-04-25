@@ -13,67 +13,7 @@
     </div>
 
     <!-- ============================================= -->
-    <!-- SECCIÓN 1: DEPARTAMENTOS -->
-    <!-- ============================================= -->
-    <section class="section">
-      <div class="section-header">
-        <div>
-          <h3 class="section-title">
-            <mat-icon>corporate_fare</mat-icon>
-            Departamentos
-          </h3>
-          <p class="section-subtitle">Organiza quién se encarga de cada actividad en tus procesos</p>
-        </div>
-        <button mat-stroked-button (click)="showCreateDepto.set(!showCreateDepto())">
-          <mat-icon>{{ showCreateDepto() ? 'close' : 'add' }}</mat-icon>
-          {{ showCreateDepto() ? 'Cancelar' : 'Nuevo departamento' }}
-        </button>
-      </div>
-
-      <!-- Formulario crear departamento (inline) -->
-      @if (showCreateDepto()) {
-        <div class="inline-form">
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Nombre del departamento</mat-label>
-            <input matInput [(ngModel)]="newDeptoNombre" placeholder="Ej: Atención al Cliente" (keyup.enter)="crearDepartamento()">
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Descripción (opcional)</mat-label>
-            <input matInput [(ngModel)]="newDeptoDesc" placeholder="Función de este departamento">
-          </mat-form-field>
-          <button mat-flat-button [disabled]="!newDeptoNombre.trim() || savingDepto()" (click)="crearDepartamento()">
-            <mat-icon>check</mat-icon>
-            {{ savingDepto() ? 'Guardando...' : 'Crear departamento' }}
-          </button>
-        </div>
-      }
-
-      <!-- Lista de departamentos -->
-      <div class="deptos-list">
-        @for (d of departamentos(); track d.id) {
-          <div class="depto-chip">
-            <mat-icon class="depto-icon">group</mat-icon>
-            <div class="depto-info">
-              <span class="depto-nombre">{{ d.nombre }}</span>
-              @if (d.descripcion) {
-                <span class="depto-desc">{{ d.descripcion }}</span>
-              }
-            </div>
-            <button mat-icon-button class="depto-delete" (click)="eliminarDepartamento(d.id, $event)" title="Eliminar">
-              <mat-icon>delete_outline</mat-icon>
-            </button>
-          </div>
-        } @empty {
-          <div class="depto-empty">
-            <mat-icon>corporate_fare</mat-icon>
-            <span>Aún no hay departamentos. Crea uno para asignarlo a las actividades de tus procesos.</span>
-          </div>
-        }
-      </div>
-    </section>
-
-    <!-- ============================================= -->
-    <!-- SECCIÓN 2: PROCESOS / WORKFLOWS -->
+    <!-- SECCIÓN: PROCESOS / WORKFLOWS -->
     <!-- ============================================= -->
     <section class="section">
       <div class="section-header">
@@ -114,9 +54,17 @@
           <mat-card class="proceso-card" (click)="abrirDiagramador(proceso)">
             <div class="card-header">
               <mat-icon class="card-icon">account_tree</mat-icon>
-              <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <div style="display: flex; gap: 0.4rem; align-items: center;">
                 <span class="estado-badge" [attr.data-estado]="proceso.estado">{{ proceso.estado }}</span>
-                <button mat-icon-button (click)="eliminarProceso(proceso, $event)" title="Eliminar proceso y sus ejecuciones" class="btn-delete-proceso">
+                @if (proceso.estado === 'PUBLICADO') {
+                  <button mat-icon-button class="btn-nueva-version"
+                          [disabled]="creandoVersionId() === proceso.id"
+                          (click)="crearNuevaVersion(proceso, $event)"
+                          title="Crear nueva versión editable">
+                    <mat-icon>edit_note</mat-icon>
+                  </button>
+                }
+                <button mat-icon-button (click)="eliminarProceso(proceso, $event)" title="Eliminar proceso" class="btn-delete-proceso">
                   <mat-icon>delete</mat-icon>
                 </button>
               </div>
@@ -127,6 +75,19 @@
               <span>{{ proceso.nodos.length || 0 }} nodos</span>
               <span>v{{ proceso.version }}</span>
             </div>
+
+            <!-- Badges de dept → asignado -->
+            @if (getAsignacionEntries(proceso).length > 0) {
+              <div class="asign-badges">
+                @for (a of getAsignacionEntries(proceso); track a.deptNombre) {
+                  <span class="asign-badge" [title]="a.deptNombre + ' → ' + a.userName">
+                    <mat-icon>person</mat-icon>
+                    {{ a.userName || a.deptNombre }}
+                  </span>
+                }
+              </div>
+            }
+
             <button mat-stroked-button class="assign-btn"
                     (click)="abrirAsignacion(proceso, $event)"
                     title="Asignar funcionarios a este proceso">
@@ -166,41 +127,6 @@
           </div>
         }
       </div>
-    </section>
-
-
-    <!-- ============================================= -->
-    <!-- SECCIÓN 4: EJECUCIONES ACTIVAS -->
-    <!-- ============================================= -->
-    <section class="section">
-      <div class="section-header">
-        <h3><mat-icon>play_circle</mat-icon> Ejecuciones Activas</h3>
-        <button mat-stroked-button (click)="verInstancias()">
-          <mat-icon>refresh</mat-icon> Ver / Actualizar
-        </button>
-      </div>
-
-      @if (instanciasActivas().length > 0) {
-        <div class="instancias-lista">
-          @for (inst of instanciasActivas(); track inst.id) {
-            <div class="instancia-row">
-              <div class="inst-info">
-                <span class="inst-proceso">{{ getNombreProceso(inst.procesoId) }}</span>
-                <span class="inst-id">#{{ inst.id.slice(-8) }}</span>
-                <span class="inst-fecha">
-                  <mat-icon>schedule</mat-icon>
-                  {{ inst.fechaInicio | date:'dd/MM/yy HH:mm' }}
-                </span>
-              </div>
-              <button mat-stroked-button class="cancel-btn" (click)="cancelarInstancia(inst.id)">
-                <mat-icon>cancel</mat-icon> Cancelar
-              </button>
-            </div>
-          }
-        </div>
-      } @else {
-        <p class="no-instancias">Haz clic en "Ver / Actualizar" para cargar las ejecuciones activas.</p>
-      }
     </section>
 
   </div>

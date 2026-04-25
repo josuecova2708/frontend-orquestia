@@ -41,6 +41,10 @@ export class ProcesoService {
     return this.http.post<Proceso>(`${this.baseUrl}/${id}/archivar`, {}, { headers: this.headers() });
   }
 
+  crearNuevaVersion(id: string) {
+    return this.http.post<Proceso>(`${this.baseUrl}/${id}/nueva-version`, {}, { headers: this.headers() });
+  }
+
   eliminar(id: string) {
     return this.http.delete<void>(`${this.baseUrl}/${id}`, { headers: this.headers() });
   }

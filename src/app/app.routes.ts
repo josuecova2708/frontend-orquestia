@@ -93,6 +93,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/panel-funcionario/mis-tareas/mis-tareas').then(m => m.MisTareas)
   },
   {
+    path: 'mi-historial',
+    canActivate: [empresaSetupGuard],
+    loadComponent: () => import('./features/panel-funcionario/mi-historial/mi-historial-page').then(m => m.MiHistorialPage)
+  },
+  {
     path: 'diagramador/:id',
     canActivate: [adminGuard],
     loadComponent: () => import('./features/diagramador/diagramador').then(m => m.Diagramador)
@@ -106,6 +111,21 @@ export const routes: Routes = [
     path: 'administradores',
     canActivate: [adminGuard],
     loadComponent: () => import('./features/admin/administradores/administradores').then(m => m.AdministradoresAdmin)
+  },
+  {
+    path: 'departamentos',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/panel-funcionario/departamentos/departamentos-page').then(m => m.DepartamentosPage)
+  },
+  {
+    path: 'ejecuciones',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/panel-funcionario/ejecuciones/ejecuciones-page').then(m => m.EjecucionesPage)
+  },
+  {
+    path: 'reportes',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/admin/reportes/reportes-page').then(m => m.ReportesPage)
   },
 
   { path: '**', redirectTo: 'login' }

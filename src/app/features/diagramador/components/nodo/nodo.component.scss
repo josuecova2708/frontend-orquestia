@@ -20,6 +20,11 @@
   &:active:not(.readonly) {
     cursor: grabbing;
   }
+
+  mat-icon, .label-text {
+    -webkit-user-drag: none;
+    user-select: none;
+  }
 }
 
 /* Ports */
