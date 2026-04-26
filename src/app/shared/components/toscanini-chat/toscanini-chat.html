@@ -1,0 +1,114 @@
+@if (auth.isLoggedIn()) {
+<div class="toscanini-widget">
+
+  <!-- Burbuja de sugerencia -->
+  @if (mostrarBurbuja() && !abierto()) {
+    <div class="toscanini-burbuja" (click)="toggleChat()">
+      <span>¿Necesitas ayuda? 💬</span>
+      <div class="burbuja-cola"></div>
+    </div>
+  }
+
+  <!-- Botón flotante -->
+  <button
+    class="toscanini-fab"
+    [class.abierto]="abierto()"
+    (click)="toggleChat()"
+    title="Toscanini — Asistente de Orquestia"
+    id="toscanini-fab-btn"
+  >
+    <span class="fab-icon-open">
+      <!-- Ícono de batuta / orquesta -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="currentColor"/>
+      </svg>
+    </span>
+    <span class="fab-icon-close">
+      <mat-icon>close</mat-icon>
+    </span>
+  </button>
+
+  <!-- Panel del chat -->
+  @if (abierto()) {
+    <div class="toscanini-panel" id="toscanini-panel">
+
+      <!-- Header -->
+      <div class="chat-header">
+        <div class="header-brand">
+          <div class="header-avatar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div>
+            <span class="header-name">Toscanini</span>
+            <span class="header-sub">Asistente de Orquestia</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="header-btn" (click)="limpiarChat()" title="Nueva conversación" id="toscanini-limpiar-btn">
+            <mat-icon>refresh</mat-icon>
+          </button>
+          <button class="header-btn" (click)="cerrar()" title="Cerrar" id="toscanini-cerrar-btn">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mensajes -->
+      <div class="chat-mensajes" #mensajesContainer>
+        @for (msg of historial(); track $index) {
+          <div class="mensaje" [class.usuario]="msg.rol === 'usuario'" [class.toscanini]="msg.rol === 'toscanini'">
+            @if (msg.rol === 'toscanini') {
+              <div class="msg-avatar">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="currentColor"/>
+                </svg>
+              </div>
+            }
+            <div class="msg-burbuja" [innerHTML]="formatearMensaje(msg.mensaje)"></div>
+          </div>
+        }
+
+        <!-- Indicador de carga -->
+        @if (cargando()) {
+          <div class="mensaje toscanini">
+            <div class="msg-avatar">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="currentColor"/>
+              </svg>
+            </div>
+            <div class="msg-burbuja typing">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Input -->
+      <div class="chat-input-area">
+        <textarea
+          class="chat-input"
+          placeholder="Escribe tu pregunta..."
+          [(ngModel)]="inputTexto"
+          (keydown)="onKeydown($event)"
+          [disabled]="cargando()"
+          rows="1"
+          id="toscanini-input"
+        ></textarea>
+        <button
+          class="send-btn"
+          (click)="enviar()"
+          [disabled]="!inputTexto.trim() || cargando()"
+          id="toscanini-send-btn"
+          title="Enviar (Enter)"
+        >
+          <mat-icon>arrow_upward</mat-icon>
+        </button>
+      </div>
+
+    </div>
+  }
+
+</div>
+}
