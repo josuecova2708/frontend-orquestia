@@ -2,7 +2,8 @@
 <div class="node-wrapper"
      [ngClass]="[nodo.tipo, isSelected ? 'selected' : '', !isDraft ? 'readonly' : '']"
      [style.transform]="'translate(' + nodo.posX + 'px, ' + nodo.posY + 'px)'"
-     [attr.data-tooltip]="nodo.label"
+     (mouseenter)="onMouseEnter()"
+     (mouseleave)="onMouseLeave()"
      (mousedown)="onMouseDown($event)"
      (touchstart)="onMouseDown($event)"
      (mouseup)="onMouseUp()"
@@ -28,6 +29,11 @@
       }
     </div>
   </div>
+
+  <!-- Tooltip de nombre completo (aparece tras 2s de hover) -->
+  @if (showTooltip()) {
+    <div class="nodo-tooltip">{{ nodo.label }}</div>
+  }
 
   <!-- Puertos (Solo mostrados si es borrador) -->
   @if (isDraft) {
