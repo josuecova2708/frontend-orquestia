@@ -147,5 +147,6 @@ export interface MetricasEmpresa {
   cuellosBottela: { nodoLabel: string; avgMinutos: number; total: number }[];
   cargaFuncionarios: { userId: string; pendientes: number }[];
   actividadReciente: { fecha: string; total: number }[];
+  tiemposPorProceso: { procesoNombre: string; avgMinutos: number; total: number }[];
 }
 

@@ -15,7 +15,10 @@ export class MetricaService {
     return new HttpHeaders({ Authorization: `Bearer ${this.auth.token()}` });
   }
 
-  getMetricas(empresaId: string) {
-    return this.http.get<MetricasEmpresa>(`${this.baseUrl}?empresaId=${empresaId}`, { headers: this.headers() });
+  getMetricas(empresaId: string, desde?: string, hasta?: string) {
+    let url = `${this.baseUrl}?empresaId=${empresaId}`;
+    if (desde) url += `&desde=${desde}`;
+    if (hasta) url += `&hasta=${hasta}`;
+    return this.http.get<MetricasEmpresa>(url, { headers: this.headers() });
   }
 }

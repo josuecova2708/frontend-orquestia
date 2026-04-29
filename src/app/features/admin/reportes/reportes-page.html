@@ -15,6 +15,30 @@
       </button>
     </div>
 
+    <!-- FILTRO DE FECHAS -->
+    <div class="filtro-bar">
+      <div class="filtro-inputs">
+        <label class="filtro-label">Desde</label>
+        <input type="date" class="filtro-date" [value]="fechaDesde()" (input)="onFechaDesde($event)" />
+        <label class="filtro-label">Hasta</label>
+        <input type="date" class="filtro-date" [value]="fechaHasta()" (input)="onFechaHasta($event)" />
+        <button mat-flat-button color="primary" class="btn-aplicar" (click)="aplicarFiltro()">
+          <mat-icon>filter_alt</mat-icon>
+          Aplicar
+        </button>
+        @if (filtroActivo()) {
+          <button mat-stroked-button class="btn-limpiar" (click)="limpiarFiltro()">
+            <mat-icon>close</mat-icon>
+            Limpiar
+          </button>
+        }
+      </div>
+      <div class="filtro-rapidos">
+        <button mat-stroked-button (click)="filtrarHoy()">Hoy</button>
+        <button mat-stroked-button (click)="filtrarSemana()">Esta semana</button>
+      </div>
+    </div>
+
     <!-- LOADING -->
     @if (cargando()) {
       <div class="loading-state">
@@ -53,27 +77,34 @@
           <span class="kpi-label">Nodo más lento (prom.)</span>
           <span class="kpi-value">{{ avgCuello }}</span>
         </div>
+        <div class="kpi-card accent-pink">
+          <span class="kpi-label">Proceso más lento (prom.)</span>
+          <span class="kpi-value">{{ procesoPlusLento }}</span>
+        </div>
       </div>
 
-      <!-- CHARTS ROW 1 -->
-      <div class="charts-row">
+      <!-- CHARTS ROW 1: doughnut + line -->
+      <div class="charts-row row-top">
 
-        <!-- Doughnut: tasa de éxito -->
-        <div class="chart-card chart-sm">
+        <div class="chart-card">
           <div class="chart-title">
             <mat-icon>donut_large</mat-icon>
             Estado de ejecuciones
           </div>
-          <div class="chart-body">
+          <div class="chart-body chart-body-sm">
             <canvas #chartEstado></canvas>
           </div>
         </div>
 
-        <!-- Line: actividad reciente -->
-        <div class="chart-card chart-lg">
+        <div class="chart-card">
           <div class="chart-title">
             <mat-icon>show_chart</mat-icon>
-            Actividad reciente (últimos 30 días)
+            Actividad
+            @if (filtroActivo()) {
+              <span class="filtro-badge">Filtrado</span>
+            } @else {
+              <span class="filtro-hint">últimos 30 días</span>
+            }
           </div>
           <div class="chart-body">
             <canvas #chartActividad></canvas>
@@ -82,19 +113,19 @@
 
       </div>
 
-      <!-- CHARTS ROW 2 -->
-      <div class="charts-row">
+      <!-- CHARTS ROW 2: cuello + procesos + carga -->
+      <div class="charts-row row-mid">
 
-        <!-- Horizontal bar: cuello de botella -->
-        <div class="chart-card chart-md">
+        <!-- Cuello de botella -->
+        <div class="chart-card">
           <div class="chart-title">
             <mat-icon>hourglass_top</mat-icon>
-            Cuellos de botella (nodos más lentos)
+            Cuellos de botella (tareas)
           </div>
           @if (metricas()!.cuellosBottela.length === 0) {
             <div class="chart-empty">
               <mat-icon>bar_chart</mat-icon>
-              <p>Sin datos suficientes todavía</p>
+              <p>Sin datos suficientes</p>
             </div>
           } @else {
             <div class="chart-body">
@@ -103,8 +134,26 @@
           }
         </div>
 
-        <!-- Bar: carga por funcionario -->
-        <div class="chart-card chart-md">
+        <!-- Procesos más lentos -->
+        <div class="chart-card">
+          <div class="chart-title">
+            <mat-icon>timer</mat-icon>
+            Procesos más lentos
+          </div>
+          @if (!metricas()!.tiemposPorProceso.length) {
+            <div class="chart-empty">
+              <mat-icon>timelapse</mat-icon>
+              <p>Sin procesos completados</p>
+            </div>
+          } @else {
+            <div class="chart-body">
+              <canvas #chartProcesos></canvas>
+            </div>
+          }
+        </div>
+
+        <!-- Carga por funcionario -->
+        <div class="chart-card">
           <div class="chart-title">
             <mat-icon>people</mat-icon>
             Carga actual por funcionario
@@ -112,7 +161,7 @@
           @if (metricas()!.cargaFuncionarios.length === 0) {
             <div class="chart-empty">
               <mat-icon>person_off</mat-icon>
-              <p>No hay tareas activas asignadas</p>
+              <p>No hay tareas activas</p>
             </div>
           } @else {
             <div class="chart-body">
