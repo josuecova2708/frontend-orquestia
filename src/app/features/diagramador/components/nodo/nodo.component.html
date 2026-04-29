@@ -2,6 +2,7 @@
 <div class="node-wrapper"
      [ngClass]="[nodo.tipo, isSelected ? 'selected' : '', !isDraft ? 'readonly' : '']"
      [style.transform]="'translate(' + nodo.posX + 'px, ' + nodo.posY + 'px)'"
+     [attr.data-tooltip]="nodo.label"
      (mousedown)="onMouseDown($event)"
      (touchstart)="onMouseDown($event)"
      (mouseup)="onMouseUp()"
