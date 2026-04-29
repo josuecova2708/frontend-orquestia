@@ -16,7 +16,8 @@ import { ProcesoService } from '../../shared/services/proceso';
 import { ApiService } from '../../shared/services/api';
 import { AuthService } from '../../shared/services/auth';
 import { WebSocketService, DiagramaEvent } from '../../shared/services/websocket.service';
-import { IaService, DiagramaIaResponse } from '../../shared/services/ia.service';
+import { IaService, DiagramaIaResponse, OptimizarDiagramaResponse } from '../../shared/services/ia.service';
+import { ConfirmModalService } from '../../shared/services/confirm-modal.service';
 import { Proceso, Nodo, Conexion, Departamento, CampoFormulario } from '../../shared/models/interfaces';
 import { DecimalPipe } from '@angular/common';
 import { NodoComponent } from './components/nodo/nodo.component';
@@ -78,7 +79,7 @@ export class Diagramador implements OnInit, OnDestroy {
     { type: 'FIN',          label: 'Fin',       icon: 'stop_circle',  desc: 'Punto de cierre del proceso' },
   ];
 
-  // ── IA Modal ────────────────────────────────────────────────────────────────
+  // ── IA Modal (generar) ──────────────────────────────────────────────────────
   iaModalVisible  = signal(false);
   iaFase          = signal<'input' | 'confirmar'>('input');
   iaDescripcion   = '';
@@ -86,6 +87,11 @@ export class Diagramador implements OnInit, OnDestroy {
   iaError         = signal('');
   iaDeptsNuevos: string[] = [];
   private iaResultadoPendiente: DiagramaIaResponse | null = null;
+
+  // ── IA Optimización ─────────────────────────────────────────────────────────
+  optimizandoIA       = signal(false);
+  optimizacionCambios = signal<string[]>([]);
+  mostrarCambiosIA    = signal(false);
   // ───────────────────────────────────────────────────────────────────────────
 
   constructor(
@@ -96,7 +102,8 @@ export class Diagramador implements OnInit, OnDestroy {
     public auth: AuthService,
     private snackBar: MatSnackBar,
     private wsService: WebSocketService,
-    private iaService: IaService
+    private iaService: IaService,
+    private modal: ConfirmModalService
   ) {}
 
   ngOnInit() {
@@ -408,10 +415,14 @@ export class Diagramador implements OnInit, OnDestroy {
 
   // ── Plantillas ──────────────────────────────────────────────────────────────
 
-  cargarPlantilla(tipo: 'SECUENCIAL' | 'CONDICIONAL' | 'PARALELO' | 'BUCLE') {
+  async cargarPlantilla(tipo: 'SECUENCIAL' | 'CONDICIONAL' | 'PARALELO' | 'BUCLE') {
     if (this.proceso()?.estado !== 'BORRADOR') return;
     if (this.nodos().length > 0) {
-      if (!confirm('Cargar una plantilla borrará tu diseño actual. ¿Deseas continuar?')) return;
+      const ok = await this.modal.confirm(
+        'Cargar una plantilla borrará tu diseño actual.',
+        '¿Reemplazar diagrama?'
+      );
+      if (!ok) return;
     }
     this.selectedItem.set({ type: null, id: null });
     const genId = (p: string) => p + '_' + Math.random().toString(36).substring(2, 11);
@@ -805,6 +816,49 @@ export class Diagramador implements OnInit, OnDestroy {
   aplicarSinCrearDeptsIA() {
     if (!this.iaResultadoPendiente) return;
     this.aplicarResultadoIA(this.iaResultadoPendiente);
+  }
+
+  async optimizarConIA() {
+    if (this.optimizandoIA() || this.proceso()?.estado !== 'BORRADOR') return;
+    if (this.nodos().length === 0) {
+      this.snackBar.open('El diagrama está vacío. Primero diseña o genera un proceso.', 'OK', { duration: 4000 });
+      return;
+    }
+    const ok = await this.modal.confirm(
+      'La IA analizará tu diagrama y aplicará mejoras estructurales. Tu diseño actual se actualizará.',
+      '✨ Optimizar diagrama con IA'
+    );
+    if (!ok) return;
+
+    this.optimizandoIA.set(true);
+    this.mostrarCambiosIA.set(false);
+    const depts = this.departamentosEmpresa().map(d => ({ id: d.id, nombre: d.nombre }));
+
+    this.iaService.optimizarDiagrama({
+      nodos: this.nodos(),
+      conexiones: this.conexiones(),
+      departamentos: depts
+    }).subscribe({
+      next: (resultado) => {
+        this.optimizandoIA.set(false);
+        this.nodos.set(resultado.nodos as any);
+        this.conexiones.set(resultado.conexiones as any);
+        this.departamentosCanvas.set([]);
+        this.selectedItem.set({ type: null, id: null });
+        this.computarLanesVisibles();
+        this.wsService.publicar(this.procesoId, {
+          tipo: 'DIAGRAM_RESET',
+          data: { nodos: resultado.nodos, conexiones: resultado.conexiones }
+        });
+        this.autoGuardar();
+        this.optimizacionCambios.set(resultado.cambios_realizados ?? []);
+        this.mostrarCambiosIA.set(true);
+      },
+      error: () => {
+        this.optimizandoIA.set(false);
+        this.snackBar.open('No se pudo optimizar el diagrama. Intenta de nuevo.', 'Cerrar', { duration: 5000 });
+      }
+    });
   }
 
   private aplicarResultadoIA(resultado: DiagramaIaResponse) {

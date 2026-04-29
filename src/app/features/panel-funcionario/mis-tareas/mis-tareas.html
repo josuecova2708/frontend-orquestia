@@ -89,8 +89,18 @@
                 <mat-icon>schedule</mat-icon>
                 {{ tarea.fechaCreacion | date: 'dd/MM/yy HH:mm' }}
               </span>
-              <span class="instance-id" title="ID de ejecución: {{ tarea.instanciaId }}">
-                #{{ tarea.instanciaId.slice(-6) }}
+              <span class="instance-id-wrap">
+                <span class="instance-id" title="ID de ejecución: {{ tarea.instanciaId }}">
+                  #{{ tarea.instanciaId.slice(-6) }}
+                </span>
+                <button
+                  mat-icon-button
+                  class="copy-id-btn"
+                  [title]="'Copiar ID de ejecución: ' + tarea.instanciaId"
+                  (click)="copiarInstanciaId(tarea.instanciaId, $event)"
+                >
+                  <mat-icon>{{ copiado() === tarea.instanciaId ? 'check' : 'content_copy' }}</mat-icon>
+                </button>
               </span>
             </div>
 
@@ -220,14 +230,31 @@
                 }
 
                 @default {
-                  <input
-                    [id]="campo.nombre"
-                    [type]="getInputType(campo.tipo)"
-                    [value]="getRespuestaStr(campo.nombre)"
-                    (input)="setRespuesta(campo.nombre, $any($event.target).value)"
-                    class="campo-input"
-                    [placeholder]="campo.tipo === 'NUMERO' ? '0' : 'Escribe aquí...'"
-                  />
+                  <div class="campo-input-wrap">
+                    <input
+                      [id]="campo.nombre"
+                      [type]="getInputType(campo.tipo)"
+                      [value]="getRespuestaStr(campo.nombre)"
+                      (input)="setRespuesta(campo.nombre, $any($event.target).value)"
+                      class="campo-input"
+                      [placeholder]="campo.tipo === 'NUMERO' ? '0' : 'Escribe aquí...'"
+                    />
+                    @if (campo.tipo === 'TEXTO') {
+                      <button
+                        type="button"
+                        class="mic-btn"
+                        [class.grabando]="grabandoCampo() === campo.nombre"
+                        [class.transcribiendo]="transcribiendoCampo() === campo.nombre"
+                        [disabled]="transcribiendoCampo() === campo.nombre"
+                        (click)="toggleGrabacion(campo.nombre)"
+                        [title]="grabandoCampo() === campo.nombre ? 'Detener grabación' : 'Dictar con voz'"
+                      >
+                        <mat-icon>
+                          {{ transcribiendoCampo() === campo.nombre ? 'hourglass_top' : grabandoCampo() === campo.nombre ? 'stop_circle' : 'mic' }}
+                        </mat-icon>
+                      </button>
+                    }
+                  </div>
                 }
               }
             </div>
@@ -235,7 +262,22 @@
 
           <!-- Comentario opcional siempre disponible -->
           <div class="campo-grupo">
-            <label for="comentario">Comentarios u observaciones</label>
+            <label for="comentario">
+              Comentarios u observaciones
+              <button
+                type="button"
+                class="mic-btn mic-btn-inline"
+                [class.grabando]="grabandoCampo() === '__comentario__'"
+                [class.transcribiendo]="transcribiendoCampo() === '__comentario__'"
+                [disabled]="transcribiendoCampo() === '__comentario__'"
+                (click)="toggleGrabacionComentario()"
+                [title]="grabandoCampo() === '__comentario__' ? 'Detener grabación' : 'Dictar con voz'"
+              >
+                <mat-icon>
+                  {{ transcribiendoCampo() === '__comentario__' ? 'hourglass_top' : grabandoCampo() === '__comentario__' ? 'stop_circle' : 'mic' }}
+                </mat-icon>
+              </button>
+            </label>
             <textarea
               id="comentario"
               [(ngModel)]="comentario"

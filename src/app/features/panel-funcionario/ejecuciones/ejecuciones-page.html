@@ -82,7 +82,17 @@
               </div>
               <div class="inst-info">
                 <span class="inst-proceso">{{ getNombreProceso(inst.procesoId) }}</span>
-                <span class="inst-id">#{{ inst.id.slice(-8) }}</span>
+                <span class="inst-id-wrap">
+                  <span class="inst-id">#{{ inst.id.slice(-8) }}</span>
+                  <button
+                    mat-icon-button
+                    class="copy-id-btn"
+                    [title]="'Copiar ID: ' + inst.id"
+                    (click)="copiarInstanciaId(inst.id, $event)"
+                  >
+                    <mat-icon>{{ copiado() === inst.id ? 'check' : 'content_copy' }}</mat-icon>
+                  </button>
+                </span>
               </div>
               <div class="inst-fechas">
                 <span class="inst-fecha">

@@ -154,6 +154,11 @@ $radius: 8px;
       gap: 3px;
       mat-icon { font-size: 14px; width: 14px; height: 14px; }
     }
+    .instance-id-wrap {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
     .instance-id {
       font-family: monospace;
       font-size: 0.72rem;
@@ -161,6 +166,13 @@ $radius: 8px;
       padding: 2px 6px;
       border-radius: 4px;
       color: #64748b;
+    }
+    .copy-id-btn {
+      width: 22px !important;
+      height: 22px !important;
+      line-height: 22px !important;
+      mat-icon { font-size: 13px; width: 13px; height: 13px; color: #94a3b8; }
+      &:hover mat-icon { color: #0A0A0A; }
     }
   }
 
@@ -255,6 +267,64 @@ $radius: 8px;
     &:focus { outline: none; border-color: $blue; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
     &.textarea { resize: vertical; min-height: 80px; }
   }
+}
+
+/* CAMPO INPUT CON MICRÓFONO */
+.campo-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .campo-input { flex: 1; margin: 0; }
+}
+
+.mic-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 50%;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+  &:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+
+  &.grabando {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: #fef2f2;
+    animation: mic-pulse 1.2s ease-in-out infinite;
+  }
+
+  &.transcribiendo {
+    border-color: #f59e0b;
+    color: #f59e0b;
+    background: #fffbeb;
+    cursor: not-allowed;
+  }
+
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+// Variante inline para la etiqueta del comentario
+.mic-btn-inline {
+  width: 26px;
+  height: 26px;
+  margin-left: 6px;
+  vertical-align: middle;
+  mat-icon { font-size: 14px; width: 14px; height: 14px; }
+}
+
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
 }
 
 /* CAMPO BOOLEANO */

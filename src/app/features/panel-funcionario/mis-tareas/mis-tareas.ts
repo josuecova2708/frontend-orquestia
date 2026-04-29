@@ -11,7 +11,9 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { AuthService } from '../../../shared/services/auth';
 import { ApiService } from '../../../shared/services/api';
 import { MotorService } from '../../../shared/services/motor';
+import { ConfirmModalService } from '../../../shared/services/confirm-modal.service';
 import { ProcesoService } from '../../../shared/services/proceso';
+import { IaService } from '../../../shared/services/ia.service';
 import { WebSocketService } from '../../../shared/services/websocket.service';
 import { TareaInstancia, Departamento, CampoFormulario, InstanciaProceso, Proceso } from '../../../shared/models/interfaces';
 import { ProcessContextComponent } from '../../../shared/components/process-context/process-context.component';
@@ -48,13 +50,24 @@ export class MisTareas implements OnInit, OnDestroy {
   guardando = signal(false);
   uploadEstados = signal<Record<string, 'idle' | 'uploading' | 'done' | 'error'>>({});
 
+  copiado = signal<string | null>(null);
+
+  // ── Grabación de voz ────────────────────────────────────────────────────────
+  grabandoCampo      = signal<string | null>(null);
+  transcribiendoCampo = signal<string | null>(null);
+  private mediaRecorder?: MediaRecorder;
+  private audioChunks: BlobPart[] = [];
+  // ───────────────────────────────────────────────────────────────────────────
+
   constructor(
     public auth: AuthService,
     private api: ApiService,
     private motor: MotorService,
     private procesoService: ProcesoService,
     private wsService: WebSocketService,
-    private router: Router
+    private router: Router,
+    private modal: ConfirmModalService,
+    private iaService: IaService
   ) {}
 
   ngOnInit() {
@@ -180,6 +193,110 @@ export class MisTareas implements OnInit, OnDestroy {
     });
   }
 
+  copiarInstanciaId(instanciaId: string, event: Event) {
+    event.stopPropagation();
+    navigator.clipboard.writeText(instanciaId).then(() => {
+      this.copiado.set(instanciaId);
+      setTimeout(() => this.copiado.set(null), 2000);
+    });
+  }
+
+  // ── Voz ─────────────────────────────────────────────────────────────────────
+
+  async toggleGrabacion(campoNombre: string) {
+    if (this.grabandoCampo() === campoNombre) {
+      this.detenerGrabacion(campoNombre);
+      return;
+    }
+    if (this.grabandoCampo()) {
+      this.detenerGrabacion(this.grabandoCampo()!);
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.audioChunks = [];
+      this.mediaRecorder = new MediaRecorder(stream);
+      this.mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) this.audioChunks.push(e.data);
+      };
+      this.mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        this.enviarAudio(blob, campoNombre);
+      };
+      this.mediaRecorder.start();
+      this.grabandoCampo.set(campoNombre);
+    } catch {
+      this.modal.toast('No se pudo acceder al micrófono. Verifica los permisos del navegador.', 'error');
+    }
+  }
+
+  private detenerGrabacion(campoNombre: string) {
+    this.grabandoCampo.set(null);
+    this.transcribiendoCampo.set(campoNombre);
+    this.mediaRecorder?.stop();
+  }
+
+  private enviarAudio(blob: Blob, campoNombre: string) {
+    this.iaService.transcribirAudio(blob).subscribe({
+      next: ({ texto }) => {
+        this.transcribiendoCampo.set(null);
+        if (texto) {
+          const actual = this.getRespuestaStr(campoNombre);
+          this.setRespuesta(campoNombre, actual ? `${actual} ${texto}` : texto);
+        }
+      },
+      error: () => {
+        this.transcribiendoCampo.set(null);
+        this.modal.toast('No se pudo transcribir el audio. Intenta de nuevo.', 'error');
+      }
+    });
+  }
+
+  // Voz para el campo de comentario (usa clave especial)
+  async toggleGrabacionComentario() {
+    const CLAVE = '__comentario__';
+    if (this.grabandoCampo() === CLAVE) {
+      this.detenerGrabacionComentario(CLAVE);
+      return;
+    }
+    if (this.grabandoCampo()) this.detenerGrabacion(this.grabandoCampo()!);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.audioChunks = [];
+      this.mediaRecorder = new MediaRecorder(stream);
+      this.mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) this.audioChunks.push(e.data);
+      };
+      this.mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        this.transcribiendoCampo.set(CLAVE);
+        this.iaService.transcribirAudio(blob).subscribe({
+          next: ({ texto }) => {
+            this.transcribiendoCampo.set(null);
+            if (texto) this.comentario = this.comentario ? `${this.comentario} ${texto}` : texto;
+          },
+          error: () => {
+            this.transcribiendoCampo.set(null);
+            this.modal.toast('No se pudo transcribir el audio.', 'error');
+          }
+        });
+      };
+      this.mediaRecorder.start();
+      this.grabandoCampo.set(CLAVE);
+    } catch {
+      this.modal.toast('No se pudo acceder al micrófono. Verifica los permisos del navegador.', 'error');
+    }
+  }
+
+  private detenerGrabacionComentario(clave: string) {
+    this.grabandoCampo.set(null);
+    this.mediaRecorder?.stop();
+    // onstop se encarga de transcribir
+    void clave;
+  }
+  // ───────────────────────────────────────────────────────────────────────────
+
   getUploadEstado(nombre: string): 'idle' | 'uploading' | 'done' | 'error' {
     return this.uploadEstados()[nombre] ?? 'idle';
   }
@@ -191,7 +308,7 @@ export class MisTareas implements OnInit, OnDestroy {
     // Bloquear si hay archivos subiendo
     const haySubiendo = this.campos().some(c => c.tipo === 'ARCHIVO' && this.getUploadEstado(c.nombre) === 'uploading');
     if (haySubiendo) {
-      alert('Espera a que todos los archivos terminen de subirse.');
+      this.modal.toast('Espera a que todos los archivos terminen de subirse.', 'info');
       return;
     }
 
@@ -202,7 +319,7 @@ export class MisTareas implements OnInit, OnDestroy {
       return v === undefined || v === null || v === '';
     });
     if (incompleto) {
-      alert('Por favor completa todos los campos requeridos.');
+      this.modal.toast('Por favor completa todos los campos requeridos.', 'error');
       return;
     }
 

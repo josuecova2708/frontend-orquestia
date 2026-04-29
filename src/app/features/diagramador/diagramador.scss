@@ -653,7 +653,7 @@
   }
 }
 
-// ── Botón IA en toolbar ──────────────────────────────────────────────────────
+// ── Botones IA en toolbar ─────────────────────────────────────────────────────
 .btn-ia {
   border: 1.5px solid #8b5cf6;
   color: #8b5cf6;
@@ -664,6 +664,86 @@
   height: 34px;
   transition: background 0.15s;
   &:hover { background: #f5f3ff; }
+}
+
+.btn-optimizar {
+  border-color: #0ea5e9;
+  color: #0ea5e9;
+  margin-left: 6px;
+  &:hover { background: #f0f9ff; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.spin-ia {
+  animation: spin-ia 1s linear infinite;
+  font-size: 16px; width: 16px; height: 16px;
+}
+
+@keyframes spin-ia {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+// ── Botón "Cambios IA" en toolbar ────────────────────────────────────────────
+.btn-cambios-ia {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1.5px solid #0ea5e9;
+  color: #0284c7;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0 10px;
+  height: 34px;
+  margin-right: 8px;
+  transition: background 0.15s;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; margin-left: 2px; }
+  &:hover { background: #f0f9ff; }
+}
+
+.cambios-badge {
+  background: #0ea5e9;
+  color: #fff;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  min-width: 18px;
+  text-align: center;
+}
+
+// ── Panel desplegable de cambios IA ──────────────────────────────────────────
+.ia-cambios-panel {
+  background: #f0f9ff;
+  border-bottom: 1px solid #bae6fd;
+  padding: 10px 24px 12px;
+  font-size: 0.82rem;
+  color: #0c4a6e;
+  flex-shrink: 0;
+  animation: slideDownPanel 0.18s ease;
+}
+
+.ia-cambios-ok-panel {
+  font-weight: 500;
+  padding: 10px 24px;
+}
+
+@keyframes slideDownPanel {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ia-cambios-titulo {
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.ia-cambios-lista {
+  margin: 0;
+  padding-left: 20px;
+  line-height: 1.7;
 }
 
 // ── Modal IA ─────────────────────────────────────────────────────────────────

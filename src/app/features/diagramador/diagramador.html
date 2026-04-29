@@ -20,19 +20,56 @@
       <button mat-stroked-button class="btn-ia" (click)="abrirModalIA()">
         ✨ Generar con IA
       </button>
+      <button mat-stroked-button class="btn-ia btn-optimizar"
+              [disabled]="optimizandoIA()"
+              (click)="optimizarConIA()"
+              title="La IA analiza tu diagrama y sugiere mejoras estructurales">
+        @if (optimizandoIA()) {
+          <ng-container><mat-icon class="spin-ia">autorenew</mat-icon> Optimizando...</ng-container>
+        } @else {
+          🔧 Optimizar con IA
+        }
+      </button>
     }
 
     <button mat-button (click)="guardarBorrador()" [disabled]="proceso()?.estado !== 'BORRADOR'">
       <mat-icon>save</mat-icon> Guardar a Borrador
     </button>
     
+    @if (optimizacionCambios().length > 0) {
+      <button mat-stroked-button class="btn-cambios-ia"
+              (click)="mostrarCambiosIA.update(v => !v)"
+              [title]="mostrarCambiosIA() ? 'Ocultar cambios IA' : 'Ver cambios aplicados por IA'">
+        <span class="cambios-badge">{{ optimizacionCambios().length }}</span>
+        Cambios IA
+        <mat-icon>{{ mostrarCambiosIA() ? 'expand_less' : 'expand_more' }}</mat-icon>
+      </button>
+    }
+
     <button mat-flat-button color="accent" (click)="publicar()" [disabled]="proceso()?.estado !== 'BORRADOR'">
       <mat-icon>rocket_launch</mat-icon> Publicar Proceso
     </button>
   </mat-toolbar>
 
+  <!-- Panel desplegable de cambios IA (bajo el toolbar) -->
+  @if (mostrarCambiosIA() && optimizacionCambios().length > 0) {
+    <div class="ia-cambios-panel">
+      <p class="ia-cambios-titulo">✨ {{ optimizacionCambios().length }} mejora{{ optimizacionCambios().length !== 1 ? 's' : '' }} aplicada{{ optimizacionCambios().length !== 1 ? 's' : '' }} por la IA:</p>
+      <ul class="ia-cambios-lista">
+        @for (cambio of optimizacionCambios(); track $index) {
+          <li>{{ cambio }}</li>
+        }
+      </ul>
+    </div>
+  }
+  @if (mostrarCambiosIA() && optimizacionCambios().length === 0) {
+    <div class="ia-cambios-panel ia-cambios-ok-panel">
+      ✅ El diagrama ya estaba bien optimizado. No se realizaron cambios.
+    </div>
+  }
+
   <div class="workspace">
-    
+
     <!-- LEFT SIDEBAR: PALETA -->
     @if (proceso()?.estado === 'BORRADOR') {
       <div class="paleta-sidebar">

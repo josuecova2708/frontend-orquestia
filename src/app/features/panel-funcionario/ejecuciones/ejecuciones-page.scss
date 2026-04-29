@@ -95,7 +95,19 @@
   gap: 2px;
 
   .inst-proceso { font-weight: 600; font-size: 0.9rem; color: #0f172a; }
-  .inst-id      { font-size: 0.75rem; color: #94a3b8; font-family: monospace; }
+  .inst-id-wrap {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .inst-id { font-size: 0.75rem; color: #94a3b8; font-family: monospace; }
+  .copy-id-btn {
+    width: 22px !important;
+    height: 22px !important;
+    line-height: 22px !important;
+    mat-icon { font-size: 13px; width: 13px; height: 13px; color: #cbd5e1; }
+    &:hover mat-icon { color: #0f172a; }
+  }
 }
 
 .inst-fechas {

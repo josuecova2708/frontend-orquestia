@@ -5,6 +5,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { ToscaniniService, ToscaniniMensaje } from '../../services/toscanini.service';
 import { AuthService } from '../../services/auth';
 
@@ -29,7 +31,9 @@ export class ToscaniniChatComponent implements OnInit, AfterViewChecked {
 
   constructor(
     private toscanini: ToscaniniService,
-    public auth: AuthService
+    public auth: AuthService,
+    private sanitizer: DomSanitizer,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -110,11 +114,27 @@ export class ToscaniniChatComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  // Convierte markdown básico a HTML
-  formatearMensaje(texto: string): string {
-    return texto
+  // Convierte markdown a HTML seguro, incluyendo botones de acción navegables
+  formatearMensaje(texto: string): SafeHtml {
+    const html = texto
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // Links de acción [Texto](/ruta) → botón con data-route
+      .replace(
+        /\[([^\]]+)\]\((\/[^)]+)\)/g,
+        '<button class="tsc-action-btn" data-route="$2">$1 →</button>'
+      )
       .replace(/\n/g, '<br>');
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  // Intercepta clics en botones de acción y navega con el Router de Angular
+  onMensajeClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const btn = target.closest('[data-route]') as HTMLElement | null;
+    if (btn?.dataset['route']) {
+      this.router.navigate([btn.dataset['route']]);
+      this.cerrar();
+    }
   }
 }

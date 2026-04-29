@@ -18,6 +18,7 @@ import {
   Departamento, UsuarioResponse
 } from '../../../shared/models/interfaces';
 import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-navbar.component';
+import { ConfirmModalService } from '../../../shared/services/confirm-modal.service';
 
 @Component({
   selector: 'orq-ejecuciones-page',
@@ -61,6 +62,16 @@ export class EjecucionesPage implements OnInit, OnDestroy {
   historialTareas   = signal<TareaInstancia[]>([]);
   cargandoHistorial = signal(false);
 
+  copiado = signal<string | null>(null);
+
+  copiarInstanciaId(id: string, event: Event) {
+    event.stopPropagation();
+    navigator.clipboard.writeText(id).then(() => {
+      this.copiado.set(id);
+      setTimeout(() => this.copiado.set(null), 2000);
+    });
+  }
+
   private wsEmpresaSub: Subscription | null = null;
 
   constructor(
@@ -69,7 +80,8 @@ export class EjecucionesPage implements OnInit, OnDestroy {
     private procesoService: ProcesoService,
     private apiService: ApiService,
     private wsService: WebSocketService,
-    public router: Router
+    public router: Router,
+    private modal: ConfirmModalService
   ) {}
 
   ngOnInit() {
@@ -131,9 +143,13 @@ export class EjecucionesPage implements OnInit, OnDestroy {
 
   // === Acciones ===
 
-  cancelarInstancia(instanciaId: string, event: Event) {
+  async cancelarInstancia(instanciaId: string, event: Event) {
     event.stopPropagation();
-    if (!confirm('¿Cancelar esta ejecución?')) return;
+    const ok = await this.modal.confirm(
+      'La instancia pasará a estado CANCELADA y todas sus tareas abiertas serán rechazadas.',
+      '¿Cancelar esta ejecución?'
+    );
+    if (!ok) return;
     this.motorService.cancelarInstancia(instanciaId).subscribe({
       next: () => {
         this.todasInstancias.update(list =>

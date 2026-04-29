@@ -1,0 +1,25 @@
+@if (modal.confirmVisible()) {
+  <div class="cm-backdrop" (click)="modal.cancel()">
+    <div class="cm-card" (click)="$event.stopPropagation()">
+      <div class="cm-header">
+        <mat-icon class="cm-warn-icon">warning_amber</mat-icon>
+        <h3>{{ modal.confirmTitle() }}</h3>
+      </div>
+      <p class="cm-message">{{ modal.confirmMessage() }}</p>
+      <div class="cm-actions">
+        <button mat-stroked-button (click)="modal.cancel()">Cancelar</button>
+        <button mat-flat-button class="cm-btn-confirm" (click)="modal.accept()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (modal.toastVisible()) {
+  <div class="cm-toast" [class]="'cm-toast--' + modal.toastType()">
+    <mat-icon>{{ modal.toastType() === 'error' ? 'error_outline' : modal.toastType() === 'success' ? 'check_circle_outline' : 'info_outline' }}</mat-icon>
+    <span>{{ modal.toastMessage() }}</span>
+    <button mat-icon-button class="cm-toast-close" (click)="modal.toastVisible.set(false)">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+}

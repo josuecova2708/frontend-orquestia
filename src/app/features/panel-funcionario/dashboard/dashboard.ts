@@ -11,9 +11,9 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../shared/services/auth';
 import { ProcesoService } from '../../../shared/services/proceso';
 import { ApiService } from '../../../shared/services/api';
-import { MotorService } from '../../../shared/services/motor';
 import { Proceso, Empresa, Departamento, UsuarioResponse } from '../../../shared/models/interfaces';
 import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-navbar.component';
+import { ConfirmModalService } from '../../../shared/services/confirm-modal.service';
 
 @Component({
   selector: 'orq-dashboard',
@@ -48,8 +48,8 @@ export class Dashboard implements OnInit {
     public auth: AuthService,
     private procesoService: ProcesoService,
     private apiService: ApiService,
-    private motorService: MotorService,
-    public router: Router
+    public router: Router,
+    private modal: ConfirmModalService
   ) {}
 
   ngOnInit() {
@@ -132,13 +132,13 @@ export class Dashboard implements OnInit {
     this.router.navigate(['/diagramador', proceso.id]);
   }
 
-  crearNuevaVersion(proceso: Proceso, event: Event) {
+  async crearNuevaVersion(proceso: Proceso, event: Event) {
     event.stopPropagation();
-    if (!confirm(
-      `¿Crear nueva versión de "${proceso.nombre}"?\n\n` +
-      `El proceso actual será archivado y no se podrán iniciar nuevas ejecuciones con él. ` +
-      `Las instancias activas continuarán normalmente.`
-    )) return;
+    const ok = await this.modal.confirm(
+      `El proceso actual será archivado y no se podrán iniciar nuevas ejecuciones con él. Las instancias activas continuarán normalmente.`,
+      `¿Crear nueva versión de "${proceso.nombre}"?`
+    );
+    if (!ok) return;
     this.creandoVersionId.set(proceso.id);
     this.procesoService.crearNuevaVersion(proceso.id).subscribe({
       next: (nuevo) => {
@@ -147,25 +147,28 @@ export class Dashboard implements OnInit {
       },
       error: () => {
         this.creandoVersionId.set(null);
-        alert('Error al crear nueva versión.');
+        this.modal.toast('Error al crear nueva versión.', 'error');
       }
     });
   }
 
-  eliminarProceso(proceso: Proceso, event: Event) {
+  async eliminarProceso(proceso: Proceso, event: Event) {
     event.stopPropagation();
-    if (confirm('¿Seguro que deseas eliminar este proceso definitivamente?')) {
-      this.procesoService.eliminar(proceso.id).subscribe({
-        next: () => this.procesos.update(list => list.filter(p => p.id !== proceso.id)),
-        error: (err) => {
-          if (err.status === 409) {
-            alert('No se puede eliminar: el proceso tiene instancias activas en curso.');
-          } else {
-            alert('Error al eliminar el proceso.');
-          }
+    const ok = await this.modal.confirm(
+      '¿Seguro que deseas eliminar este proceso definitivamente? Esta acción no se puede deshacer.',
+      'Eliminar proceso'
+    );
+    if (!ok) return;
+    this.procesoService.eliminar(proceso.id).subscribe({
+      next: () => this.procesos.update(list => list.filter(p => p.id !== proceso.id)),
+      error: (err) => {
+        if (err.status === 409) {
+          this.modal.toast('No se puede eliminar: el proceso tiene instancias activas en curso.', 'error');
+        } else {
+          this.modal.toast('Error al eliminar el proceso.', 'error');
         }
-      });
-    }
+      }
+    });
   }
 
   logout() {

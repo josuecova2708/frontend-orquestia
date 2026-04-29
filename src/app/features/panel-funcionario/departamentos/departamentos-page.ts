@@ -9,6 +9,7 @@ import { AuthService } from '../../../shared/services/auth';
 import { ApiService } from '../../../shared/services/api';
 import { Departamento, UsuarioResponse } from '../../../shared/models/interfaces';
 import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-navbar.component';
+import { ConfirmModalService } from '../../../shared/services/confirm-modal.service';
 
 @Component({
   selector: 'orq-departamentos-page',
@@ -32,7 +33,8 @@ export class DepartamentosPage implements OnInit {
   constructor(
     public auth: AuthService,
     private apiService: ApiService,
-    public router: Router
+    public router: Router,
+    private modal: ConfirmModalService
   ) {}
 
   ngOnInit() {
@@ -63,8 +65,12 @@ export class DepartamentosPage implements OnInit {
     });
   }
 
-  eliminarDepartamento(id: string) {
-    if (!confirm('¿Eliminar este departamento?')) return;
+  async eliminarDepartamento(id: string) {
+    const ok = await this.modal.confirm(
+      'Los funcionarios asignados a este departamento no serán eliminados.',
+      '¿Eliminar este departamento?'
+    );
+    if (!ok) return;
     this.apiService.eliminarDepartamento(id).subscribe({
       next: () => this.departamentos.update(list => list.filter(d => d.id !== id))
     });
