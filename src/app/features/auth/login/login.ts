@@ -51,6 +51,8 @@ export class Login {
       this.router.navigate(['/seleccionar-empresa']);
     } else if (this.auth.needsSetup()) {
       this.router.navigate(['/setup-empresa']);
+    } else if (this.auth.user()?.rol === 'CLIENTE') {
+      this.router.navigate(['/panel-cliente']);
     } else if (this.auth.user()?.rol === 'FUNCIONARIO') {
       this.router.navigate(['/mis-tareas']);
     } else {

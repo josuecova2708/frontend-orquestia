@@ -13,6 +13,32 @@
     </div>
 
     <!-- ============================================= -->
+    <!-- SECCIÓN: PORTAL DE CLIENTES -->
+    <!-- ============================================= -->
+    <section class="section portal-cliente-section">
+      <div class="portal-cliente-card">
+        <div class="portal-cliente-left">
+          <div class="portal-cliente-icon">
+            <mat-icon>link</mat-icon>
+          </div>
+          <div>
+            <h4 class="portal-cliente-title">Portal de Clientes</h4>
+            <p class="portal-cliente-hint">
+              Comparte este enlace con tus clientes para que puedan registrarse e iniciar trámites habilitados.
+            </p>
+            <div class="portal-cliente-url">
+              <span class="portal-url-text">{{ portalClienteUrl }}</span>
+            </div>
+          </div>
+        </div>
+        <button mat-stroked-button class="btn-copiar" [class.btn-copiado]="linkCopiado()" (click)="copiarLinkPortal()">
+          <mat-icon>{{ linkCopiado() ? 'check' : 'content_copy' }}</mat-icon>
+          {{ linkCopiado() ? '¡Copiado!' : 'Copiar enlace' }}
+        </button>
+      </div>
+    </section>
+
+    <!-- ============================================= -->
     <!-- SECCIÓN: PROCESOS / WORKFLOWS -->
     <!-- ============================================= -->
     <section class="section">

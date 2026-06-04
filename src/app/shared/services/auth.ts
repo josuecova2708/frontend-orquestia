@@ -39,6 +39,11 @@ export class AuthService {
       .pipe(tap(res => this.saveUser(res)));
   }
 
+  registerCliente(data: { email: string; password: string; nombre: string; apellido: string; telefono?: string }, empresaId: string) {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/register-cliente?empresaId=${empresaId}`, data)
+      .pipe(tap(res => this.saveUser(res)));
+  }
+
   setupEmpresa(data: { nombre: string; descripcion?: string; rubro: string }) {
     const headers = new HttpHeaders({ Authorization: `Bearer ${this.token()}` });
     return this.http.post<AuthResponse>(`${this.apiUrl}/setup-empresa`, data, { headers })

@@ -46,6 +46,16 @@
       </button>
     }
 
+    <button mat-stroked-button (click)="abrirClienteConfig()"
+            [class.btn-cliente-activo]="proceso()?.habilitadoParaClientes"
+            title="Configurar visibilidad para clientes y documentos requeridos">
+      <mat-icon>people</mat-icon>
+      Portal Cliente
+      @if (proceso()?.habilitadoParaClientes) {
+        <span class="cliente-badge-on">ON</span>
+      }
+    </button>
+
     <button mat-flat-button color="accent" (click)="publicar()" [disabled]="proceso()?.estado !== 'BORRADOR'">
       <mat-icon>rocket_launch</mat-icon> Publicar Proceso
     </button>
@@ -576,6 +586,95 @@
           </button>
         </div>
       }
+
+    </div>
+  </div>
+}
+
+<!-- MODAL CONFIGURACIÓN CLIENTE -->
+@if (clienteConfigVisible()) {
+  <div class="ia-overlay" (click)="cerrarClienteConfig()">
+    <div class="ia-modal cliente-config-modal" (click)="$event.stopPropagation()">
+
+      <div class="ia-modal-header">
+        <span class="ia-modal-title">Portal de Clientes</span>
+        <button class="ia-close-btn" (click)="cerrarClienteConfig()">✕</button>
+      </div>
+
+      <div class="ia-modal-body">
+
+        <!-- Toggle principal -->
+        <div class="cliente-toggle-row">
+          <div class="cliente-toggle-info">
+            <span class="cliente-toggle-label">Habilitar para clientes</span>
+            <span class="cliente-toggle-hint">Los clientes podrán iniciar este trámite desde el chatbot de recepción</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" [(ngModel)]="clienteHabilitado">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        @if (clienteHabilitado) {
+          <div class="requisitos-section">
+            <p class="requisitos-titulo">Documentos requeridos al inicio</p>
+            <p class="ia-hint">El chatbot solicitará estos documentos al cliente antes de abrir el trámite.</p>
+
+            <!-- Lista existente -->
+            @if (clienteDocRequeridos.length > 0) {
+              <div class="requisitos-list">
+                @for (req of clienteDocRequeridos; track $index) {
+                  <div class="requisito-item">
+                    <div class="requisito-info">
+                      <span class="requisito-nombre">{{ req.nombre }}</span>
+                      @if (req.descripcion) {
+                        <span class="requisito-desc">{{ req.descripcion }}</span>
+                      }
+                      <span class="requisito-badge" [class.badge-obligatorio]="req.obligatorio" [class.badge-opcional]="!req.obligatorio">
+                        {{ req.obligatorio ? 'Obligatorio' : 'Opcional' }}
+                      </span>
+                    </div>
+                    <button class="requisito-delete" (click)="eliminarRequisito($index)" title="Eliminar">✕</button>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Formulario para agregar nuevo requisito -->
+            <div class="nuevo-requisito-form">
+              <p class="nuevo-req-titulo">Agregar documento</p>
+              <div class="nuevo-req-fields">
+                <input class="ia-input" type="text" placeholder="Nombre del documento (ej: DNI)"
+                       [(ngModel)]="nuevoRequisitoNombre" (keyup.enter)="agregarRequisito()">
+                <input class="ia-input" type="text" placeholder="Instrucción para el cliente (opcional)"
+                       [(ngModel)]="nuevoRequisitoDescripcion">
+                <label class="requisito-check-label">
+                  <input type="checkbox" [(ngModel)]="nuevoRequisitoObligatorio">
+                  Obligatorio
+                </label>
+              </div>
+              <button class="ia-btn-secondary req-add-btn" (click)="agregarRequisito()"
+                      [disabled]="!nuevoRequisitoNombre.trim()">
+                + Agregar
+              </button>
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <div class="ia-modal-footer">
+        <button class="ia-btn-secondary" (click)="cerrarClienteConfig()" [disabled]="clienteConfigGuardando()">
+          Cancelar
+        </button>
+        <button class="ia-btn-primary" (click)="guardarClienteConfig()" [disabled]="clienteConfigGuardando()">
+          @if (clienteConfigGuardando()) {
+            <span class="ia-spinner"></span> Guardando...
+          } @else {
+            Guardar configuración
+          }
+        </button>
+      </div>
 
     </div>
   </div>

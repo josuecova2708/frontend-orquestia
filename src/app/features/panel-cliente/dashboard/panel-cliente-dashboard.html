@@ -1,0 +1,65 @@
+<div class="cliente-layout">
+  <header class="cliente-header">
+    <div class="header-brand">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="8" height="8" x="3" y="3" rx="2" />
+        <path d="M7 11v4a2 2 0 0 0 2 2h4" />
+        <rect width="8" height="8" x="13" y="13" rx="2" />
+      </svg>
+      <span>Orquestia</span>
+    </div>
+    <div class="header-user">
+      <span class="user-name">{{ auth.user()?.nombre }} {{ auth.user()?.apellido }}</span>
+      <button class="btn-logout" (click)="logout()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline
+          points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        Salir
+      </button>
+    </div>
+  </header>
+
+  <main class="cliente-main">
+    <div class="page-title">
+      <h1>Mis trámites</h1>
+      <p>Aquí puedes ver el estado de todos tus trámites activos e históricos.</p>
+    </div>
+
+    @if (loading()) {
+      <div class="empty-state">
+        <div class="spinner-ring"></div>
+        <p>Cargando tus trámites...</p>
+      </div>
+    } @else if (instancias().length === 0) {
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.5" opacity="0.3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline
+          points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline
+          points="10 9 9 9 8 9"/></svg>
+        <p>No tienes trámites aún.</p>
+        <span>Usa el asistente para iniciar tu primer trámite.</span>
+      </div>
+    } @else {
+      <div class="instancias-grid">
+        @for (inst of instancias(); track inst.id) {
+          <div class="instancia-card">
+            <div class="card-header">
+              <span class="proceso-nombre">{{ inst.procesoNombre ?? inst.procesoId }}</span>
+              <span class="badge" [class]="estadoClass(inst.estado)">{{ inst.estado }}</span>
+            </div>
+            <div class="card-meta">
+              <span>Iniciado: {{ inst.fechaInicio | slice:0:10 }}</span>
+              @if (inst.fechaFin) {
+                <span>Finalizado: {{ inst.fechaFin | slice:0:10 }}</span>
+              }
+            </div>
+            <div class="card-id">
+              <span>ID: {{ inst.id }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>

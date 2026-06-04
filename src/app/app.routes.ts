@@ -59,6 +59,15 @@ const adminGuard = () => {
   return true;
 };
 
+// Guard: solo CLIENTE puede acceder
+const clienteGuard = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isLoggedIn()) { router.navigate(['/login']); return false; }
+  if (auth.user()?.rol !== 'CLIENTE') { router.navigate(['/mis-tareas']); return false; }
+  return true;
+};
+
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
@@ -69,6 +78,10 @@ export const routes: Routes = [
   {
     path: 'register',
     loadComponent: () => import('./features/auth/register/register').then(m => m.Register)
+  },
+  {
+    path: 'register-cliente',
+    loadComponent: () => import('./features/auth/register-cliente/register-cliente').then(m => m.RegisterCliente)
   },
 
   {
@@ -126,6 +139,12 @@ export const routes: Routes = [
     path: 'reportes',
     canActivate: [adminGuard],
     loadComponent: () => import('./features/admin/reportes/reportes-page').then(m => m.ReportesPage)
+  },
+
+  {
+    path: 'panel-cliente',
+    canActivate: [clienteGuard],
+    loadComponent: () => import('./features/panel-cliente/dashboard/panel-cliente-dashboard').then(m => m.PanelClienteDashboard)
   },
 
   { path: '**', redirectTo: 'login' }

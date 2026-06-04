@@ -18,7 +18,7 @@ import { AuthService } from '../../shared/services/auth';
 import { WebSocketService, DiagramaEvent } from '../../shared/services/websocket.service';
 import { IaService, DiagramaIaResponse, OptimizarDiagramaResponse } from '../../shared/services/ia.service';
 import { ConfirmModalService } from '../../shared/services/confirm-modal.service';
-import { Proceso, Nodo, Conexion, Departamento, CampoFormulario } from '../../shared/models/interfaces';
+import { Proceso, Nodo, Conexion, Departamento, CampoFormulario, RequisitoDocumento } from '../../shared/models/interfaces';
 import { DecimalPipe } from '@angular/common';
 import { NodoComponent } from './components/nodo/nodo.component';
 import { FlechaComponent } from './components/flecha/flecha.component';
@@ -92,6 +92,15 @@ export class Diagramador implements OnInit, OnDestroy {
   optimizandoIA       = signal(false);
   optimizacionCambios = signal<string[]>([]);
   mostrarCambiosIA    = signal(false);
+
+  // ── Configuración Cliente ────────────────────────────────────────────────────
+  clienteConfigVisible   = signal(false);
+  clienteConfigGuardando = signal(false);
+  clienteHabilitado      = false;
+  clienteDocRequeridos: RequisitoDocumento[] = [];
+  nuevoRequisitoNombre      = '';
+  nuevoRequisitoDescripcion = '';
+  nuevoRequisitoObligatorio = true;
   // ───────────────────────────────────────────────────────────────────────────
 
   constructor(
@@ -874,6 +883,58 @@ export class Diagramador implements OnInit, OnDestroy {
     this.autoGuardar();
     this.cerrarModalIA();
     this.snackBar.open('✨ Diagrama generado con IA', 'OK', { duration: 4000 });
+  }
+
+  // ── Configuración Cliente ────────────────────────────────────────────────────
+
+  abrirClienteConfig() {
+    const p = this.proceso();
+    if (!p) return;
+    this.clienteHabilitado = p.habilitadoParaClientes ?? false;
+    this.clienteDocRequeridos = [...(p.documentosRequeridos ?? [])];
+    this.clienteConfigVisible.set(true);
+  }
+
+  cerrarClienteConfig() {
+    this.clienteConfigVisible.set(false);
+  }
+
+  agregarRequisito() {
+    if (!this.nuevoRequisitoNombre.trim()) return;
+    this.clienteDocRequeridos = [...this.clienteDocRequeridos, {
+      nombre: this.nuevoRequisitoNombre.trim(),
+      descripcion: this.nuevoRequisitoDescripcion.trim(),
+      mimeTypesPermitidos: [],
+      obligatorio: this.nuevoRequisitoObligatorio
+    }];
+    this.nuevoRequisitoNombre = '';
+    this.nuevoRequisitoDescripcion = '';
+    this.nuevoRequisitoObligatorio = true;
+  }
+
+  eliminarRequisito(i: number) {
+    this.clienteDocRequeridos = this.clienteDocRequeridos.filter((_, idx) => idx !== i);
+  }
+
+  guardarClienteConfig() {
+    const p = this.proceso();
+    if (!p) return;
+    this.clienteConfigGuardando.set(true);
+    this.procesoService.configurarCliente(p.id, {
+      habilitadoParaClientes: this.clienteHabilitado,
+      documentosRequeridos: this.clienteDocRequeridos
+    }).subscribe({
+      next: (updated) => {
+        this.proceso.set(updated);
+        this.clienteConfigGuardando.set(false);
+        this.cerrarClienteConfig();
+        this.snackBar.open('Configuración de cliente guardada', 'OK', { duration: 3000 });
+      },
+      error: () => {
+        this.clienteConfigGuardando.set(false);
+        this.snackBar.open('Error al guardar la configuración', 'Cerrar', { duration: 4000 });
+      }
+    });
   }
 
   // ────────────────────────────────────────────────────────────────────────────

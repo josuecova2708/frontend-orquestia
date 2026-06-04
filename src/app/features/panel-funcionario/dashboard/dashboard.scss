@@ -436,3 +436,81 @@
   &[data-estado="CANCELADA"]  { background: #f1f5f9; color: #475569; }
   &[data-estado="ERROR"]      { background: #fee2e2; color: #dc2626; }
 }
+
+// ── Portal de Clientes ──────────────────────────────────────────────────────
+.portal-cliente-section {
+  padding-top: 0;
+  margin-bottom: -0.5rem;
+}
+
+.portal-cliente-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
+.portal-cliente-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  min-width: 0;
+}
+
+.portal-cliente-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(99, 102, 241, 0.12);
+  border-radius: 0.5rem;
+  flex-shrink: 0;
+
+  mat-icon { color: #818cf8; font-size: 18px; width: 18px; height: 18px; }
+}
+
+.portal-cliente-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.2rem;
+  color: inherit;
+}
+
+.portal-cliente-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted, #6b7280);
+  margin: 0 0 0.5rem;
+}
+
+.portal-cliente-url {
+  background: rgba(0,0,0,0.15);
+  border-radius: 0.375rem;
+  padding: 0.3rem 0.6rem;
+  max-width: 480px;
+  overflow: hidden;
+
+  .portal-url-text {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #a5b4fc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+}
+
+.btn-copiar {
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.btn-copiado {
+  color: #10b981 !important;
+  border-color: #10b981 !important;
+}

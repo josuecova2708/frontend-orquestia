@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth';
-import { Proceso } from '../models/interfaces';
+import { Proceso, RequisitoDocumento } from '../models/interfaces';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -58,6 +58,18 @@ export class ProcesoService {
     return this.http.put<Proceso>(
       `${this.baseUrl}/${id}/asignaciones`,
       asignaciones,
+      { headers: this.headers() }
+    );
+  }
+
+  listarPublicos(empresaId: string) {
+    return this.http.get<Proceso[]>(`${this.baseUrl}/publicos?empresaId=${empresaId}`);
+  }
+
+  configurarCliente(id: string, data: { habilitadoParaClientes: boolean; documentosRequeridos: RequisitoDocumento[] }) {
+    return this.http.put<Proceso>(
+      `${this.baseUrl}/${id}/configuracion-cliente`,
+      data,
       { headers: this.headers() }
     );
   }

@@ -33,6 +33,7 @@ export class Dashboard implements OnInit {
   funcionarios  = signal<UsuarioResponse[]>([]);
 
   creandoVersionId = signal<string | null>(null);
+  linkCopiado = signal(false);
 
   // Asignaciones por proceso
   asignandoProcesoId = signal<string | null>(null);
@@ -168,6 +169,18 @@ export class Dashboard implements OnInit {
           this.modal.toast('Error al eliminar el proceso.', 'error');
         }
       }
+    });
+  }
+
+  get portalClienteUrl(): string {
+    const empresaId = this.auth.user()?.empresaId ?? '';
+    return `${window.location.origin}/register-cliente?empresaId=${empresaId}`;
+  }
+
+  copiarLinkPortal() {
+    navigator.clipboard.writeText(this.portalClienteUrl).then(() => {
+      this.linkCopiado.set(true);
+      setTimeout(() => this.linkCopiado.set(false), 2500);
     });
   }
 

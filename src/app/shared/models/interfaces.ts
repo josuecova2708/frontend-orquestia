@@ -24,7 +24,7 @@ export interface AuthResponse {
   email: string;
   nombre: string;
   apellido: string;
-  rol: 'ADMIN' | 'DISEÑADOR' | 'FUNCIONARIO';
+  rol: 'ADMIN' | 'DISEÑADOR' | 'FUNCIONARIO' | 'CLIENTE';
   empresaId: string | null;
   departamentoId: string | null;
   empresasAdmin?: EmpresaResumen[];
@@ -35,11 +35,18 @@ export interface UsuarioResponse {
   email: string;
   nombre: string;
   apellido: string;
-  rol: 'ADMIN' | 'DISEÑADOR' | 'FUNCIONARIO';
+  rol: 'ADMIN' | 'DISEÑADOR' | 'FUNCIONARIO' | 'CLIENTE';
   empresaId: string;
   departamentoId: string | null;
   activo: boolean;
   fechaCreacion: string;
+}
+
+export interface RequisitoDocumento {
+  nombre: string;
+  descripcion: string;
+  mimeTypesPermitidos: string[];
+  obligatorio: boolean;
 }
 
 export interface Empresa {
@@ -102,6 +109,8 @@ export interface Proceso {
   conexiones: Conexion[];
   /** departamentoId → userId: quién ejecuta las tareas de ese depto en este proceso */
   asignaciones: Record<string, string>;
+  habilitadoParaClientes: boolean;
+  documentosRequeridos: RequisitoDocumento[];
   version: number;
   fechaCreacion: string;
   fechaModificacion: string;
@@ -114,8 +123,11 @@ export interface Proceso {
 export interface InstanciaProceso {
   id: string;
   procesoId: string;
+  procesoNombre?: string;
   empresaId: string;
   creadoPor: string;
+  creadoPorNombre?: string;
+  clienteId?: string;
   estado: 'ACTIVA' | 'COMPLETADA' | 'CANCELADA' | 'ERROR';
   variables: Record<string, unknown>;
   fechaInicio: string;
