@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:8080',
-  iaUrl: 'http://localhost:8001'
+  iaUrl: 'http://localhost:8001',
+  onlyOfficeUrl: 'https://office-orquestia.duckdns.org'
 };

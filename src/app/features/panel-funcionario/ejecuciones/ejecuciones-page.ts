@@ -19,6 +19,7 @@ import {
 } from '../../../shared/models/interfaces';
 import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-navbar.component';
 import { ConfirmModalService } from '../../../shared/services/confirm-modal.service';
+import { VisorDocumentos } from '../../documentos/visor-documentos/visor-documentos';
 
 @Component({
   selector: 'orq-ejecuciones-page',
@@ -26,7 +27,7 @@ import { ConfirmModalService } from '../../../shared/services/confirm-modal.serv
   imports: [
     MatIconModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule,
     FormsModule, DatePipe,
-    TopNavbarComponent
+    TopNavbarComponent, VisorDocumentos
   ],
   templateUrl: './ejecuciones-page.html',
   styleUrl: './ejecuciones-page.scss'

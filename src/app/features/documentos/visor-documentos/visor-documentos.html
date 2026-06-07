@@ -1,0 +1,70 @@
+<div class="visor-documentos">
+
+  <div class="visor-header">
+    <h4 class="visor-title">
+      <mat-icon>folder_open</mat-icon>
+      Documentos
+    </h4>
+    @if (!soloLectura) {
+      <button mat-flat-button class="btn-subir" (click)="seleccionarArchivo()" [disabled]="subiendo()">
+        <mat-icon>upload</mat-icon>
+        Subir documento
+      </button>
+    }
+  </div>
+
+  @if (subiendo()) {
+    <div class="upload-progress">
+      <span class="upload-label">Subiendo...</span>
+      <mat-progress-bar mode="determinate" [value]="progreso()"></mat-progress-bar>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="error-msg">{{ error() }}</div>
+  }
+
+  @if (cargando()) {
+    <div class="loading-state">
+      <mat-icon class="spin">refresh</mat-icon>
+      Cargando documentos...
+    </div>
+  } @else if (documentos().length === 0) {
+    <div class="empty-docs">
+      <mat-icon>insert_drive_file</mat-icon>
+      <p>No hay documentos adjuntos todavía.</p>
+    </div>
+  } @else {
+    <div class="docs-list">
+      @for (doc of documentos(); track doc.id) {
+        <div class="doc-item">
+          <mat-icon class="doc-icon">{{ iconoPorMime(doc) }}</mat-icon>
+          <div class="doc-info">
+            <span class="doc-nombre">{{ doc.nombre }}</span>
+            <span class="doc-meta">
+              {{ formatBytes(doc.size) }} · {{ doc.creadoPorNombre }} ·
+              {{ doc.fechaCreacion | date:'dd/MM/yy HH:mm' }}
+            </span>
+          </div>
+          <div class="doc-actions">
+            @if (esEditable(doc)) {
+              <button mat-icon-button (click)="abrirEditor(doc)"
+                      [matTooltip]="soloLectura ? 'Ver en editor' : 'Editar en OnlyOffice'">
+                <mat-icon>edit_document</mat-icon>
+              </button>
+            }
+            <button mat-icon-button (click)="descargar(doc)" matTooltip="Descargar">
+              <mat-icon>download</mat-icon>
+            </button>
+            @if (!soloLectura) {
+              <button mat-icon-button class="btn-delete" (click)="eliminar(doc)" matTooltip="Eliminar">
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+</div>

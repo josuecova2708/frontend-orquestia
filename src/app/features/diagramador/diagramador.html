@@ -249,20 +249,35 @@
             </mat-form-field>
 
             @if (selectedNode.tipo === 'ACTIVIDAD') {
-              <mat-form-field appearance="outline" class="w-100">
-                <mat-label>Departamento Responsable</mat-label>
-                <mat-select [ngModel]="selectedNode.departamentoId" (ngModelChange)="updateSelectedNode({departamentoId: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'">
-                  @for (d of departamentosEmpresa(); track d.id) {
-                    <mat-option [value]="d.id">{{ d.nombre }}</mat-option>
-                  }
-                  @if (departamentosEmpresa().length === 0) {
-                    <mat-option disabled>— Sin departamentos —</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <!-- Autoservicio: la actividad la realiza el cliente, no un funcionario -->
+              <label class="autoservicio-toggle">
+                <input type="checkbox" [checked]="selectedNode.responsableCliente"
+                       (change)="updateSelectedNode({responsableCliente: $any($event.target).checked})"
+                       [disabled]="proceso()?.estado !== 'BORRADOR'">
+                <span>La realiza el <strong>cliente</strong> (autoservicio)</span>
+              </label>
+
+              @if (!selectedNode.responsableCliente) {
+                <mat-form-field appearance="outline" class="w-100">
+                  <mat-label>Departamento Responsable</mat-label>
+                  <mat-select [ngModel]="selectedNode.departamentoId" (ngModelChange)="updateSelectedNode({departamentoId: $event})" [disabled]="proceso()?.estado !== 'BORRADOR'">
+                    @for (d of departamentosEmpresa(); track d.id) {
+                      <mat-option [value]="d.id">{{ d.nombre }}</mat-option>
+                    }
+                    @if (departamentosEmpresa().length === 0) {
+                      <mat-option disabled>— Sin departamentos —</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              } @else {
+                <div class="autoservicio-hint">
+                  <mat-icon>person</mat-icon>
+                  Esta tarea aparecerá en el portal del cliente como una acción pendiente.
+                </div>
+              }
 
               <!-- Mini-formulario para crear departamento inline -->
-              @if (proceso()?.estado === 'BORRADOR') {
+              @if (proceso()?.estado === 'BORRADOR' && !selectedNode.responsableCliente) {
                 @if (!showNewDepto()) {
                   <button mat-stroked-button class="w-100 depto-add-btn"
                           (click)="showNewDepto.set(true)">

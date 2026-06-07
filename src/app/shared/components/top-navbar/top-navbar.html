@@ -30,6 +30,12 @@
           <mat-icon>history</mat-icon>
           <span>Mi Historial</span>
         </div>
+        @if (auth.user()?.rol === 'FUNCIONARIO' || auth.user()?.rol === 'DISEÑADOR') {
+          <div class="nav-tab" [class.active]="isActive('/sgd')" (click)="router.navigate(['/sgd'])">
+            <mat-icon>folder_special</mat-icon>
+            <span>Documentos</span>
+          </div>
+        }
       }
       @if (auth.user()?.rol === 'ADMIN') {
         <div class="nav-tab" [class.active]="isActive('/administradores')" (click)="router.navigate(['/administradores'])">
@@ -47,6 +53,10 @@
         <div class="nav-tab" [class.active]="isActive('/ejecuciones')" (click)="router.navigate(['/ejecuciones'])">
           <mat-icon>play_circle</mat-icon>
           <span>Ejecuciones</span>
+        </div>
+        <div class="nav-tab" [class.active]="isActive('/sgd')" (click)="router.navigate(['/sgd'])">
+          <mat-icon>folder_special</mat-icon>
+          <span>Documentos</span>
         </div>
         <div class="nav-tab" [class.active]="isActive('/reportes')" (click)="router.navigate(['/reportes'])">
           <mat-icon>analytics</mat-icon>

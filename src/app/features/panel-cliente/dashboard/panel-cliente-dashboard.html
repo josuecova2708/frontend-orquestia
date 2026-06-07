@@ -21,9 +21,60 @@
   </header>
 
   <main class="cliente-main">
+    @if (tramiteIniciado()) {
+      <div class="banner-exito">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        ¡Tu trámite se inició correctamente! Ya puedes seguir su avance aquí abajo.
+      </div>
+    }
+
+    <!-- Acciones pendientes (autoservicio) -->
+    @if (acciones().length > 0) {
+      <section class="acciones-pendientes">
+        <div class="ap-titulo">
+          <mat-icon>notifications_active</mat-icon>
+          Tienes {{ acciones().length }} acción{{ acciones().length !== 1 ? 'es' : '' }} pendiente{{ acciones().length !== 1 ? 's' : '' }}
+        </div>
+        <div class="ap-lista">
+          @for (acc of acciones(); track acc.id) {
+            <div class="ap-item">
+              <div class="ap-info">
+                <mat-icon>assignment_ind</mat-icon>
+                <span>{{ acc.nodoLabel }}</span>
+              </div>
+              <button class="ap-btn" (click)="abrirAccion(acc)">
+                Completar <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Tabs: Mis trámites / Mis documentos -->
+    <div class="cliente-tabs">
+      <button class="cliente-tab" [class.activo]="vista() === 'tramites'" (click)="verTramites()">
+        <mat-icon>receipt_long</mat-icon> Mis trámites
+      </button>
+      <button class="cliente-tab" [class.activo]="vista() === 'documentos'" (click)="verDocumentos()">
+        <mat-icon>folder</mat-icon> Mis documentos
+      </button>
+    </div>
+
+    @if (vista() === 'tramites') {
     <div class="page-title">
-      <h1>Mis trámites</h1>
-      <p>Aquí puedes ver el estado de todos tus trámites activos e históricos.</p>
+      <div>
+        <h1>Mis trámites</h1>
+        <p>Aquí puedes ver el estado de todos tus trámites activos e históricos.</p>
+      </div>
+      <button class="btn-nuevo-tramite" (click)="iniciarTramite()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+        Iniciar nuevo trámite
+      </button>
     </div>
 
     @if (loading()) {
@@ -39,27 +90,215 @@
           points="10 9 9 9 8 9"/></svg>
         <p>No tienes trámites aún.</p>
         <span>Usa el asistente para iniciar tu primer trámite.</span>
+        <button class="btn-nuevo-tramite" (click)="iniciarTramite()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+          Iniciar mi primer trámite
+        </button>
       </div>
     } @else {
       <div class="instancias-grid">
         @for (inst of instancias(); track inst.id) {
-          <div class="instancia-card">
-            <div class="card-header">
-              <span class="proceso-nombre">{{ inst.procesoNombre ?? inst.procesoId }}</span>
-              <span class="badge" [class]="estadoClass(inst.estado)">{{ inst.estado }}</span>
+          <div class="instancia-card" [class.expandida]="expandido() === inst.id">
+            <div class="card-clickable" (click)="toggleSeguimiento(inst)">
+              <div class="card-header">
+                <span class="proceso-nombre">{{ inst.procesoNombre ?? inst.procesoId }}</span>
+                <span class="badge" [class]="estadoClass(inst.estado)">{{ inst.estado }}</span>
+              </div>
+              <div class="card-meta">
+                <span>Iniciado: {{ inst.fechaInicio | slice:0:10 }}</span>
+                @if (inst.fechaFin) {
+                  <span>Finalizado: {{ inst.fechaFin | slice:0:10 }}</span>
+                }
+              </div>
+              <button class="ver-seguimiento">
+                <mat-icon>{{ expandido() === inst.id ? 'expand_less' : 'timeline' }}</mat-icon>
+                {{ expandido() === inst.id ? 'Ocultar seguimiento' : 'Ver seguimiento' }}
+              </button>
             </div>
-            <div class="card-meta">
-              <span>Iniciado: {{ inst.fechaInicio | slice:0:10 }}</span>
-              @if (inst.fechaFin) {
-                <span>Finalizado: {{ inst.fechaFin | slice:0:10 }}</span>
-              }
-            </div>
-            <div class="card-id">
-              <span>ID: {{ inst.id }}</span>
-            </div>
+
+            <!-- Seguimiento (timeline) -->
+            @if (expandido() === inst.id) {
+              <div class="seguimiento">
+                @if (cargandoSeguimiento() === inst.id) {
+                  <div class="seg-cargando"><div class="spinner-ring small"></div> Cargando seguimiento...</div>
+                } @else if (seguimientos()[inst.id]; as seg) {
+                  @if (seg.timeline.length === 0) {
+                    <p class="seg-vacio">El trámite aún no tiene pasos registrados.</p>
+                  } @else {
+                    <ul class="timeline">
+                      @for (paso of seg.timeline; track $index) {
+                        <li class="timeline-item" [attr.data-estado]="paso.estado">
+                          <mat-icon class="ti-icono">{{ iconoPaso(paso.estado) }}</mat-icon>
+                          <div class="ti-cuerpo">
+                            <span class="ti-label">{{ paso.nodoLabel }}</span>
+                            <span class="ti-estado">
+                              {{ paso.estado }}
+                              @if (paso.fechaCompletado) {
+                                · {{ paso.fechaCompletado | date:'dd/MM/yy HH:mm' }}
+                              }
+                            </span>
+                          </div>
+                        </li>
+                      }
+                    </ul>
+                  }
+                }
+              </div>
+            }
           </div>
         }
       </div>
     }
+    }
+
+    <!-- ════════════════════════════ VISTA: MIS DOCUMENTOS ═══════════════════════ -->
+    @if (vista() === 'documentos') {
+      <div class="page-title">
+        <div>
+          <h1>Mis documentos</h1>
+          <p>Todos los documentos que subiste y los que la empresa generó en tus trámites.</p>
+        </div>
+      </div>
+
+      @if (cargandoDocs()) {
+        <div class="empty-state">
+          <div class="spinner-ring"></div>
+          <p>Cargando tus documentos...</p>
+        </div>
+      } @else if (documentos().length === 0) {
+        <div class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" opacity="0.3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline
+            points="14 2 14 8 20 8"/></svg>
+          <p>No tienes documentos aún.</p>
+          <span>Cuando subas documentos en un trámite aparecerán aquí.</span>
+        </div>
+      } @else {
+        <div class="docs-grid">
+          @for (doc of documentos(); track doc.id) {
+            <div class="doc-card">
+              <mat-icon class="doc-icono">{{ iconoDoc(doc.nombre) }}</mat-icon>
+              <div class="doc-info">
+                <span class="doc-nombre">{{ doc.nombre }}</span>
+                <span class="doc-tipo">{{ etiquetaTipoDoc(doc.tipo) }}</span>
+                <span class="doc-fecha">{{ doc.fechaCreacion | date:'dd/MM/yy HH:mm' }}</span>
+              </div>
+              <button class="doc-descargar" (click)="descargarDoc(doc)" title="Descargar">
+                <mat-icon>download</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    }
   </main>
+
+  <!-- ═══════════════════════════ MODAL: Completar acción ═══════════════════════ -->
+  @if (accionActiva(); as acc) {
+    <div class="modal-backdrop" (click)="cerrarAccion()"></div>
+    <div class="modal-accion">
+      <div class="ma-header">
+        <div>
+          <h3>{{ acc.nodoLabel }}</h3>
+          <span>Completa esta acción para continuar tu trámite</span>
+        </div>
+        <button class="ma-cerrar" (click)="cerrarAccion()"><mat-icon>close</mat-icon></button>
+      </div>
+
+      <div class="ma-cuerpo">
+        @for (campo of campos(); track campo.nombre) {
+          <div class="ma-campo">
+            <label>
+              {{ campo.label }}
+              @if (campo.requerido) { <span class="req-star">*</span> }
+            </label>
+
+            @switch (campo.tipo) {
+              @case ('BOOLEANO') {
+                <div class="ma-bool">
+                  <label class="ma-radio">
+                    <input type="radio" [name]="campo.nombre" [checked]="getRespuesta(campo.nombre) === 'true' || respuestas[campo.nombre] === true"
+                           (change)="setRespuesta(campo.nombre, true)"> Sí
+                  </label>
+                  <label class="ma-radio">
+                    <input type="radio" [name]="campo.nombre" [checked]="respuestas[campo.nombre] === false"
+                           (change)="setRespuesta(campo.nombre, false)"> No
+                  </label>
+                </div>
+              }
+              @case ('OPCIONES') {
+                <select [value]="getRespuesta(campo.nombre)" (change)="setRespuesta(campo.nombre, $any($event.target).value)">
+                  <option value="" disabled>Selecciona...</option>
+                  @for (op of campo.opciones ?? []; track op) {
+                    <option [value]="op">{{ op }}</option>
+                  }
+                </select>
+              }
+              @case ('NUMERO') {
+                <input type="number" [value]="getRespuesta(campo.nombre)"
+                       (input)="setRespuesta(campo.nombre, $any($event.target).value)">
+              }
+              @case ('FECHA') {
+                <input type="date" [value]="getRespuesta(campo.nombre)"
+                       (input)="setRespuesta(campo.nombre, $any($event.target).value)">
+              }
+              @case ('ARCHIVO') {
+                <div class="ma-archivo">
+                  @if (getUploadEstado(campo.nombre) === 'done') {
+                    <span class="ma-archivo-ok"><mat-icon>check_circle</mat-icon> Archivo subido</span>
+                  } @else if (getUploadEstado(campo.nombre) === 'uploading') {
+                    <span class="ma-archivo-sub"><div class="spinner-ring small"></div> Subiendo...</span>
+                  } @else {
+                    <label class="ma-archivo-btn">
+                      <mat-icon>attach_file</mat-icon> Adjuntar archivo
+                      <input type="file" hidden (change)="subirArchivo(campo.nombre, $event)">
+                    </label>
+                  }
+                  @if (getUploadEstado(campo.nombre) === 'error') {
+                    <span class="ma-archivo-err">Error al subir. Intenta de nuevo.</span>
+                  }
+                </div>
+              }
+              @default {
+                <!-- TEXTO con asistencia por voz -->
+                <div class="ma-texto">
+                  <textarea rows="2" [value]="getRespuesta(campo.nombre)"
+                            (input)="setRespuesta(campo.nombre, $any($event.target).value)"></textarea>
+                  <button class="ma-mic" [class.grabando]="grabandoCampo() === campo.nombre"
+                          (click)="toggleGrabacion(campo.nombre)" title="Dictar por voz">
+                    <mat-icon>{{ grabandoCampo() === campo.nombre ? 'stop' : 'mic' }}</mat-icon>
+                  </button>
+                </div>
+                @if (transcribiendoCampo() === campo.nombre) {
+                  <span class="ma-transcribiendo"><div class="spinner-ring small"></div> Transcribiendo...</span>
+                }
+              }
+            }
+          </div>
+        }
+
+        <div class="ma-campo">
+          <label>Comentario (opcional)</label>
+          <textarea rows="2" [(ngModel)]="comentario" placeholder="Algo que quieras agregar..."></textarea>
+        </div>
+
+        @if (errorAccion()) {
+          <div class="ma-error"><mat-icon>error_outline</mat-icon> {{ errorAccion() }}</div>
+        }
+      </div>
+
+      <div class="ma-footer">
+        <button class="ma-btn-cancelar" (click)="cerrarAccion()">Cancelar</button>
+        <button class="ma-btn-enviar" [disabled]="guardando()" (click)="enviarAccion()">
+          @if (guardando()) {
+            <div class="spinner-ring small blanco"></div> Enviando...
+          } @else {
+            <mat-icon>check</mat-icon> Enviar
+          }
+        </button>
+      </div>
+    </div>
+  }
 </div>

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth';
-import { InstanciaProceso, TareaInstancia } from '../models/interfaces';
+import { InstanciaProceso, TareaInstancia, SeguimientoTramite } from '../models/interfaces';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -21,6 +21,44 @@ export class MotorService {
     return this.http.post<InstanciaProceso>(
       `${this.baseUrl}/instancias`,
       { procesoId, variables },
+      { headers: this.headers() }
+    );
+  }
+
+  // Inicia un trámite como CLIENTE: valida documentos requeridos y los vincula a la instancia
+  iniciarTramite(procesoId: string, documentoIds: string[], variables: Record<string, unknown> = {}) {
+    return this.http.post<InstanciaProceso>(
+      `${this.baseUrl}/cliente/iniciar-tramite`,
+      { procesoId, documentoIds, variables },
+      { headers: this.headers() }
+    );
+  }
+
+  // Trámites iniciados por el cliente autenticado
+  misTramites() {
+    return this.http.get<InstanciaProceso[]>(
+      `${this.baseUrl}/cliente/mis-tramites`,
+      { headers: this.headers() }
+    );
+  }
+
+  // Seguimiento (timeline de pasos) de un trámite — endpoint público, sin datos sensibles
+  trackInstancia(instanciaId: string) {
+    return this.http.get<SeguimientoTramite>(`${this.baseUrl}/public/instancias/${instanciaId}`);
+  }
+
+  // Acciones de autoservicio pendientes del cliente (aceptar condiciones, firmar, etc.)
+  misAcciones() {
+    return this.http.get<TareaInstancia[]>(
+      `${this.baseUrl}/cliente/mis-acciones`,
+      { headers: this.headers() }
+    );
+  }
+
+  completarAccion(tareaId: string, datos: Record<string, unknown>, comentario?: string) {
+    return this.http.post<TareaInstancia>(
+      `${this.baseUrl}/cliente/acciones/${tareaId}/completar`,
+      { datos, comentario },
       { headers: this.headers() }
     );
   }

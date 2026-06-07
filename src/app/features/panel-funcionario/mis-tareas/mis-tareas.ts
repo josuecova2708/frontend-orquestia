@@ -11,6 +11,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { AuthService } from '../../../shared/services/auth';
 import { ApiService } from '../../../shared/services/api';
 import { MotorService } from '../../../shared/services/motor';
+import { DocumentoService } from '../../../shared/services/documento';
 import { ConfirmModalService } from '../../../shared/services/confirm-modal.service';
 import { ProcesoService } from '../../../shared/services/proceso';
 import { IaService } from '../../../shared/services/ia.service';
@@ -63,6 +64,7 @@ export class MisTareas implements OnInit, OnDestroy {
     public auth: AuthService,
     private api: ApiService,
     private motor: MotorService,
+    private docService: DocumentoService,
     private procesoService: ProcesoService,
     private wsService: WebSocketService,
     private router: Router,
@@ -170,23 +172,27 @@ export class MisTareas implements OnInit, OnDestroy {
     const file = input.files?.[0];
     if (!file) return;
 
+    const tarea = this.tareaActiva();
+    const empresaId = this.auth.user()?.empresaId ?? '';
     this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'uploading' }));
 
-    this.api.getPresignUrl(file.name, file.type).subscribe({
-      next: ({ uploadUrl, publicUrl }) => {
-        fetch(uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': file.type },
-          body: file
-        }).then(res => {
-          if (res.ok) {
-            this.setRespuesta(campoNombre, publicUrl);
+    // Se registra como Documento (tipo TAREA) vinculado a la instancia/tarea → aparece en el SGD
+    this.docService.iniciarUpload({
+      nombre: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      size: file.size,
+      empresaId,
+      instanciaId: tarea?.instanciaId,
+      tareaId: tarea?.id,
+      tipo: 'TAREA'
+    }).subscribe({
+      next: (res) => {
+        this.docService.subirAMinio(res.uploadUrl, file).subscribe({
+          next: () => {
+            this.setRespuesta(campoNombre, res.publicUrl);
             this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'done' }));
-          } else {
-            this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'error' }));
-          }
-        }).catch(() => {
-          this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'error' }));
+          },
+          error: () => this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'error' }))
         });
       },
       error: () => this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'error' }))

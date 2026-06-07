@@ -82,6 +82,7 @@ export interface Nodo {
   label: string;
   descripcion?: string;
   departamentoId?: string;
+  responsableCliente?: boolean;    // true = la actividad la realiza el cliente (autoservicio)
   formulario?: CampoFormulario[];  // Formulario embebido en la actividad
   posX: number;
   posY: number;
@@ -134,6 +135,21 @@ export interface InstanciaProceso {
   fechaFin?: string;
 }
 
+export interface TimelineItem {
+  nodoLabel: string;
+  estado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'RECHAZADA';
+  fechaCompletado?: string;
+}
+
+export interface SeguimientoTramite {
+  id: string;
+  nombreProceso: string;
+  estado: 'ACTIVA' | 'COMPLETADA' | 'CANCELADA' | 'ERROR';
+  fechaInicio: string;
+  fechaFin?: string;
+  timeline: TimelineItem[];
+}
+
 export interface TareaInstancia {
   id: string;
   instanciaId: string;
@@ -148,6 +164,60 @@ export interface TareaInstancia {
   formularioCampos?: CampoFormulario[]; // Inyectado por el motor al crear la tarea
   fechaCreacion: string;
   fechaCompletado?: string;
+}
+
+// =========================================================================
+// SGD — Sistema de Gestión Documental
+// =========================================================================
+
+export interface Documento {
+  id: string;
+  nombre: string;
+  mimeType: string;
+  size: number;
+  key: string;
+  url: string;
+  empresaId: string;
+  instanciaId?: string;
+  tareaId?: string;
+  procesoId?: string;
+  clienteId?: string;
+  tipo: 'ENTRADA' | 'TAREA' | 'GENERADO' | 'CORPORATIVO';
+  creadoPor: string;
+  creadoPorNombre: string;
+  fechaCreacion: string;
+  ultimaEdicion?: string;
+  ultimoEditorNombre?: string;
+  permisos: PermisoDocumento[];
+  auditLog: AuditEntry[];
+}
+
+export interface PermisoDocumento {
+  usuarioId: string;
+  usuarioNombre: string;
+  tipo: 'LECTURA' | 'ESCRITURA' | 'ADMIN';
+}
+
+export interface AuditEntry {
+  usuarioId: string;
+  usuarioNombre: string;
+  accion: string;
+  fecha: string;
+  detalle: string;
+}
+
+export interface IniciarUploadResponse {
+  documentoId: string;
+  uploadUrl: string;
+  key: string;
+  publicUrl: string;
+}
+
+export interface OnlyOfficeConfig {
+  documentType: string;
+  document: Record<string, unknown>;
+  editorConfig: Record<string, unknown>;
+  token: string;
 }
 
 // =========================================================================

@@ -59,6 +59,17 @@ const adminGuard = () => {
   return true;
 };
 
+// Guard: ADMIN, DISEÑADOR y FUNCIONARIO — no CLIENTE
+const staffGuard = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (!auth.isLoggedIn()) { router.navigate(['/login']); return false; }
+  if (auth.needsSelection()) { router.navigate(['/seleccionar-empresa']); return false; }
+  if (auth.needsSetup()) { router.navigate(['/setup-empresa']); return false; }
+  if (auth.user()?.rol === 'CLIENTE') { router.navigate(['/panel-cliente']); return false; }
+  return true;
+};
+
 // Guard: solo CLIENTE puede acceder
 const clienteGuard = () => {
   const auth = inject(AuthService);
@@ -145,6 +156,22 @@ export const routes: Routes = [
     path: 'panel-cliente',
     canActivate: [clienteGuard],
     loadComponent: () => import('./features/panel-cliente/dashboard/panel-cliente-dashboard').then(m => m.PanelClienteDashboard)
+  },
+  {
+    path: 'recepcion',
+    canActivate: [clienteGuard],
+    loadComponent: () => import('./features/panel-cliente/recepcion-chat/recepcion-chat').then(m => m.RecepcionChat)
+  },
+
+  {
+    path: 'sgd',
+    canActivate: [staffGuard],
+    loadComponent: () => import('./features/sgd/sgd-page/sgd-page').then(m => m.SgdPage)
+  },
+  {
+    path: 'editor-documento/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/documentos/editor-onlyoffice/editor-onlyoffice').then(m => m.EditorOnlyoffice)
   },
 
   { path: '**', redirectTo: 'login' }

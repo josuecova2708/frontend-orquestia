@@ -27,6 +27,34 @@ export interface OptimizarDiagramaResponse {
   cambios_realizados: string[];
 }
 
+export interface ChatMensaje {
+  rol: 'usuario' | 'agente';
+  mensaje: string;
+}
+
+export interface ProcesoDisponible {
+  id: string;
+  nombre: string;
+  descripcion: string;
+}
+
+export interface ClasificarTramiteRequest {
+  historial: ChatMensaje[];
+  procesos: ProcesoDisponible[];
+}
+
+export interface OpcionProceso {
+  id: string;
+  nombre: string;
+}
+
+export interface ClasificarTramiteResponse {
+  respuesta: string;
+  proceso_recomendado_id: string | null;
+  requiere_aclaracion: boolean;
+  opciones: OpcionProceso[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class IaService {
   private http = inject(HttpClient);
@@ -44,5 +72,9 @@ export class IaService {
     const form = new FormData();
     form.append('audio', blob, 'grabacion.webm');
     return this.http.post<{ texto: string }>(`${this.baseUrl}/ia/transcribir-audio`, form);
+  }
+
+  clasificarTramite(request: ClasificarTramiteRequest): Observable<ClasificarTramiteResponse> {
+    return this.http.post<ClasificarTramiteResponse>(`${this.baseUrl}/ia/clasificar-tramite`, request);
   }
 }

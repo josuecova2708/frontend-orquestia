@@ -250,6 +250,38 @@
 .w-100 { width: 100%; margin-bottom: 8px; }
 .mb-0 { margin-bottom: 0px !important; }
 
+/* Toggle autoservicio (responsable cliente) */
+.autoservicio-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #334155;
+  cursor: pointer;
+
+  input { width: 16px; height: 16px; cursor: pointer; accent-color: #2563eb; }
+  strong { color: #2563eb; }
+}
+.autoservicio-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 8px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: #1d4ed8;
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
+
 /* Botón crear departamento en panel de propiedades */
 .depto-add-btn {
   width: 100%;

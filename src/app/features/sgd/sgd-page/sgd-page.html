@@ -1,0 +1,178 @@
+<div class="sgd-page">
+
+  <app-top-navbar></app-top-navbar>
+
+  <div class="sgd-layout">
+
+    <!-- ═══════════════════════════════════════════════════════ SIDEBAR -->
+    <aside class="sgd-sidebar">
+
+      <div class="sidebar-title">
+        <mat-icon>folder_special</mat-icon>
+        Gestión Documental
+      </div>
+
+      <!-- Corporativos — solo admin puede subir; funcionarios lo ven en modo lectura -->
+      @if (esAdmin() || contarCorporativos() > 0) {
+        <div class="tree-node" [class.active]="vista().tipo === 'corporativos'"
+             (click)="seleccionarCorporativos()">
+          <mat-icon>business_center</mat-icon>
+          <span>Corporativos</span>
+          <span class="tree-count">{{ contarCorporativos() }}</span>
+        </div>
+      }
+
+      <!-- Por proceso -->
+      <div class="tree-section">
+        <div class="tree-section-header" (click)="procesosExpanded.set(!procesosExpanded())">
+          <mat-icon>account_tree</mat-icon>
+          <span>Por proceso</span>
+          <mat-icon class="expand-arrow">{{ procesosExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </div>
+        @if (procesosExpanded()) {
+          @if (procesosConDocs().length === 0) {
+            <div class="tree-empty">Sin documentos por proceso</div>
+          }
+          @for (proc of procesosConDocs(); track proc.id) {
+            <div class="tree-node tree-node--child"
+                 [class.active]="vista().tipo === 'proceso' && $any(vista()).procesoId === proc.id"
+                 (click)="seleccionarProceso(proc)">
+              <mat-icon>receipt_long</mat-icon>
+              <span class="tree-label">{{ proc.nombre }}</span>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Por cliente -->
+      <div class="tree-section">
+        <div class="tree-section-header" (click)="clientesExpanded.set(!clientesExpanded())">
+          <mat-icon>people</mat-icon>
+          <span>Por cliente</span>
+          <mat-icon class="expand-arrow">{{ clientesExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </div>
+        @if (clientesExpanded()) {
+          @if (clientesConDocs().length === 0) {
+            <div class="tree-empty">Sin documentos de clientes</div>
+          }
+          @for (cliente of clientesConDocs(); track cliente.id) {
+            <!-- Nodo cliente -->
+            <div class="tree-node tree-node--child"
+                 [class.active]="vista().tipo === 'cliente' && $any(vista()).clienteId === cliente.id"
+                 (click)="toggleCliente(cliente)">
+              <mat-icon>person</mat-icon>
+              <span class="tree-label">{{ cliente.nombre }} {{ cliente.apellido }}</span>
+              <mat-icon class="expand-arrow small">
+                {{ clienteExpandido() === cliente.id ? 'expand_less' : 'chevron_right' }}
+              </mat-icon>
+            </div>
+            <!-- Instancias del cliente -->
+            @if (clienteExpandido() === cliente.id) {
+              @for (inst of instanciasDeCliente(cliente.id); track inst.id) {
+                <div class="tree-node tree-node--grandchild"
+                     [class.active]="vista().tipo === 'instancia' && $any(vista()).instanciaId === inst.id"
+                     (click)="seleccionarInstancia(inst, cliente.nombre + ' ' + cliente.apellido)">
+                  <mat-icon>folder_open</mat-icon>
+                  <span class="tree-label">Trámite #{{ inst.id.slice(-6).toUpperCase() }}</span>
+                  <span class="inst-estado" [attr.data-estado]="inst.estado">{{ inst.estado }}</span>
+                </div>
+              }
+              @if (instanciasDeCliente(cliente.id).length === 0) {
+                <div class="tree-empty tree-empty--deep">Sin trámites</div>
+              }
+            }
+          }
+        }
+      </div>
+
+    </aside>
+
+    <!-- ═══════════════════════════════════════════════════════ PANEL DERECHO -->
+    <main class="sgd-content">
+
+      <!-- Header del panel -->
+      <div class="content-header">
+        <div class="content-header-left">
+          <h3 class="content-title">{{ tituloPanelDerecho() }}</h3>
+          <span class="content-count">{{ documentosFiltrados().length }} documento{{ documentosFiltrados().length !== 1 ? 's' : '' }}</span>
+        </div>
+        <div class="content-header-right">
+          <!-- Búsqueda -->
+          <div class="search-box">
+            <mat-icon>search</mat-icon>
+            <input type="text" placeholder="Buscar por nombre..."
+                   [value]="busqueda()"
+                   (input)="busqueda.set($any($event.target).value)">
+          </div>
+          <!-- Subir: oculto para funcionarios en vista Corporativos -->
+          @if (esAdmin() || vista().tipo !== 'corporativos') {
+            <button mat-flat-button class="btn-upload" (click)="seleccionarArchivo()" [disabled]="subiendo()">
+              <mat-icon>upload</mat-icon>
+              Subir documento
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Barra de progreso upload -->
+      @if (subiendo()) {
+        <mat-progress-bar mode="determinate" [value]="progreso()" class="upload-bar"></mat-progress-bar>
+      }
+
+      @if (errorMsg()) {
+        <div class="error-banner">
+          <mat-icon>error_outline</mat-icon>
+          {{ errorMsg() }}
+        </div>
+      }
+
+      <!-- Grid de documentos -->
+      @if (documentosFiltrados().length === 0) {
+        <div class="empty-state">
+          <mat-icon>folder_open</mat-icon>
+          <p>No hay documentos en esta sección.</p>
+          @if (esAdmin() || vista().tipo !== 'corporativos') {
+            <button mat-stroked-button (click)="seleccionarArchivo()">
+              <mat-icon>upload</mat-icon>
+              Subir el primero
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="docs-grid">
+          @for (doc of documentosFiltrados(); track doc.id) {
+            <div class="doc-card">
+              <div class="doc-card-icon">
+                <mat-icon>{{ iconoPorDoc(doc) }}</mat-icon>
+              </div>
+              <div class="doc-card-body">
+                <span class="doc-nombre" [matTooltip]="doc.nombre">{{ doc.nombre }}</span>
+                <span class="doc-meta">{{ formatBytes(doc.size) }}</span>
+                <span class="doc-meta">{{ doc.creadoPorNombre }}</span>
+                <span class="doc-meta">{{ doc.fechaCreacion | date:'dd/MM/yy HH:mm' }}</span>
+              </div>
+              <div class="doc-card-tipo">
+                <span class="tipo-badge" [attr.data-tipo]="doc.tipo">{{ doc.tipo }}</span>
+              </div>
+              <div class="doc-card-actions">
+                @if (esEditable(doc)) {
+                  <button mat-icon-button (click)="abrirEditor(doc)" matTooltip="Editar en OnlyOffice">
+                    <mat-icon>edit_document</mat-icon>
+                  </button>
+                }
+                <button mat-icon-button (click)="descargar(doc)" matTooltip="Descargar">
+                  <mat-icon>download</mat-icon>
+                </button>
+                <button mat-icon-button class="btn-del" (click)="eliminar(doc)" matTooltip="Eliminar">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+    </main>
+
+  </div>
+</div>

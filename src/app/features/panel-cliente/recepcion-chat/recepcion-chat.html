@@ -1,0 +1,222 @@
+<div class="recepcion-layout">
+
+  <!-- HEADER -->
+  <header class="recepcion-header">
+    <div class="header-brand" (click)="router.navigate(['/panel-cliente'])">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="8" height="8" x="3" y="3" rx="2" />
+        <path d="M7 11v4a2 2 0 0 0 2 2h4" />
+        <rect width="8" height="8" x="13" y="13" rx="2" />
+      </svg>
+      <span>Orquestia</span>
+    </div>
+    <div class="header-user">
+      <button class="btn-volver" (click)="router.navigate(['/panel-cliente'])">
+        <mat-icon>arrow_back</mat-icon>
+        Mis trámites
+      </button>
+      <button class="btn-logout" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Salir
+      </button>
+    </div>
+  </header>
+
+  <main class="recepcion-main">
+
+    <!-- ═══════════════════════════════════ VISTA CHAT ═══════════════════════════ -->
+    @if (!enVistaDocumentos()) {
+      <div class="chat-wrapper">
+
+        <div class="chat-panel">
+          <div class="chat-titulo">
+            <mat-icon>support_agent</mat-icon>
+            <div>
+              <h2>Asistente de recepción</h2>
+              <p>Dime qué necesitas y te llevo al trámite correcto</p>
+            </div>
+          </div>
+
+          <div class="chat-mensajes" #scrollChat>
+            @for (m of mensajes(); track $index) {
+              <div class="msg" [class.msg--usuario]="m.rol === 'usuario'" [class.msg--agente]="m.rol === 'agente'">
+                @if (m.rol === 'agente') { <mat-icon class="msg-avatar">support_agent</mat-icon> }
+                <div class="msg-burbuja">{{ m.mensaje }}</div>
+              </div>
+            }
+
+            @if (pensando()) {
+              <div class="msg msg--agente">
+                <mat-icon class="msg-avatar">support_agent</mat-icon>
+                <div class="msg-burbuja msg-burbuja--typing">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            }
+
+            <!-- Opciones de desambiguación -->
+            @if (opciones().length > 0) {
+              <div class="sugerencias">
+                @for (op of opciones(); track op.id) {
+                  <button class="chip-opcion" (click)="seleccionarProcesoPorId(op.id)">
+                    <mat-icon>arrow_forward</mat-icon>
+                    {{ op.nombre }}
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- Tarjeta de proceso recomendado -->
+            @if (recomendado(); as rec) {
+              <div class="tarjeta-recomendado">
+                <div class="rec-info">
+                  <mat-icon>verified</mat-icon>
+                  <div>
+                    <strong>{{ rec.nombre }}</strong>
+                    <span>{{ rec.descripcion }}</span>
+                  </div>
+                </div>
+                <button class="btn-iniciar-rec" (click)="seleccionarProceso(rec)">
+                  Iniciar este trámite
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+
+          <!-- Barra de entrada -->
+          <div class="chat-entrada">
+            @if (transcribiendo()) {
+              <div class="transcribiendo-hint">
+                <div class="mini-spinner"></div> Transcribiendo tu voz...
+              </div>
+            }
+            <div class="entrada-fila">
+              <button class="btn-mic" [class.grabando]="grabando()" (click)="toggleGrabacion()"
+                      [title]="grabando() ? 'Detener' : 'Hablar'">
+                <mat-icon>{{ grabando() ? 'stop' : 'mic' }}</mat-icon>
+              </button>
+              <input type="text" placeholder="Escribe tu mensaje..."
+                     [(ngModel)]="entrada"
+                     (keyup.enter)="enviar()"
+                     [disabled]="pensando()">
+              <button class="btn-enviar" (click)="enviar()" [disabled]="!entrada.trim() || pensando()">
+                <mat-icon>send</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista directa de trámites -->
+        <aside class="lista-tramites">
+          <div class="lista-titulo">
+            <mat-icon>list_alt</mat-icon>
+            ¿Ya sabes qué necesitas?
+          </div>
+          @if (cargandoProcesos()) {
+            <div class="lista-cargando">Cargando trámites...</div>
+          } @else if (procesos().length === 0) {
+            <div class="lista-vacia">No hay trámites disponibles por ahora.</div>
+          } @else {
+            @for (p of procesos(); track p.id) {
+              <button class="tramite-item" (click)="seleccionarProceso(p)">
+                <mat-icon>description</mat-icon>
+                <div class="tramite-info">
+                  <strong>{{ p.nombre }}</strong>
+                  <span>{{ p.descripcion }}</span>
+                </div>
+                <mat-icon class="tramite-arrow">chevron_right</mat-icon>
+              </button>
+            }
+          }
+        </aside>
+
+      </div>
+    }
+
+    <!-- ═══════════════════════════════ VISTA DOCUMENTOS ═════════════════════════ -->
+    @if (procesoSeleccionado(); as proc) {
+      <div class="docs-wrapper">
+        <button class="btn-atras" (click)="volverAlChat()">
+          <mat-icon>arrow_back</mat-icon> Volver
+        </button>
+
+        <div class="docs-cabecera">
+          <h2>{{ proc.nombre }}</h2>
+          <p>{{ proc.descripcion }}</p>
+        </div>
+
+        @if (requisitos().length === 0) {
+          <div class="docs-sin-requisitos">
+            <mat-icon>check_circle</mat-icon>
+            <p>Este trámite no requiere documentos previos. Puedes iniciarlo directamente.</p>
+          </div>
+        } @else {
+          <div class="docs-instruccion">
+            <mat-icon>upload_file</mat-icon>
+            Adjunta los siguientes documentos para iniciar tu trámite:
+          </div>
+
+          <div class="docs-lista">
+            @for (req of requisitos(); track $index) {
+              <div class="doc-requisito" [class.completo]="slots()[$index]?.documentoId">
+                <div class="req-cabecera">
+                  <span class="req-nombre">
+                    {{ req.nombre }}
+                    @if (req.obligatorio) { <span class="req-badge">Obligatorio</span> }
+                    @else { <span class="req-badge req-badge--opt">Opcional</span> }
+                  </span>
+                </div>
+                @if (req.descripcion) { <p class="req-desc">{{ req.descripcion }}</p> }
+
+                @if (slots()[$index]?.documentoId) {
+                  <div class="req-archivo">
+                    <mat-icon>{{ iconoArchivo(slots()[$index]?.nombreArchivo) }}</mat-icon>
+                    <span class="req-archivo-nombre">{{ slots()[$index]?.nombreArchivo }}</span>
+                    <mat-icon class="req-ok">check_circle</mat-icon>
+                    <button class="req-quitar" (click)="quitarDocumento($index)" title="Quitar">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                } @else if (slots()[$index]?.subiendo) {
+                  <div class="req-subiendo">
+                    <div class="mini-spinner"></div> Subiendo...
+                  </div>
+                } @else {
+                  <button class="btn-adjuntar" (click)="seleccionarArchivo($index, req)">
+                    <mat-icon>attach_file</mat-icon> Adjuntar archivo
+                  </button>
+                }
+
+                @if (slots()[$index]?.error) {
+                  <span class="req-error">{{ slots()[$index]?.error }}</span>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        @if (errorInicio()) {
+          <div class="error-inicio">
+            <mat-icon>error_outline</mat-icon> {{ errorInicio() }}
+          </div>
+        }
+
+        <div class="docs-acciones">
+          <button class="btn-iniciar" [disabled]="!puedeIniciar() || iniciando()" (click)="iniciarTramite()">
+            @if (iniciando()) {
+              <div class="mini-spinner mini-spinner--blanco"></div> Iniciando...
+            } @else {
+              <mat-icon>rocket_launch</mat-icon> Iniciar trámite
+            }
+          </button>
+          @if (!puedeIniciar()) {
+            <span class="hint-faltan">Faltan documentos obligatorios por adjuntar.</span>
+          }
+        </div>
+      </div>
+    }
+
+  </main>
+</div>

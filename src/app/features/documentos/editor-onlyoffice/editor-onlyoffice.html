@@ -1,0 +1,27 @@
+<div class="editor-page">
+
+  <div class="editor-topbar">
+    <button mat-icon-button (click)="volver()" class="btn-back">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span class="editor-label">Editor colaborativo · OnlyOffice</span>
+  </div>
+
+  @if (cargando()) {
+    <div class="editor-loading">
+      <mat-icon class="spin">refresh</mat-icon>
+      <p>Cargando documento...</p>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="editor-error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error() }}</p>
+      <button mat-flat-button (click)="volver()">Volver</button>
+    </div>
+  }
+
+  <div id="onlyoffice-container" [class.hidden]="cargando() || !!error()"></div>
+
+</div>
