@@ -19,6 +19,7 @@ import { WebSocketService } from '../../../shared/services/websocket.service';
 import { TareaInstancia, Departamento, CampoFormulario, InstanciaProceso, Proceso } from '../../../shared/models/interfaces';
 import { ProcessContextComponent } from '../../../shared/components/process-context/process-context.component';
 import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-navbar.component';
+import { acceptDe, archivoPermitido, etiquetaTipos } from '../../../shared/utils/tipos-archivo';
 
 @Component({
   selector: 'orq-mis-tareas',
@@ -153,6 +154,7 @@ export class MisTareas implements OnInit, OnDestroy {
         ? camposDefinidos
         : [{ nombre: 'decision', tipo: 'TEXTO', label: 'Resultado / decisión', requerido: true, opciones: [] }]
     );
+    this.inicializarGrids();
 
     if (tarea.estado === 'PENDIENTE') {
       this.motor.iniciarTarea(tarea.id).subscribe({
@@ -167,10 +169,21 @@ export class MisTareas implements OnInit, OnDestroy {
     this.campoLabels.set({});
   }
 
-  subirArchivo(campoNombre: string, event: Event) {
+  acceptCampo(campo: CampoFormulario): string {
+    return acceptDe(campo.mimeTypesPermitidos);
+  }
+
+  subirArchivo(campoNombre: string, event: Event, campo?: CampoFormulario) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+
+    if (campo && !archivoPermitido(file, campo.mimeTypesPermitidos)) {
+      this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'error' }));
+      this.modal.toast(`Tipo no permitido. Permitidos: ${etiquetaTipos(campo.mimeTypesPermitidos)}`, 'error');
+      input.value = '';
+      return;
+    }
 
     const tarea = this.tareaActiva();
     const empresaId = this.auth.user()?.empresaId ?? '';
@@ -354,6 +367,33 @@ export class MisTareas implements OnInit, OnDestroy {
 
   setRespuesta(campo: string, value: unknown) {
     this.respuestas = { ...this.respuestas, [campo]: value };
+  }
+
+  // ── GRID (tabla NxN) ──────────────────────────────────────────────────────
+  private inicializarGrids() {
+    this.campos().forEach(c => {
+      if (c.tipo === 'GRID' && !this.respuestas[c.nombre]) {
+        this.respuestas = { ...this.respuestas, [c.nombre]: this.nuevaMatriz(c) };
+      }
+    });
+  }
+  private nuevaMatriz(campo: CampoFormulario): string[][] {
+    const filas = campo.filas ?? 1;
+    const cols = campo.columnas?.length || 1;
+    return Array.from({ length: filas }, () => Array.from({ length: cols }, () => ''));
+  }
+  rangoFilas(campo: CampoFormulario): number[] {
+    return Array.from({ length: campo.filas ?? 1 }, (_, i) => i);
+  }
+  celdaGrid(campo: CampoFormulario, f: number, c: number): string {
+    const m = this.respuestas[campo.nombre] as string[][] | undefined;
+    return m?.[f]?.[c] ?? '';
+  }
+  setCeldaGrid(campo: CampoFormulario, f: number, c: number, valor: string) {
+    let m = (this.respuestas[campo.nombre] as string[][] | undefined) ?? this.nuevaMatriz(campo);
+    m = m.map(row => [...row]);
+    m[f][c] = valor;
+    this.respuestas = { ...this.respuestas, [campo.nombre]: m };
   }
 
   // Devuelve el tipo visual de una variable del contexto para renderizarla correctamente

@@ -18,7 +18,8 @@ import { AuthService } from '../../shared/services/auth';
 import { WebSocketService, DiagramaEvent } from '../../shared/services/websocket.service';
 import { IaService, DiagramaIaResponse, OptimizarDiagramaResponse } from '../../shared/services/ia.service';
 import { ConfirmModalService } from '../../shared/services/confirm-modal.service';
-import { Proceso, Nodo, Conexion, Departamento, CampoFormulario, RequisitoDocumento } from '../../shared/models/interfaces';
+import { Proceso, Nodo, Conexion, Departamento, CampoFormulario, RequisitoDocumento, UsuarioResponse } from '../../shared/models/interfaces';
+import { TIPOS_ARCHIVO, GrupoTipoArchivo, grupoSeleccionado, toggleGrupo, etiquetaTipos } from '../../shared/utils/tipos-archivo';
 import { DecimalPipe } from '@angular/common';
 import { NodoComponent } from './components/nodo/nodo.component';
 import { FlechaComponent } from './components/flecha/flecha.component';
@@ -93,6 +94,15 @@ export class Diagramador implements OnInit, OnDestroy {
   optimizacionCambios = signal<string[]>([]);
   mostrarCambiosIA    = signal(false);
 
+  // ── IA Comandos (texto + voz) ─────────────────────────────────────────────────
+  comandoTexto        = '';
+  comandoEjecutando   = signal(false);
+  comandoMensaje      = signal('');
+  grabandoComando     = signal(false);
+  transcribiendoComando = signal(false);
+  private comandoRecorder?: MediaRecorder;
+  private comandoChunks: BlobPart[] = [];
+
   // ── Configuración Cliente ────────────────────────────────────────────────────
   clienteConfigVisible   = signal(false);
   clienteConfigGuardando = signal(false);
@@ -101,6 +111,23 @@ export class Diagramador implements OnInit, OnDestroy {
   nuevoRequisitoNombre      = '';
   nuevoRequisitoDescripcion = '';
   nuevoRequisitoObligatorio = true;
+  nuevoRequisitoTipos: string[] = [];
+
+  // Selector de tipos de archivo permitidos (docs requeridos y campos ARCHIVO)
+  tiposArchivo = TIPOS_ARCHIVO;
+  grupoTipoActivo(lista: string[] | undefined, grupo: GrupoTipoArchivo): boolean {
+    return grupoSeleccionado(lista ?? [], grupo);
+  }
+  alternarTipo(lista: string[] | undefined, grupo: GrupoTipoArchivo): string[] {
+    return toggleGrupo(lista ?? [], grupo);
+  }
+  etiquetaTipos(lista: string[] | undefined): string { return etiquetaTipos(lista); }
+
+  // ── Modal de publicación (asignar funcionarios) ───────────────────────────────
+  publicarModalVisible = signal(false);
+  publicando           = signal(false);
+  funcionariosEmpresa  = signal<UsuarioResponse[]>([]);
+  asignacionesPublicar: Record<string, string> = {};
   // ───────────────────────────────────────────────────────────────────────────
 
   constructor(
@@ -315,6 +342,9 @@ export class Diagramador implements OnInit, OnDestroy {
     this.apiService.getDepartamentos(empresaId).subscribe({
       next: (depts) => { this.departamentosEmpresa.set(depts); this.computarLanesVisibles(); }
     });
+    this.apiService.getFuncionarios(empresaId).subscribe({
+      next: (us) => this.funcionariosEmpresa.set(us.filter(u => u.rol === 'FUNCIONARIO'))
+    });
   }
 
   computarLanesVisibles() {
@@ -365,33 +395,43 @@ export class Diagramador implements OnInit, OnDestroy {
   // ── Form Builder ────────────────────────────────────────────────────────────
 
   editingCampoIndex = signal<number | 'new' | null>(null);
-  campoForm: { nombre: string; tipo: CampoFormulario['tipo']; label: string; requerido: boolean; opcionesTexto: string } = {
-    nombre: '', tipo: 'TEXTO', label: '', requerido: false, opcionesTexto: ''
+  campoForm: { nombre: string; tipo: CampoFormulario['tipo']; label: string; requerido: boolean; opcionesTexto: string; mimeTypes: string[]; columnasTexto: string; filas: number } = {
+    nombre: '', tipo: 'TEXTO', label: '', requerido: false, opcionesTexto: '', mimeTypes: [], columnasTexto: '', filas: 3
   };
 
   get camposActuales(): CampoFormulario[] { return this.selectedNode?.formulario ?? []; }
 
   abrirNuevoCampo() {
-    this.campoForm = { nombre: '', tipo: 'TEXTO', label: '', requerido: false, opcionesTexto: '' };
+    this.campoForm = { nombre: '', tipo: 'TEXTO', label: '', requerido: false, opcionesTexto: '', mimeTypes: [], columnasTexto: '', filas: 3 };
     this.editingCampoIndex.set('new');
   }
 
   abrirEditarCampo(i: number) {
     const c = this.camposActuales[i];
-    this.campoForm = { nombre: c.nombre, tipo: c.tipo, label: c.label, requerido: c.requerido, opcionesTexto: c.opciones?.join(', ') ?? '' };
+    this.campoForm = {
+      nombre: c.nombre, tipo: c.tipo, label: c.label, requerido: c.requerido,
+      opcionesTexto: c.opciones?.join(', ') ?? '',
+      mimeTypes: [...(c.mimeTypesPermitidos ?? [])],
+      columnasTexto: c.columnas?.join(', ') ?? '',
+      filas: c.filas ?? 3
+    };
     this.editingCampoIndex.set(i);
   }
 
   guardarCampo() {
     const idx = this.editingCampoIndex();
     if (idx === null || !this.campoForm.nombre.trim() || !this.campoForm.label.trim()) return;
+    const esGrid = this.campoForm.tipo === 'GRID';
     const campo: CampoFormulario = {
       nombre: this.campoForm.nombre.trim().toLowerCase().replace(/\s+/g, '_'),
       tipo: this.campoForm.tipo,
       label: this.campoForm.label.trim(),
       requerido: this.campoForm.requerido,
       opciones: this.campoForm.tipo === 'OPCIONES'
-        ? this.campoForm.opcionesTexto.split(',').map(s => s.trim()).filter(Boolean) : []
+        ? this.campoForm.opcionesTexto.split(',').map(s => s.trim()).filter(Boolean) : [],
+      mimeTypesPermitidos: this.campoForm.tipo === 'ARCHIVO' ? this.campoForm.mimeTypes : [],
+      columnas: esGrid ? this.campoForm.columnasTexto.split(',').map(s => s.trim()).filter(Boolean) : [],
+      filas: esGrid ? Math.max(1, Number(this.campoForm.filas) || 1) : undefined
     };
     const campos = [...this.camposActuales];
     if (idx === 'new') campos.push(campo); else campos[idx] = campo;
@@ -885,6 +925,97 @@ export class Diagramador implements OnInit, OnDestroy {
     this.snackBar.open('✨ Diagrama generado con IA', 'OK', { duration: 4000 });
   }
 
+  // ── Comandos por texto / voz ──────────────────────────────────────────────────
+
+  ejecutarComando() {
+    const comando = this.comandoTexto.trim();
+    if (!comando || this.comandoEjecutando()) return;
+    if (this.proceso()?.estado !== 'BORRADOR') {
+      this.snackBar.open('Solo puedes editar procesos en BORRADOR.', 'OK', { duration: 4000 });
+      return;
+    }
+
+    this.comandoEjecutando.set(true);
+    this.comandoMensaje.set('');
+    this.iaService.comandoDiagrama({
+      comando,
+      nodos: this.nodos().map(n => ({
+        id: n.id, label: n.label, tipo: n.tipo,
+        departamentoId: n.departamentoId, responsableCliente: n.responsableCliente
+      })),
+      departamentos: this.departamentosEmpresa().map(d => ({ id: d.id, nombre: d.nombre }))
+    }).subscribe({
+      next: (res) => {
+        this.comandoEjecutando.set(false);
+        res.acciones.forEach(a => this.aplicarAccionComando(a));
+        this.comandoMensaje.set(res.mensaje || (res.acciones.length ? 'Listo.' : 'No se reconoció ninguna acción.'));
+        if (res.acciones.length > 0) this.comandoTexto = '';
+      },
+      error: () => {
+        this.comandoEjecutando.set(false);
+        this.comandoMensaje.set('No se pudo interpretar el comando. Intenta de nuevo.');
+      }
+    });
+  }
+
+  private aplicarAccionComando(a: { tipo: string; nodoId: string; departamentoId?: string | null; nuevoLabel?: string | null; valor?: boolean | null }) {
+    switch (a.tipo) {
+      case 'eliminar':
+        this.eliminarNodo(a.nodoId);
+        return;
+      case 'asignar_departamento':
+        if (a.departamentoId) this.actualizarNodoPorId(a.nodoId, { departamentoId: a.departamentoId, responsableCliente: false });
+        break;
+      case 'renombrar':
+        if (a.nuevoLabel) this.actualizarNodoPorId(a.nodoId, { label: a.nuevoLabel });
+        break;
+      case 'autoservicio': {
+        const valor = a.valor !== false;
+        this.actualizarNodoPorId(a.nodoId, valor ? { responsableCliente: true, departamentoId: undefined } : { responsableCliente: false });
+        break;
+      }
+    }
+  }
+
+  private actualizarNodoPorId(id: string, data: Partial<Nodo>) {
+    this.nodos.update(ns => ns.map(n => n.id === id ? { ...n, ...data } : n));
+    const updated = this.nodos().find(n => n.id === id);
+    if (updated) {
+      this.nodeUpdateSubject.next(updated);
+      this.autoSaveSubject.next();
+    }
+  }
+
+  async toggleGrabacionComando() {
+    if (this.grabandoComando()) {
+      this.grabandoComando.set(false);
+      this.transcribiendoComando.set(true);
+      this.comandoRecorder?.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.comandoChunks = [];
+      this.comandoRecorder = new MediaRecorder(stream);
+      this.comandoRecorder.ondataavailable = e => { if (e.data.size > 0) this.comandoChunks.push(e.data); };
+      this.comandoRecorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(this.comandoChunks, { type: 'audio/webm' });
+        this.iaService.transcribirAudio(blob).subscribe({
+          next: ({ texto }) => {
+            this.transcribiendoComando.set(false);
+            if (texto) { this.comandoTexto = texto; this.ejecutarComando(); }
+          },
+          error: () => this.transcribiendoComando.set(false)
+        });
+      };
+      this.comandoRecorder.start();
+      this.grabandoComando.set(true);
+    } catch {
+      this.snackBar.open('No se pudo acceder al micrófono.', 'OK', { duration: 4000 });
+    }
+  }
+
   // ── Configuración Cliente ────────────────────────────────────────────────────
 
   abrirClienteConfig() {
@@ -904,12 +1035,13 @@ export class Diagramador implements OnInit, OnDestroy {
     this.clienteDocRequeridos = [...this.clienteDocRequeridos, {
       nombre: this.nuevoRequisitoNombre.trim(),
       descripcion: this.nuevoRequisitoDescripcion.trim(),
-      mimeTypesPermitidos: [],
+      mimeTypesPermitidos: [...this.nuevoRequisitoTipos],
       obligatorio: this.nuevoRequisitoObligatorio
     }];
     this.nuevoRequisitoNombre = '';
     this.nuevoRequisitoDescripcion = '';
     this.nuevoRequisitoObligatorio = true;
+    this.nuevoRequisitoTipos = [];
   }
 
   eliminarRequisito(i: number) {
@@ -939,21 +1071,70 @@ export class Diagramador implements OnInit, OnDestroy {
 
   // ────────────────────────────────────────────────────────────────────────────
 
-  publicar() {
+  // Departamentos usados por actividades de funcionario (no autoservicio) — requieren asignación
+  departamentosUsados = computed(() => {
+    const ids = new Set(
+      this.nodos()
+        .filter(n => n.tipo === 'ACTIVIDAD' && !n.responsableCliente && n.departamentoId)
+        .map(n => n.departamentoId as string)
+    );
+    return this.departamentosEmpresa().filter(d => ids.has(d.id));
+  });
+
+  funcionariosDeDepto(deptId: string): UsuarioResponse[] {
+    const delDepto = this.funcionariosEmpresa().filter(u => u.departamentoId === deptId);
+    return delDepto.length > 0 ? delDepto : this.funcionariosEmpresa();
+  }
+
+  // Método (no computed): asignacionesPublicar es un objeto plano que muta ngModel,
+  // un computed no reaccionaría a esa mutación. Un método se re-evalúa en cada CD.
+  publicarTodosAsignados(): boolean {
+    return this.departamentosUsados().every(d => !!this.asignacionesPublicar[d.id]);
+  }
+
+  // El botón Publicar ahora abre el modal de asignación
+  abrirPublicar() {
     const p = this.proceso();
     if (!p) return;
     const error = this.validarDiagrama();
     if (error) { this.snackBar.open(error, 'Cerrar', { duration: 6000, panelClass: 'snack-warn' }); return; }
-    this.procesoService.guardar(p.id, {
-      nombre: p.nombre, descripcion: p.descripcion, empresaId: p.empresaId,
-      nodos: this.nodos(), conexiones: this.conexiones()
-    }).subscribe({
+    // Pre-cargar asignaciones existentes
+    this.asignacionesPublicar = { ...(p.asignaciones ?? {}) };
+    this.publicarModalVisible.set(true);
+  }
+
+  cerrarPublicar() { this.publicarModalVisible.set(false); }
+
+  confirmarPublicar() {
+    const p = this.proceso();
+    if (!p || this.publicando()) return;
+    if (!this.publicarTodosAsignados()) {
+      this.snackBar.open('Asigna un funcionario a cada departamento antes de publicar.', 'Cerrar', { duration: 5000 });
+      return;
+    }
+    this.publicando.set(true);
+    // 1) Guardar asignaciones  2) Guardar diagrama  3) Publicar
+    this.procesoService.guardarAsignaciones(p.id, this.asignacionesPublicar).subscribe({
       next: () => {
-        this.procesoService.publicar(p.id).subscribe({
-          next: () => { this.snackBar.open('¡Proceso Publicado!', 'OK', { duration: 3000 }); this.router.navigate(['/dashboard']); },
-          error: (err) => this.snackBar.open(err.error?.error || 'Error al publicar', 'Cerrar', { duration: 5000 })
+        this.procesoService.guardar(p.id, {
+          nombre: p.nombre, descripcion: p.descripcion, empresaId: p.empresaId,
+          nodos: this.nodos(), conexiones: this.conexiones()
+        }).subscribe({
+          next: () => {
+            this.procesoService.publicar(p.id).subscribe({
+              next: () => {
+                this.publicando.set(false);
+                this.publicarModalVisible.set(false);
+                this.snackBar.open('¡Proceso Publicado!', 'OK', { duration: 3000 });
+                this.router.navigate(['/dashboard']);
+              },
+              error: (err) => { this.publicando.set(false); this.snackBar.open(err.error?.error || 'Error al publicar', 'Cerrar', { duration: 5000 }); }
+            });
+          },
+          error: () => { this.publicando.set(false); this.snackBar.open('Error al guardar el proceso', 'Cerrar', { duration: 5000 }); }
         });
-      }
+      },
+      error: () => { this.publicando.set(false); this.snackBar.open('Error al guardar asignaciones', 'Cerrar', { duration: 5000 }); }
     });
   }
 }

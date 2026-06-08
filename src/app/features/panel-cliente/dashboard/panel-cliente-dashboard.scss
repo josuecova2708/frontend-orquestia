@@ -287,11 +287,43 @@
   &.activo { color: #2563eb; border-bottom-color: #2563eb; }
 }
 
-/* ── Grid de documentos del cliente ──────────────────────────────────────── */
+/* ── Documentos del cliente agrupados por trámite ────────────────────────── */
+.docs-grupo {
+  margin-bottom: 1.75rem;
+}
+.docs-grupo-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.85rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.6rem;
+  margin-bottom: 0.75rem;
+
+  > mat-icon { color: #2563eb; }
+  .dg-proceso { display: block; font-weight: 700; font-size: 0.92rem; color: #1e293b; }
+  .dg-fecha { display: block; font-size: 0.75rem; color: #64748b; }
+  .dg-count { margin-left: auto; font-size: 0.75rem; color: #64748b; font-weight: 600; }
+}
+
 .docs-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
+}
+
+.doc-tarea-cli {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: #7c3aed;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  mat-icon { font-size: 14px; width: 14px; height: 14px; flex-shrink: 0; }
 }
 .doc-card {
   display: flex;
@@ -508,4 +540,20 @@
   &--completada { background: #eff6ff; color: #2563eb; }
   &--cancelada  { background: #fee2e2; color: #dc2626; }
   &--error      { background: #fef3c7; color: #d97706; }
+}
+
+/* Campo GRID en el modal de acción */
+.ma-grid { overflow-x: auto; }
+.ma-grid .grid-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th, td { border: 1px solid #e2e8f0; padding: 0; }
+  th { background: #f1f5f9; padding: 6px 8px; font-weight: 600; color: #334155; text-align: left; white-space: nowrap; }
+  .grid-celda {
+    width: 100%; border: none; padding: 7px 8px; font-size: 0.85rem; outline: none;
+    background: transparent; box-sizing: border-box;
+    &:focus { background: #eff6ff; }
+  }
 }

@@ -250,6 +250,97 @@
 .w-100 { width: 100%; margin-bottom: 8px; }
 .mb-0 { margin-bottom: 0px !important; }
 
+/* Modal de publicación: asignación de funcionarios */
+.pub-asignacion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+
+  .pub-depto { flex: 0 0 40%; font-weight: 600; font-size: 0.88rem; color: #334155; }
+  .pub-select {
+    flex: 1;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    outline: none;
+    background: #fff;
+    &:focus { border-color: #2563eb; }
+  }
+}
+
+/* Barra de comandos IA (texto + voz) */
+.comando-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+
+  .comando-icono { color: #7c3aed; }
+  .comando-input {
+    flex: 1;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    outline: none;
+    &:focus { border-color: #7c3aed; }
+  }
+  .comando-mic {
+    width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer;
+    background: #f1f5f9; color: #64748b; display: grid; place-items: center; flex-shrink: 0;
+    mat-icon { font-size: 20px; width: 20px; height: 20px; }
+    &:hover { background: #e2e8f0; }
+    &.grabando { background: #dc2626; color: #fff; }
+  }
+  .comando-run {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #7c3aed; color: #fff; border: none; cursor: pointer;
+    padding: 8px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+    &:not(:disabled):hover { filter: brightness(1.08); }
+  }
+  .comando-msg { font-size: 0.78rem; color: #475569; max-width: 280px; }
+}
+
+/* Selector de tipos de archivo permitidos */
+.tipos-archivo-selector {
+  margin: 8px 0;
+  .tipos-label { display: block; font-size: 0.78rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
+  .tipos-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tipos-hint { display: block; font-size: 0.72rem; color: #94a3b8; margin-top: 6px; }
+}
+.tipo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  input { display: none; }
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  &:hover { border-color: #cbd5e1; }
+  &.activo { background: #eff6ff; border-color: #2563eb; color: #2563eb; }
+}
+.requisito-tipos {
+  display: inline-block;
+  font-size: 0.7rem;
+  color: #7c3aed;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
 /* Toggle autoservicio (responsable cliente) */
 .autoservicio-toggle {
   display: flex;

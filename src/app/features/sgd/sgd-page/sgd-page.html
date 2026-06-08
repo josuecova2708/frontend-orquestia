@@ -94,6 +94,11 @@
       <div class="content-header">
         <div class="content-header-left">
           <h3 class="content-title">{{ tituloPanelDerecho() }}</h3>
+          @if (subtituloPanelDerecho()) {
+            <span class="content-subtitulo">
+              <mat-icon>account_tree</mat-icon>{{ subtituloPanelDerecho() }}
+            </span>
+          }
           <span class="content-count">{{ documentosFiltrados().length }} documento{{ documentosFiltrados().length !== 1 ? 's' : '' }}</span>
         </div>
         <div class="content-header-right">
@@ -147,6 +152,11 @@
               </div>
               <div class="doc-card-body">
                 <span class="doc-nombre" [matTooltip]="doc.nombre">{{ doc.nombre }}</span>
+                @if (doc.tareaLabel) {
+                  <span class="doc-tarea" [matTooltip]="'Actividad: ' + doc.tareaLabel">
+                    <mat-icon>assignment</mat-icon>{{ doc.tareaLabel }}
+                  </span>
+                }
                 <span class="doc-meta">{{ formatBytes(doc.size) }}</span>
                 <span class="doc-meta">{{ doc.creadoPorNombre }}</span>
                 <span class="doc-meta">{{ doc.fechaCreacion | date:'dd/MM/yy HH:mm' }}</span>
@@ -155,6 +165,9 @@
                 <span class="tipo-badge" [attr.data-tipo]="doc.tipo">{{ doc.tipo }}</span>
               </div>
               <div class="doc-card-actions">
+                <button mat-icon-button (click)="verDetalles(doc)" matTooltip="Detalles e historial">
+                  <mat-icon>info</mat-icon>
+                </button>
                 @if (esEditable(doc)) {
                   <button mat-icon-button (click)="abrirEditor(doc)" matTooltip="Editar en OnlyOffice">
                     <mat-icon>edit_document</mat-icon>
@@ -175,4 +188,65 @@
     </main>
 
   </div>
+
+  <!-- ═══════════════════════════ MODAL: Detalles e historial ═══════════════════ -->
+  @if (docDetalle(); as doc) {
+    <div class="detalle-backdrop" (click)="cerrarDetalles()"></div>
+    <div class="detalle-modal">
+      <div class="dm-header">
+        <div class="dm-titulo">
+          <mat-icon>{{ iconoPorDoc(doc) }}</mat-icon>
+          <span [matTooltip]="doc.nombre">{{ doc.nombre }}</span>
+        </div>
+        <button class="dm-cerrar" (click)="cerrarDetalles()"><mat-icon>close</mat-icon></button>
+      </div>
+
+      <div class="dm-cuerpo">
+        <!-- Atributos -->
+        <div class="dm-seccion">
+          <h4>Atributos</h4>
+          <div class="dm-attrs">
+            <div class="dm-attr"><span>Tipo</span><b>{{ doc.tipo }}</b></div>
+            <div class="dm-attr"><span>Tamaño</span><b>{{ formatBytes(doc.size) }}</b></div>
+            <div class="dm-attr"><span>Creado por</span><b>{{ doc.creadoPorNombre }}</b></div>
+            <div class="dm-attr"><span>Fecha de creación</span><b>{{ doc.fechaCreacion | date:'dd/MM/yy HH:mm' }}</b></div>
+            @if (doc.tareaLabel) {
+              <div class="dm-attr"><span>Actividad de origen</span><b>{{ doc.tareaLabel }}</b></div>
+            }
+            @if (doc.ultimaEdicion) {
+              <div class="dm-attr"><span>Última edición</span><b>{{ doc.ultimaEdicion | date:'dd/MM/yy HH:mm' }}</b></div>
+            }
+            @if (doc.ultimoEditorNombre) {
+              <div class="dm-attr"><span>Último editor</span><b>{{ doc.ultimoEditorNombre }}</b></div>
+            }
+          </div>
+        </div>
+
+        <!-- Historial de interacciones -->
+        <div class="dm-seccion">
+          <h4>
+            Historial de interacciones
+            @if (cargandoDetalle()) { <span class="dm-cargando">actualizando…</span> }
+          </h4>
+          @if (auditOrdenado(doc).length === 0) {
+            <p class="dm-vacio">Aún no hay interacciones registradas.</p>
+          } @else {
+            <ul class="dm-audit">
+              @for (e of auditOrdenado(doc); track $index) {
+                <li class="dm-audit-item" [attr.data-accion]="e.accion">
+                  <mat-icon class="dm-audit-icono">{{ iconoAccion(e.accion) }}</mat-icon>
+                  <div class="dm-audit-cuerpo">
+                    <span class="dm-audit-txt">
+                      <b>{{ e.usuarioNombre }}</b> · {{ etiquetaAccion(e.accion) }}
+                    </span>
+                    <span class="dm-audit-fecha">{{ e.fecha | date:'dd/MM/yy HH:mm' }}</span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+    </div>
+  }
 </div>

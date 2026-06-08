@@ -55,6 +55,52 @@ export interface ClasificarTramiteResponse {
   opciones: OpcionProceso[];
 }
 
+export interface AccionDiagrama {
+  tipo: 'asignar_departamento' | 'renombrar' | 'autoservicio' | 'eliminar';
+  nodoId: string;
+  departamentoId?: string | null;
+  nuevoLabel?: string | null;
+  valor?: boolean | null;
+}
+
+export interface ComandoDiagramaRequest {
+  comando: string;
+  nodos: { id: string; label: string; tipo: string; departamentoId?: string | null; responsableCliente?: boolean }[];
+  departamentos: { id: string; nombre: string }[];
+}
+
+export interface ComandoDiagramaResponse {
+  acciones: AccionDiagrama[];
+  mensaje: string;
+}
+
+export interface FuncionarioDisponible {
+  id: string;
+  nombre: string;
+}
+
+export interface ConsultaIaRequest {
+  pregunta: string;
+  fecha_actual: string;
+  procesos: ProcesoDisponible[];
+  funcionarios: FuncionarioDisponible[];
+}
+
+export interface ConsultaReporteSpec {
+  valido: boolean;
+  mensaje: string;
+  metrica: string | null;
+  desde: string | null;
+  hasta: string | null;
+  estado: string | null;
+  proceso_id: string | null;
+  funcionario_id: string | null;
+  limite: number | null;
+  orden: string;
+  formato: 'pantalla' | 'pdf' | 'excel';
+  titulo: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class IaService {
   private http = inject(HttpClient);
@@ -76,5 +122,13 @@ export class IaService {
 
   clasificarTramite(request: ClasificarTramiteRequest): Observable<ClasificarTramiteResponse> {
     return this.http.post<ClasificarTramiteResponse>(`${this.baseUrl}/ia/clasificar-tramite`, request);
+  }
+
+  comandoDiagrama(request: ComandoDiagramaRequest): Observable<ComandoDiagramaResponse> {
+    return this.http.post<ComandoDiagramaResponse>(`${this.baseUrl}/ia/comando-diagrama`, request);
+  }
+
+  interpretarConsulta(request: ConsultaIaRequest): Observable<ConsultaReporteSpec> {
+    return this.http.post<ConsultaReporteSpec>(`${this.baseUrl}/ia/consulta-reporte`, request);
   }
 }

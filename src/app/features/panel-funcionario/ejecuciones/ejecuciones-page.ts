@@ -194,6 +194,14 @@ export class EjecucionesPage implements OnInit, OnDestroy {
     return String(val);
   }
 
+  esGrid(val: unknown): boolean {
+    return Array.isArray(val) && val.length > 0 && Array.isArray(val[0]);
+  }
+
+  asGrid(val: unknown): string[][] {
+    return val as string[][];
+  }
+
   get hayFiltrosActivos(): boolean {
     return !!(this.filtroEstado() || this.filtroProceso() || this.filtroFechaDesde() || this.filtroFechaHasta());
   }

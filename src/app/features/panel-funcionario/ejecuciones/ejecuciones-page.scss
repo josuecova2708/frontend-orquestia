@@ -327,6 +327,29 @@
   }
 }
 
+.tl-dato-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  margin-top: 4px;
+
+  .tl-dato-key { color: #64748b; font-weight: 500; font-size: 0.78rem; }
+}
+
+.tl-grid-table {
+  border-collapse: collapse;
+  font-size: 0.78rem;
+
+  td {
+    border: 1px solid #e2e8f0;
+    padding: 3px 8px;
+    color: #0f172a;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+}
+
 /* Empty state */
 .empty-state {
   text-align: center;

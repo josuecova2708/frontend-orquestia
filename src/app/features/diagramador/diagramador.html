@@ -56,10 +56,37 @@
       }
     </button>
 
-    <button mat-flat-button color="accent" (click)="publicar()" [disabled]="proceso()?.estado !== 'BORRADOR'">
+    <button mat-flat-button color="accent" (click)="abrirPublicar()" [disabled]="proceso()?.estado !== 'BORRADOR'">
       <mat-icon>rocket_launch</mat-icon> Publicar Proceso
     </button>
   </mat-toolbar>
+
+  <!-- Barra de comandos IA (texto + voz) -->
+  @if (proceso()?.estado === 'BORRADOR') {
+    <div class="comando-bar">
+      <mat-icon class="comando-icono">bolt</mat-icon>
+      <input class="comando-input" type="text"
+             placeholder="Comando: ej. 'asigna Revisar solicitud al departamento Legal', 'renombra... a...', 'elimina...'"
+             [(ngModel)]="comandoTexto"
+             (keyup.enter)="ejecutarComando()"
+             [disabled]="comandoEjecutando()">
+      <button class="comando-mic" [class.grabando]="grabandoComando()" (click)="toggleGrabacionComando()"
+              [title]="grabandoComando() ? 'Detener' : 'Dictar comando'">
+        <mat-icon>{{ grabandoComando() ? 'stop' : 'mic' }}</mat-icon>
+      </button>
+      <button class="comando-run" (click)="ejecutarComando()" [disabled]="!comandoTexto.trim() || comandoEjecutando()">
+        @if (comandoEjecutando() || transcribiendoComando()) {
+          <span class="ia-spinner"></span>
+        } @else {
+          <mat-icon>send</mat-icon>
+        }
+        Ejecutar
+      </button>
+      @if (comandoMensaje()) {
+        <span class="comando-msg">{{ comandoMensaje() }}</span>
+      }
+    </div>
+  }
 
   <!-- Panel desplegable de cambios IA (bajo el toolbar) -->
   @if (mostrarCambiosIA() && optimizacionCambios().length > 0) {
@@ -374,6 +401,7 @@
                         <mat-option value="OPCIONES">Lista de opciones</mat-option>
                         <mat-option value="FECHA">Fecha</mat-option>
                         <mat-option value="ARCHIVO">Archivo (imagen / PDF)</mat-option>
+                        <mat-option value="GRID">Tabla / Grid</mat-option>
                       </mat-select>
                     </mat-form-field>
 
@@ -382,6 +410,34 @@
                         <mat-label>Opciones (separadas por coma)</mat-label>
                         <input matInput [(ngModel)]="campoForm.opcionesTexto" placeholder="Aprobado, Rechazado, Pendiente">
                       </mat-form-field>
+                    }
+
+                    @if (campoForm.tipo === 'GRID') {
+                      <mat-form-field appearance="outline" class="w-100">
+                        <mat-label>Columnas (separadas por coma)</mat-label>
+                        <input matInput [(ngModel)]="campoForm.columnasTexto" placeholder="Concepto, Cantidad, Monto">
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="w-100">
+                        <mat-label>Número de filas</mat-label>
+                        <input matInput type="number" min="1" max="20" [(ngModel)]="campoForm.filas">
+                      </mat-form-field>
+                      <p class="no-campos-hint">El funcionario llenará una tabla de {{ campoForm.filas || 1 }} fila(s) con esas columnas.</p>
+                    }
+
+                    @if (campoForm.tipo === 'ARCHIVO') {
+                      <div class="tipos-archivo-selector">
+                        <span class="tipos-label">Tipos de archivo permitidos</span>
+                        <div class="tipos-chips">
+                          @for (g of tiposArchivo; track g.key) {
+                            <label class="tipo-chip" [class.activo]="grupoTipoActivo(campoForm.mimeTypes, g)">
+                              <input type="checkbox" [checked]="grupoTipoActivo(campoForm.mimeTypes, g)"
+                                     (change)="campoForm.mimeTypes = alternarTipo(campoForm.mimeTypes, g)">
+                              <mat-icon>{{ g.icon }}</mat-icon> {{ g.label }}
+                            </label>
+                          }
+                        </div>
+                        <span class="tipos-hint">Si no eliges ninguno, se permitirá cualquier tipo.</span>
+                      </div>
                     }
 
                     <label class="campo-requerido-toggle">
@@ -648,6 +704,7 @@
                       <span class="requisito-badge" [class.badge-obligatorio]="req.obligatorio" [class.badge-opcional]="!req.obligatorio">
                         {{ req.obligatorio ? 'Obligatorio' : 'Opcional' }}
                       </span>
+                      <span class="requisito-tipos">{{ etiquetaTipos(req.mimeTypesPermitidos) }}</span>
                     </div>
                     <button class="requisito-delete" (click)="eliminarRequisito($index)" title="Eliminar">✕</button>
                   </div>
@@ -668,6 +725,19 @@
                   Obligatorio
                 </label>
               </div>
+              <div class="tipos-archivo-selector">
+                <span class="tipos-label">Tipos de archivo permitidos</span>
+                <div class="tipos-chips">
+                  @for (g of tiposArchivo; track g.key) {
+                    <label class="tipo-chip" [class.activo]="grupoTipoActivo(nuevoRequisitoTipos, g)">
+                      <input type="checkbox" [checked]="grupoTipoActivo(nuevoRequisitoTipos, g)"
+                             (change)="nuevoRequisitoTipos = alternarTipo(nuevoRequisitoTipos, g)">
+                      <mat-icon>{{ g.icon }}</mat-icon> {{ g.label }}
+                    </label>
+                  }
+                </div>
+                <span class="tipos-hint">Si no eliges ninguno, se permitirá cualquier tipo.</span>
+              </div>
               <button class="ia-btn-secondary req-add-btn" (click)="agregarRequisito()"
                       [disabled]="!nuevoRequisitoNombre.trim()">
                 + Agregar
@@ -687,6 +757,51 @@
             <span class="ia-spinner"></span> Guardando...
           } @else {
             Guardar configuración
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════ MODAL: Asignar funcionarios al publicar ═══════════════ -->
+@if (publicarModalVisible()) {
+  <div class="ia-overlay" (click)="cerrarPublicar()">
+    <div class="ia-modal pub-modal" (click)="$event.stopPropagation()">
+
+      <div class="ia-modal-header">
+        <span class="ia-modal-title">🚀 Publicar proceso</span>
+      </div>
+
+      <div class="ia-modal-body">
+        <p class="ia-hint">Asigna un funcionario responsable a cada departamento. Sin esto, las tareas se crearían sin responsable y el proceso fallaría.</p>
+
+        @if (departamentosUsados().length === 0) {
+          <p class="ia-hint">Este proceso no tiene actividades de funcionario que requieran asignación. Puedes publicarlo directamente.</p>
+        } @else {
+          @for (dep of departamentosUsados(); track dep.id) {
+            <div class="pub-asignacion">
+              <label class="pub-depto">{{ dep.nombre }}</label>
+              <select class="pub-select" [(ngModel)]="asignacionesPublicar[dep.id]">
+                <option [ngValue]="undefined" disabled>Selecciona funcionario...</option>
+                @for (f of funcionariosDeDepto(dep.id); track f.id) {
+                  <option [ngValue]="f.id">{{ f.nombre }} {{ f.apellido }}</option>
+                }
+              </select>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="ia-modal-footer">
+        <button class="ia-btn-secondary" (click)="cerrarPublicar()" [disabled]="publicando()">Cancelar</button>
+        <button class="ia-btn-primary" (click)="confirmarPublicar()"
+                [disabled]="publicando() || !publicarTodosAsignados()">
+          @if (publicando()) {
+            <span class="ia-spinner"></span> Publicando...
+          } @else {
+            Publicar proceso
           }
         </button>
       </div>

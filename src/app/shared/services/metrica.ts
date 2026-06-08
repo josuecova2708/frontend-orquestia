@@ -4,6 +4,27 @@ import { AuthService } from './auth';
 import { MetricasEmpresa } from '../models/interfaces';
 import { environment } from '../../../environments/environment';
 
+export interface ConsultaReporteRequest {
+  empresaId: string;
+  metrica: string;
+  desde?: string | null;
+  hasta?: string | null;
+  estado?: string | null;
+  procesoId?: string | null;
+  funcionarioId?: string | null;
+  limite?: number | null;
+  orden?: string | null;
+  titulo?: string | null;
+}
+
+export interface ConsultaReporteResponse {
+  titulo: string;
+  metrica: string;
+  columnas: string[];
+  filas: (string | number)[][];
+  total: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class MetricaService {
 
@@ -20,5 +41,9 @@ export class MetricaService {
     if (desde) url += `&desde=${desde}`;
     if (hasta) url += `&hasta=${hasta}`;
     return this.http.get<MetricasEmpresa>(url, { headers: this.headers() });
+  }
+
+  consulta(request: ConsultaReporteRequest) {
+    return this.http.post<ConsultaReporteResponse>(`${this.baseUrl}/consulta`, request, { headers: this.headers() });
   }
 }

@@ -19,7 +19,7 @@ type VistaActual =
   | { tipo: 'corporativos' }
   | { tipo: 'proceso'; procesoId: string; nombre: string }
   | { tipo: 'cliente'; clienteId: string; nombre: string }
-  | { tipo: 'instancia'; instanciaId: string; clienteNombre: string };
+  | { tipo: 'instancia'; instanciaId: string; clienteNombre: string; procesoNombre: string };
 
 @Component({
   selector: 'orq-sgd-page',
@@ -90,6 +90,12 @@ export class SgdPage implements OnInit {
     }
   });
 
+  // Subtítulo: nombre del proceso cuando se ve un trámite concreto
+  subtituloPanelDerecho = computed(() => {
+    const v = this.vista();
+    return v.tipo === 'instancia' ? v.procesoNombre : '';
+  });
+
   // ── Procesos únicos que tienen documentos ─────────────────────────────────
   procesosConDocs = computed(() => {
     const ids = new Set(this.todosLosDocs().map(d => d.procesoId).filter(Boolean));
@@ -131,14 +137,16 @@ export class SgdPage implements OnInit {
       this.docService.listarPorEmpresa(empresaId).subscribe({
         next: docs => this.todosLosDocs.set(docs)
       });
-      this.apiService.getFuncionarios(empresaId).subscribe({
-        next: usuarios => this.clientes.set(usuarios.filter(u => u.rol === 'CLIENTE'))
-      });
     } else {
       this.docService.listarMisDocumentos().subscribe({
         next: docs => this.todosLosDocs.set(docs)
       });
     }
+
+    // La lista de clientes se necesita para el árbol "Por cliente" en ambos roles
+    this.apiService.getFuncionarios(empresaId).subscribe({
+      next: usuarios => this.clientes.set(usuarios.filter(u => u.rol === 'CLIENTE'))
+    });
 
     this.procesoService.listar(empresaId).subscribe({
       next: ps => this.procesos.set(ps)
@@ -166,7 +174,12 @@ export class SgdPage implements OnInit {
   }
 
   seleccionarInstancia(inst: InstanciaProceso, clienteNombre: string) {
-    this.vista.set({ tipo: 'instancia', instanciaId: inst.id, clienteNombre });
+    this.vista.set({
+      tipo: 'instancia',
+      instanciaId: inst.id,
+      clienteNombre,
+      procesoNombre: inst.procesoNombre ?? inst.procesoId
+    });
   }
 
   instanciasDeCliente(clienteId: string): InstanciaProceso[] {
@@ -241,6 +254,50 @@ export class SgdPage implements OnInit {
 
   abrirEditor(doc: Documento) {
     this.router.navigate(['/editor-documento', doc.id]);
+  }
+
+  // ── Detalles / historial de interacciones ─────────────────────────────────
+  docDetalle = signal<Documento | null>(null);
+  cargandoDetalle = signal(false);
+
+  verDetalles(doc: Documento) {
+    this.docDetalle.set(doc);            // muestra de inmediato lo que ya tenemos
+    this.cargandoDetalle.set(true);
+    this.docService.obtener(doc.id).subscribe({
+      next: fresco => { this.docDetalle.set(fresco); this.cargandoDetalle.set(false); },
+      error: () => this.cargandoDetalle.set(false)
+    });
+  }
+
+  cerrarDetalles() {
+    this.docDetalle.set(null);
+  }
+
+  iconoAccion(accion: string): string {
+    switch (accion) {
+      case 'CREAR':     return 'add_circle';
+      case 'VER':       return 'visibility';
+      case 'EDITAR':    return 'edit';
+      case 'DESCARGAR': return 'download';
+      case 'ELIMINAR':  return 'delete';
+      default:          return 'history';
+    }
+  }
+
+  etiquetaAccion(accion: string): string {
+    switch (accion) {
+      case 'CREAR':     return 'Creó el documento';
+      case 'VER':       return 'Visualizó';
+      case 'EDITAR':    return 'Editó';
+      case 'DESCARGAR': return 'Descargó';
+      case 'ELIMINAR':  return 'Eliminó';
+      default:          return accion;
+    }
+  }
+
+  // Historial más reciente primero
+  auditOrdenado(doc: Documento) {
+    return [...(doc.auditLog ?? [])].sort((a, b) => b.fecha.localeCompare(a.fecha));
   }
 
   eliminar(doc: Documento) {

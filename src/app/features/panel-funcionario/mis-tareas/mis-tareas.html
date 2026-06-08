@@ -223,9 +223,36 @@
                       #fileInput
                       type="file"
                       hidden
-                      accept="image/*,application/pdf"
-                      (change)="subirArchivo(campo.nombre, $event)"
+                      [accept]="acceptCampo(campo)"
+                      (change)="subirArchivo(campo.nombre, $event, campo)"
                     />
+                  </div>
+                }
+
+                @case ('GRID') {
+                  <div class="grid-campo">
+                    <table class="grid-tabla">
+                      <thead>
+                        <tr>
+                          @for (col of campo.columnas ?? []; track $index) {
+                            <th>{{ col }}</th>
+                          }
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (f of rangoFilas(campo); track f) {
+                          <tr>
+                            @for (col of campo.columnas ?? []; track $index) {
+                              <td>
+                                <input type="text" class="grid-celda"
+                                       [value]="celdaGrid(campo, f, $index)"
+                                       (input)="setCeldaGrid(campo, f, $index, $any($event.target).value)">
+                              </td>
+                            }
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
                   </div>
                 }
 

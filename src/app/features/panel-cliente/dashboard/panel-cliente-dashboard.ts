@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule, SlicePipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,7 @@ import { MotorService } from '../../../shared/services/motor';
 import { DocumentoService } from '../../../shared/services/documento';
 import { IaService } from '../../../shared/services/ia.service';
 import { InstanciaProceso, SeguimientoTramite, TareaInstancia, CampoFormulario, Documento } from '../../../shared/models/interfaces';
+import { acceptDe, archivoPermitido, etiquetaTipos } from '../../../shared/utils/tipos-archivo';
 
 @Component({
   selector: 'orq-panel-cliente-dashboard',
@@ -26,6 +27,25 @@ export class PanelClienteDashboard implements OnInit {
   documentos = signal<Documento[]>([]);
   cargandoDocs = signal(false);
   docsCargados = false;
+
+  // Documentos agrupados por trámite (con nombre del proceso y fecha)
+  documentosAgrupados = computed(() => {
+    const instMap = new Map(this.instancias().map(i => [i.id, i]));
+    const grupos = new Map<string, { procesoNombre: string; fecha?: string; docs: Documento[] }>();
+    for (const d of this.documentos()) {
+      const key = d.instanciaId ?? '__otros__';
+      if (!grupos.has(key)) {
+        const inst = d.instanciaId ? instMap.get(d.instanciaId) : undefined;
+        grupos.set(key, {
+          procesoNombre: inst?.procesoNombre ?? (d.instanciaId ? 'Trámite' : 'Otros documentos'),
+          fecha: inst?.fechaInicio,
+          docs: []
+        });
+      }
+      grupos.get(key)!.docs.push(d);
+    }
+    return Array.from(grupos.values());
+  });
 
   // Seguimiento expandible
   expandido = signal<string | null>(null);
@@ -159,6 +179,34 @@ export class PanelClienteDashboard implements OnInit {
     const campos = accion.formularioCampos ?? [];
     this.campos.set(campos.length > 0 ? campos
       : [{ nombre: 'confirmacion', tipo: 'BOOLEANO', label: 'Confirmo esta acción', requerido: true }]);
+    this.inicializarGrids();
+  }
+
+  // ── GRID (tabla NxN) ──────────────────────────────────────────────────────
+  private inicializarGrids() {
+    this.campos().forEach(c => {
+      if (c.tipo === 'GRID' && !this.respuestas[c.nombre]) {
+        this.respuestas = { ...this.respuestas, [c.nombre]: this.nuevaMatriz(c) };
+      }
+    });
+  }
+  private nuevaMatriz(campo: CampoFormulario): string[][] {
+    const filas = campo.filas ?? 1;
+    const cols = campo.columnas?.length || 1;
+    return Array.from({ length: filas }, () => Array.from({ length: cols }, () => ''));
+  }
+  rangoFilas(campo: CampoFormulario): number[] {
+    return Array.from({ length: campo.filas ?? 1 }, (_, i) => i);
+  }
+  celdaGrid(campo: CampoFormulario, f: number, c: number): string {
+    const m = this.respuestas[campo.nombre] as string[][] | undefined;
+    return m?.[f]?.[c] ?? '';
+  }
+  setCeldaGrid(campo: CampoFormulario, f: number, c: number, valor: string) {
+    let m = (this.respuestas[campo.nombre] as string[][] | undefined) ?? this.nuevaMatriz(campo);
+    m = m.map(row => [...row]);
+    m[f][c] = valor;
+    this.respuestas = { ...this.respuestas, [campo.nombre]: m };
   }
 
   cerrarAccion() {
@@ -178,10 +226,21 @@ export class PanelClienteDashboard implements OnInit {
     return this.uploadEstados()[campo] ?? 'idle';
   }
 
-  subirArchivo(campoNombre: string, event: Event) {
+  acceptCampo(campo: CampoFormulario): string {
+    return acceptDe(campo.mimeTypesPermitidos);
+  }
+
+  subirArchivo(campoNombre: string, event: Event, campo?: CampoFormulario) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+
+    if (campo && !archivoPermitido(file, campo.mimeTypesPermitidos)) {
+      this.uploadEstados.update(e => ({ ...e, [campoNombre]: 'error' }));
+      this.errorAccion.set(`Tipo no permitido. Permitidos: ${etiquetaTipos(campo.mimeTypesPermitidos)}`);
+      input.value = '';
+      return;
+    }
 
     const accion = this.accionActiva();
     const empresaId = this.auth.user()?.empresaId ?? '';

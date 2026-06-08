@@ -187,10 +187,25 @@
                           @if (objectEntries(tarea.datos).length > 0) {
                             <div class="tl-datos">
                               @for (entry of objectEntries(tarea.datos); track entry[0]) {
-                                <span class="tl-dato">
-                                  <span class="tl-dato-key">{{ entry[0] }}</span>
-                                  <span class="tl-dato-val">{{ formatDatoVal(entry[1]) }}</span>
-                                </span>
+                                @if (esGrid(entry[1])) {
+                                  <div class="tl-dato tl-dato-grid">
+                                    <span class="tl-dato-key">{{ entry[0] }}</span>
+                                    <table class="tl-grid-table">
+                                      @for (fila of asGrid(entry[1]); track $index) {
+                                        <tr>
+                                          @for (celda of fila; track $index) {
+                                            <td>{{ celda }}</td>
+                                          }
+                                        </tr>
+                                      }
+                                    </table>
+                                  </div>
+                                } @else {
+                                  <span class="tl-dato">
+                                    <span class="tl-dato-key">{{ entry[0] }}</span>
+                                    <span class="tl-dato-val">{{ formatDatoVal(entry[1]) }}</span>
+                                  </span>
+                                }
                               }
                             </div>
                           }

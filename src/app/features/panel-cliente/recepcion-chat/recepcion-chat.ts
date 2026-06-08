@@ -9,6 +9,7 @@ import { DocumentoService } from '../../../shared/services/documento';
 import { MotorService } from '../../../shared/services/motor';
 import { IaService, ChatMensaje } from '../../../shared/services/ia.service';
 import { Proceso, RequisitoDocumento } from '../../../shared/models/interfaces';
+import { acceptDe, archivoPermitido, etiquetaTipos } from '../../../shared/utils/tipos-archivo';
 
 interface SlotDocumento {
   documentoId?: string;
@@ -207,10 +208,15 @@ export class RecepcionChat implements OnInit {
   seleccionarArchivo(index: number, req: RequisitoDocumento) {
     const input = document.createElement('input');
     input.type = 'file';
-    if (req.mimeTypesPermitidos?.length) input.accept = req.mimeTypesPermitidos.join(',');
+    input.accept = acceptDe(req.mimeTypesPermitidos);
     input.onchange = e => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) this.subirDocumento(index, file);
+      if (!file) return;
+      if (!archivoPermitido(file, req.mimeTypesPermitidos)) {
+        this.actualizarSlot(index, { subiendo: false, error: `Tipo no permitido. Permitidos: ${etiquetaTipos(req.mimeTypesPermitidos)}` });
+        return;
+      }
+      this.subirDocumento(index, file);
     };
     input.click();
   }

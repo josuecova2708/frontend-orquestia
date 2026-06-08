@@ -70,10 +70,13 @@ export interface Departamento {
 // Un campo del formulario dinámico embebido en una Actividad
 export interface CampoFormulario {
   nombre: string;      // Clave de la variable (ej: "decision")
-  tipo: 'TEXTO' | 'NUMERO' | 'BOOLEANO' | 'OPCIONES' | 'FECHA' | 'ARCHIVO';
+  tipo: 'TEXTO' | 'NUMERO' | 'BOOLEANO' | 'OPCIONES' | 'FECHA' | 'ARCHIVO' | 'GRID';
   label: string;       // Texto visible
   requerido: boolean;
   opciones?: string[]; // Solo para tipo OPCIONES
+  mimeTypesPermitidos?: string[]; // Solo para tipo ARCHIVO: extensiones permitidas (vacío = todo)
+  columnas?: string[]; // Solo para tipo GRID: encabezados de columna
+  filas?: number;      // Solo para tipo GRID: número de filas
 }
 
 export interface Nodo {
@@ -182,6 +185,7 @@ export interface Documento {
   tareaId?: string;
   procesoId?: string;
   clienteId?: string;
+  tareaLabel?: string;
   tipo: 'ENTRADA' | 'TAREA' | 'GENERADO' | 'CORPORATIVO';
   creadoPor: string;
   creadoPorNombre: string;

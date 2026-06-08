@@ -9,10 +9,28 @@
         <h2>Reportes y Analítica</h2>
         <p class="hint">Métricas en tiempo real de los procesos de tu organización</p>
       </div>
-      <button mat-stroked-button (click)="recargar()" [disabled]="cargando()">
-        <mat-icon>refresh</mat-icon>
-        Actualizar
-      </button>
+      <div class="header-actions">
+        <button mat-stroked-button [matMenuTriggerFor]="exportMenu"
+                [disabled]="cargando() || error() || !metricas() || exportando()">
+          <mat-icon>{{ exportando() ? 'hourglass_top' : 'download' }}</mat-icon>
+          Exportar
+          <mat-icon class="caret">expand_more</mat-icon>
+        </button>
+        <mat-menu #exportMenu="matMenu">
+          <button mat-menu-item (click)="exportarPdf()">
+            <mat-icon>picture_as_pdf</mat-icon>
+            <span>PDF (gráficos + tablas)</span>
+          </button>
+          <button mat-menu-item (click)="exportarExcel()">
+            <mat-icon>table_view</mat-icon>
+            <span>Excel (datos)</span>
+          </button>
+        </mat-menu>
+        <button mat-stroked-button (click)="recargar()" [disabled]="cargando()">
+          <mat-icon>refresh</mat-icon>
+          Actualizar
+        </button>
+      </div>
     </div>
 
     <!-- FILTRO DE FECHAS -->
@@ -81,6 +99,130 @@
           <span class="kpi-label">Proceso más lento (prom.)</span>
           <span class="kpi-value">{{ procesoPlusLento }}</span>
         </div>
+      </div>
+
+      <!-- GENERADOR DE REPORTES POR CONSULTA -->
+      <div class="nlp-card">
+        <div class="nlp-head">
+          <div class="nlp-title">
+            <mat-icon>query_stats</mat-icon>
+            <div>
+              <span class="nlp-title-main">Reportes a medida</span>
+              <span class="nlp-title-sub">Describe el reporte que necesitas (datos, periodo y formato) y lo genero</span>
+            </div>
+          </div>
+          @if (resultados().length > 0) {
+            <button mat-icon-button class="nlp-clear" (click)="limpiarResultados()" title="Limpiar reportes">
+              <mat-icon>delete_sweep</mat-icon>
+            </button>
+          }
+        </div>
+
+        <!-- Barra de consulta -->
+        <div class="nlp-input-bar">
+          <input
+            type="text"
+            class="nlp-input"
+            placeholder="Ej: funcionarios con más actividades en junio, en PDF"
+            [ngModel]="consultaTexto()"
+            (ngModelChange)="consultaTexto.set($event)"
+            (keyup.enter)="consultar()"
+            [disabled]="consultando() || transcribiendo()" />
+
+          <button
+            class="nlp-mic"
+            [class.grabando]="grabando()"
+            (click)="toggleGrabacion()"
+            [disabled]="consultando() || transcribiendo()"
+            [title]="grabando() ? 'Detener grabación' : 'Consultar por voz'">
+            @if (transcribiendo()) {
+              <mat-spinner diameter="18"></mat-spinner>
+            } @else {
+              <mat-icon>{{ grabando() ? 'stop' : 'mic' }}</mat-icon>
+            }
+          </button>
+
+          <button
+            class="nlp-send"
+            (click)="consultar()"
+            [disabled]="!consultaTexto().trim() || consultando() || transcribiendo()">
+            @if (consultando()) {
+              <mat-spinner diameter="18"></mat-spinner>
+            } @else {
+              <mat-icon>send</mat-icon>
+            }
+          </button>
+        </div>
+
+        <!-- Sugerencias -->
+        <div class="nlp-sugerencias">
+          @for (s of consultasSugeridas; track s) {
+            <button class="nlp-chip" (click)="usarSugerida(s)" [disabled]="consultando()">
+              {{ s }}
+            </button>
+          }
+        </div>
+
+        @if (errorConsulta()) {
+          <div class="nlp-error">
+            <mat-icon>info</mat-icon>
+            {{ errorConsulta() }}
+          </div>
+        }
+
+        <!-- Resultados (tarjetas de reporte) -->
+        @for (r of resultados(); track $index) {
+          <div class="rep-card">
+            <div class="rep-head">
+              <div class="rep-title-wrap">
+                <span class="rep-title">{{ r.titulo }}</span>
+                <span class="rep-consulta">"{{ r.consulta }}"</span>
+              </div>
+              <div class="rep-actions">
+                <button mat-stroked-button class="rep-exp" (click)="exportarTablaPdf(r)" title="Exportar a PDF">
+                  <mat-icon>picture_as_pdf</mat-icon> PDF
+                </button>
+                <button mat-stroked-button class="rep-exp" (click)="exportarTablaExcel(r)" title="Exportar a Excel">
+                  <mat-icon>table_view</mat-icon> Excel
+                </button>
+                <button mat-icon-button (click)="quitarResultado($index)" title="Quitar">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="rep-criterios">
+              @for (c of r.criterios; track $index) {
+                <span class="rep-chip">{{ c }}</span>
+              }
+            </div>
+
+            @if (r.filas.length === 0) {
+              <div class="rep-empty">
+                <mat-icon>inbox</mat-icon>
+                No hay datos para estos criterios.
+              </div>
+            } @else {
+              <div class="rep-tabla-wrap">
+                <table class="rep-tabla">
+                  <thead>
+                    <tr>
+                      @for (col of r.columnas; track $index) { <th>{{ col }}</th> }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (fila of r.filas; track $index) {
+                      <tr>
+                        @for (celda of fila; track $index) { <td>{{ celda }}</td> }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <span class="rep-total">{{ r.total }} fila{{ r.total !== 1 ? 's' : '' }}</span>
+            }
+          </div>
+        }
       </div>
 
       <!-- CHARTS ROW 1: doughnut + line -->

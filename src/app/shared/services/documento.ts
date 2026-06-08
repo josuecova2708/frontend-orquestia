@@ -53,6 +53,10 @@ export class DocumentoService {
     });
   }
 
+  obtener(id: string): Observable<Documento> {
+    return this.http.get<Documento>(`${this.baseUrl}/${id}`, { headers: this.headers() });
+  }
+
   obtenerUrlDescarga(id: string): Observable<{ url: string }> {
     return this.http.get<{ url: string }>(`${this.baseUrl}/${id}/descargar`, { headers: this.headers() });
   }

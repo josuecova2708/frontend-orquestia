@@ -546,3 +546,31 @@ $radius: 8px;
   }
 }
 
+
+/* Campo GRID (tabla NxN) */
+.grid-campo { overflow-x: auto; }
+.grid-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th, td { border: 1px solid #e2e8f0; padding: 0; }
+  th {
+    background: #f1f5f9;
+    padding: 6px 8px;
+    font-weight: 600;
+    color: #334155;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .grid-celda {
+    width: 100%;
+    border: none;
+    padding: 7px 8px;
+    font-size: 0.85rem;
+    outline: none;
+    background: transparent;
+    box-sizing: border-box;
+    &:focus { background: #eff6ff; }
+  }
+}

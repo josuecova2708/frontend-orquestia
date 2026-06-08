@@ -176,21 +176,38 @@
           <span>Cuando subas documentos en un trámite aparecerán aquí.</span>
         </div>
       } @else {
-        <div class="docs-grid">
-          @for (doc of documentos(); track doc.id) {
-            <div class="doc-card">
-              <mat-icon class="doc-icono">{{ iconoDoc(doc.nombre) }}</mat-icon>
-              <div class="doc-info">
-                <span class="doc-nombre">{{ doc.nombre }}</span>
-                <span class="doc-tipo">{{ etiquetaTipoDoc(doc.tipo) }}</span>
-                <span class="doc-fecha">{{ doc.fechaCreacion | date:'dd/MM/yy HH:mm' }}</span>
+        @for (grupo of documentosAgrupados(); track grupo.procesoNombre + ($index)) {
+          <div class="docs-grupo">
+            <div class="docs-grupo-header">
+              <mat-icon>folder_open</mat-icon>
+              <div>
+                <span class="dg-proceso">{{ grupo.procesoNombre }}</span>
+                @if (grupo.fecha) {
+                  <span class="dg-fecha">Iniciado el {{ grupo.fecha | slice:0:10 }}</span>
+                }
               </div>
-              <button class="doc-descargar" (click)="descargarDoc(doc)" title="Descargar">
-                <mat-icon>download</mat-icon>
-              </button>
+              <span class="dg-count">{{ grupo.docs.length }} doc{{ grupo.docs.length !== 1 ? 's' : '' }}</span>
             </div>
-          }
-        </div>
+            <div class="docs-grid">
+              @for (doc of grupo.docs; track doc.id) {
+                <div class="doc-card">
+                  <mat-icon class="doc-icono">{{ iconoDoc(doc.nombre) }}</mat-icon>
+                  <div class="doc-info">
+                    <span class="doc-nombre">{{ doc.nombre }}</span>
+                    <span class="doc-tipo">{{ etiquetaTipoDoc(doc.tipo) }}</span>
+                    @if (doc.tareaLabel) {
+                      <span class="doc-tarea-cli"><mat-icon>assignment</mat-icon>{{ doc.tareaLabel }}</span>
+                    }
+                    <span class="doc-fecha">{{ doc.fechaCreacion | date:'dd/MM/yy HH:mm' }}</span>
+                  </div>
+                  <button class="doc-descargar" (click)="descargarDoc(doc)" title="Descargar">
+                    <mat-icon>download</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
       }
     }
   </main>
@@ -253,12 +270,36 @@
                   } @else {
                     <label class="ma-archivo-btn">
                       <mat-icon>attach_file</mat-icon> Adjuntar archivo
-                      <input type="file" hidden (change)="subirArchivo(campo.nombre, $event)">
+                      <input type="file" hidden [accept]="acceptCampo(campo)" (change)="subirArchivo(campo.nombre, $event, campo)">
                     </label>
                   }
                   @if (getUploadEstado(campo.nombre) === 'error') {
                     <span class="ma-archivo-err">Error al subir. Intenta de nuevo.</span>
                   }
+                </div>
+              }
+              @case ('GRID') {
+                <div class="ma-grid">
+                  <table class="grid-tabla">
+                    <thead>
+                      <tr>
+                        @for (col of campo.columnas ?? []; track $index) { <th>{{ col }}</th> }
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (f of rangoFilas(campo); track f) {
+                        <tr>
+                          @for (col of campo.columnas ?? []; track $index) {
+                            <td>
+                              <input type="text" class="grid-celda"
+                                     [value]="celdaGrid(campo, f, $index)"
+                                     (input)="setCeldaGrid(campo, f, $index, $any($event.target).value)">
+                            </td>
+                          }
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
                 </div>
               }
               @default {
