@@ -1,0 +1,194 @@
+<app-top-navbar></app-top-navbar>
+
+<div class="prediccion">
+  <div class="content">
+
+    <!-- HEADER -->
+    <div class="page-header">
+      <div>
+        <h2>Análisis Predictivo IA <span class="badge-dl">Deep Learning</span></h2>
+        <p class="hint">Modelo TensorFlow que estima el riesgo de demora de cada trámite activo y recomienda acciones.</p>
+      </div>
+      <button mat-stroked-button class="btn-seed" (click)="regenerarDemo()" [disabled]="sembrando()">
+        @if (sembrando()) {
+          <mat-spinner diameter="16"></mat-spinner>
+        } @else {
+          <mat-icon>science</mat-icon>
+        }
+        <span>Regenerar datos demo</span>
+      </button>
+    </div>
+
+    @if (mensajeSeed()) {
+      <div class="seed-msg">
+        <mat-icon>info</mat-icon>
+        <span>{{ mensajeSeed() }}</span>
+      </div>
+    }
+
+    <div class="layout">
+      <!-- IZQUIERDA: instancias activas -->
+      <aside class="panel-lista">
+        <div class="panel-lista-head">
+          <mat-icon>list_alt</mat-icon>
+          <span>Trámites activos</span>
+          <span class="contador">{{ activas().length }}</span>
+        </div>
+
+        @if (cargandoLista()) {
+          <div class="estado-lista"><mat-spinner diameter="28"></mat-spinner></div>
+        } @else if (activas().length === 0) {
+          <div class="estado-lista vacio">
+            <mat-icon>inbox</mat-icon>
+            <p>No hay trámites activos.</p>
+            <p class="sub">Genera la empresa demo para ver el modelo en acción.</p>
+          </div>
+        } @else {
+          <div class="lista">
+            @for (inst of activas(); track inst.id) {
+              <button class="item" [class.activo]="seleccionada()?.id === inst.id" (click)="seleccionar(inst)">
+                <span class="item-titulo">{{ inst.procesoNombre || 'Proceso' }}</span>
+                <span class="item-sub">#{{ inst.id.slice(-6) }} · {{ inst.fechaInicio | date:'dd/MM HH:mm' }}</span>
+              </button>
+            }
+          </div>
+        }
+      </aside>
+
+      <!-- DERECHA: resultado -->
+      <section class="panel-detalle">
+        @if (cargandoPred()) {
+          <div class="estado-detalle">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Analizando con el modelo…</p>
+          </div>
+        } @else if (errorPred()) {
+          <div class="estado-detalle error">
+            <mat-icon>error_outline</mat-icon>
+            <p>{{ errorPred() }}</p>
+          </div>
+        } @else if (!resultado()) {
+          <div class="estado-detalle">
+            <mat-icon>insights</mat-icon>
+            <p>Selecciona un trámite para ver su análisis de riesgo.</p>
+          </div>
+        } @else {
+          @let r = resultado()!;
+
+          <!-- Riesgo global -->
+          <div class="cab-resultado">
+            <div class="gauge" [style.background]="gaugeBg(r.riesgo_global)">
+              <div class="gauge-inner">
+                <span class="gauge-val" [style.color]="color(r.riesgo_global)">{{ pct(r.riesgo_global) }}%</span>
+                <span class="gauge-lbl">riesgo</span>
+              </div>
+            </div>
+            <div class="cab-info">
+              <span class="nivel-chip" [style.background]="color(r.riesgo_global)">Riesgo {{ nivel(r.riesgo_global) }}</span>
+              <h3>{{ seleccionada()?.procesoNombre }}</h3>
+              <p class="resumen">{{ r.resumen }}</p>
+              <div class="metricas-mini">
+                <div><mat-icon>schedule</mat-icon> Tiempo restante estimado: <b>{{ legible(r.duracion_estimada_total_min) }}</b></div>
+                <div><mat-icon>warning</mat-icon> Tareas en riesgo: <b>{{ r.nodos_en_riesgo.length }}</b> de {{ r.tareas.length }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recomendaciones -->
+          @if (r.recomendaciones.length) {
+            <div class="bloque">
+              <div class="bloque-head"><mat-icon>tips_and_updates</mat-icon> Recomendaciones</div>
+              <ul class="recos">
+                @for (rec of r.recomendaciones; track $index) {
+                  <li><mat-icon>chevron_right</mat-icon><span>{{ rec }}</span></li>
+                }
+              </ul>
+            </div>
+          }
+
+          <!-- Tareas evaluadas -->
+          <div class="bloque">
+            <div class="bloque-head"><mat-icon>fact_check</mat-icon> Tareas pendientes evaluadas</div>
+            <div class="tabla-wrap">
+              <table class="tabla">
+                <thead>
+                  <tr>
+                    <th>Actividad</th>
+                    <th>Responsable</th>
+                    <th>Duración estimada</th>
+                    <th>Riesgo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (t of r.tareas; track t.tarea_id) {
+                    <tr>
+                      <td>{{ t.nodo_label }}</td>
+                      <td>{{ t.funcionario || '—' }}</td>
+                      <td>{{ legible(t.duracion_estimada_min) }}</td>
+                      <td>
+                        <span class="riesgo-pill" [style.background]="color(t.riesgo)">{{ pct(t.riesgo) }}%</span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Datos en crudo (entradas y salidas del modelo) -->
+          <div class="bloque">
+            <div class="bloque-head"><mat-icon>data_object</mat-icon> Datos en crudo del modelo</div>
+            <p class="bloque-sub">Valores exactos que <b>entraron</b> a la red neuronal y lo que <b>predijo</b>. Gemini los interpreta en las recomendaciones de arriba.</p>
+            <div class="tabla-wrap">
+              <table class="tabla tabla-cruda">
+                <thead>
+                  <tr>
+                    <th>Actividad</th>
+                    <th title="Hora de creación (0-23)">Hora</th>
+                    <th title="0=Lun ... 6=Dom">Día</th>
+                    <th title="Sábado o domingo">Finde</th>
+                    <th title="Tareas abiertas del responsable">Carga</th>
+                    <th title="Duración histórica promedio de ese nodo (min)">Dur. hist.</th>
+                    <th title="Reintentos / reprocesos">Reint.</th>
+                    <th title="Salida: probabilidad de demora (0-1)">P(demora)</th>
+                    <th title="Salida: duración estimada (min)">Dur. est.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (t of r.tareas; track t.tarea_id) {
+                    <tr>
+                      <td class="td-nodo">{{ t.nodo_label }}</td>
+                      <td>{{ t.hora_creacion }}h</td>
+                      <td>{{ dia(t.dia_semana) }}</td>
+                      <td>{{ esFinde(t.dia_semana) ? 'Sí' : 'No' }}</td>
+                      <td>{{ t.carga_funcionario }}</td>
+                      <td>{{ t.duracion_historica_avg | number:'1.0-1' }}</td>
+                      <td>{{ t.intentos }}</td>
+                      <td class="td-out" [style.color]="color(t.riesgo)">{{ t.riesgo | number:'1.3-3' }}</td>
+                      <td class="td-out">{{ t.duracion_estimada_min | number:'1.0-1' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Sobre el modelo -->
+          <div class="bloque modelo">
+            <div class="bloque-head"><mat-icon>memory</mat-icon> Sobre el modelo</div>
+            <div class="modelo-grid">
+              <div><span class="k">Precisión (validación)</span><span class="v">{{ accuracyPct() }}</span></div>
+              <div><span class="k">Registros de entrenamiento</span><span class="v">{{ r.modelo_info.registros_entrenamiento | number }}</span></div>
+              <div><span class="k">Umbral de demora</span><span class="v">{{ r.modelo_info.umbral_demora }}× lo esperado</span></div>
+              <div class="full"><span class="k">Variables analizadas</span>
+                <span class="feats">
+                  @for (f of r.modelo_info.features; track f) { <span class="feat">{{ f }}</span> }
+                </span>
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+</div>

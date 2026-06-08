@@ -151,6 +151,11 @@ export const routes: Routes = [
     canActivate: [adminGuard],
     loadComponent: () => import('./features/admin/reportes/reportes-page').then(m => m.ReportesPage)
   },
+  {
+    path: 'prediccion',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/admin/prediccion/prediccion-page').then(m => m.PrediccionPage)
+  },
 
   {
     path: 'panel-cliente',
