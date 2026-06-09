@@ -145,7 +145,7 @@
 /* PROCESOS GRID */
 .procesos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
 }
 
@@ -461,6 +461,10 @@
   gap: 0.875rem;
   min-width: 0;
   flex: 1 1 300px;
+}
+
+.portal-cliente-info {
+  min-width: 0;
 }
 
 .portal-cliente-icon {

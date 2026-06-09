@@ -321,3 +321,20 @@ $blue: #000000;
   flex-shrink: 0;
   margin-top: 4px;
 }
+
+// ── RESPONSIVE PARA MÓVILES ────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .user-text {
+    display: none; // Ocultar nombre y rol para dar más espacio
+  }
+  .brand-name {
+    display: none; // Ocultar texto del logo, dejar solo el ícono
+  }
+  .navbar-container {
+    padding: 0 1rem;
+  }
+  .nav-tabs {
+    margin: 0 0.5rem;
+    gap: 0.75rem;
+  }
+}
