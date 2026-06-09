@@ -3,6 +3,25 @@
   <app-top-navbar></app-top-navbar>
 
   <div class="content">
+    <!-- ESTADO OFFLINE / COLA DE SINCRONIZACIÓN (PWA) -->
+    @if (!offline.enLinea()) {
+      <div class="offline-bar sin-red">
+        <mat-icon>cloud_off</mat-icon>
+        <span>Sin conexión. Puedes seguir completando tareas; se guardarán y enviarán al volver la red.</span>
+      </div>
+    }
+    @if (offline.pendientes() > 0) {
+      <div class="offline-bar pendientes">
+        <mat-icon>sync</mat-icon>
+        <span><strong>{{ offline.pendientes() }}</strong> tarea(s) pendiente(s) de sincronizar.</span>
+        <button mat-flat-button class="btn-sync"
+                [disabled]="!offline.enLinea() || offline.sincronizando()"
+                (click)="sincronizarAhora()">
+          {{ offline.sincronizando() ? 'Sincronizando…' : 'Sincronizar ahora' }}
+        </button>
+      </div>
+    }
+
     <!-- Header de sección -->
     <div class="section-header">
       <div>

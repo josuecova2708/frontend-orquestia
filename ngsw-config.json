@@ -1,0 +1,44 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/media/**",
+          "/icons/**",
+          "/*.(svg|woff|woff2|ttf|eot|ico)"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "mis-tareas-api",
+      "urls": ["/api/mis-tareas", "/api/mis-instancias"],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 50,
+        "maxAge": "1d",
+        "timeout": "5s"
+      }
+    }
+  ]
+}

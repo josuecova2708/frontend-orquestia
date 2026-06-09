@@ -16,6 +16,7 @@ import { ConfirmModalService } from '../../../shared/services/confirm-modal.serv
 import { ProcesoService } from '../../../shared/services/proceso';
 import { IaService } from '../../../shared/services/ia.service';
 import { WebSocketService } from '../../../shared/services/websocket.service';
+import { OfflineSyncService } from '../../../shared/services/offline-sync.service';
 import { TareaInstancia, Departamento, CampoFormulario, InstanciaProceso, Proceso } from '../../../shared/models/interfaces';
 import { ProcessContextComponent } from '../../../shared/components/process-context/process-context.component';
 import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-navbar.component';
@@ -70,12 +71,18 @@ export class MisTareas implements OnInit, OnDestroy {
     private wsService: WebSocketService,
     private router: Router,
     private modal: ConfirmModalService,
-    private iaService: IaService
+    private iaService: IaService,
+    public offline: OfflineSyncService
   ) {}
+
+  // Sincroniza la cola offline al recuperar la conexión y refresca la lista.
+  private onReconectar = () => { this.sincronizarAhora(); };
 
   ngOnInit() {
     const user = this.auth.user();
     if (!user?.empresaId) { this.router.navigate(['/setup-empresa']); return; }
+
+    window.addEventListener('online', this.onReconectar);
 
     const deptoId = user.departamentoId;
     if (!deptoId) {
@@ -115,6 +122,7 @@ export class MisTareas implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.wsSub?.unsubscribe();
+    window.removeEventListener('online', this.onReconectar);
   }
 
   cargarTareas() {
@@ -342,15 +350,54 @@ export class MisTareas implements OnInit, OnDestroy {
       return;
     }
 
+    const datos = { ...this.respuestas };
+    const comentario = this.comentario;
+
+    // Sin conexión: encolar en IndexedDB y resolver de forma optimista.
+    if (!navigator.onLine) {
+      this.encolarOffline(tarea, datos, comentario);
+      return;
+    }
+
     this.guardando.set(true);
-    this.motor.completarTarea(tarea.id, this.respuestas, this.comentario).subscribe({
+    this.motor.completarTarea(tarea.id, datos, comentario).subscribe({
       next: () => {
         this.guardando.set(false);
         this.cerrarModal();
         this.cargarTareas();
       },
-      error: () => this.guardando.set(false)
+      error: () => {
+        this.guardando.set(false);
+        // Si el fallo fue por pérdida de red, encolamos en lugar de perder el trabajo.
+        if (!navigator.onLine) {
+          this.encolarOffline(tarea, datos, comentario);
+        } else {
+          this.modal.toast('No se pudo completar la tarea. Intenta de nuevo.', 'error');
+        }
+      }
     });
+  }
+
+  /** Guarda la tarea en la cola offline y actualiza la UI de forma optimista. */
+  private encolarOffline(tarea: TareaInstancia, datos: Record<string, unknown>, comentario: string) {
+    this.offline.encolar({ tareaId: tarea.id, tareaLabel: tarea.nodoLabel, datos, comentario })
+      .then(() => {
+        this.modal.toast('Sin conexión: la tarea se guardó y se enviará al recuperar la red.', 'info');
+        // Optimista: la quitamos de la bandeja; se reintegra solo si la sync falla.
+        this.tareas.update(list => list.filter(t => t.id !== tarea.id));
+        this.cerrarModal();
+      })
+      .catch(() => this.modal.toast('No se pudo guardar la tarea offline.', 'error'));
+  }
+
+  /** Reenvía la cola pendiente y refresca la bandeja. */
+  async sincronizarAhora() {
+    if (this.offline.pendientes() === 0 || this.offline.sincronizando()) return;
+    const n = await this.offline.vaciarCola();
+    if (n > 0) {
+      this.modal.toast(`${n} tarea(s) sincronizada(s) correctamente.`, 'success');
+      this.cargarTareas();
+    }
   }
 
   getInputType(tipo: string): string {
