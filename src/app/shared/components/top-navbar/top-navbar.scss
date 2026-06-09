@@ -32,6 +32,7 @@ $blue: #000000;
   gap: 0.75rem;
   cursor: pointer;
   transition: opacity 0.2s;
+  flex-shrink: 0;
 
   &:hover { opacity: 0.8; }
 
@@ -60,9 +61,19 @@ $blue: #000000;
   display: flex;
   align-items: center;
   height: 100%;
-  gap: 2rem;
+  gap: 1.5rem;
   position: relative;
   top: 1px; // Align with bottom border
+  flex: 1;
+  overflow-x: auto;
+  margin: 0 1.5rem;
+
+  // Ocultar barra de scroll para un diseño más limpio
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 .nav-tab {
@@ -77,6 +88,7 @@ $blue: #000000;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 
   mat-icon {
     font-size: 18px;
@@ -99,6 +111,7 @@ $blue: #000000;
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-shrink: 0;
 }
 
 .user-info {
