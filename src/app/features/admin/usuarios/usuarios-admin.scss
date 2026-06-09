@@ -5,13 +5,29 @@
   background: #f8fafc;
 }
 
-.toolbar {
-  background: #fff;
-  border-bottom: 1px solid #e2e8f0;
-  color: #1e293b;
-  .title { margin-left: 8px; font-weight: 600; font-size: 1rem; }
-  .spacer { flex: 1; }
-  button[mat-flat-button] { background: #0f172a; color: #fff; gap: 6px; }
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    color: #0f172a;
+    mat-icon { color: #3b82f6; }
+  }
+
+  .hint {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+
+  .action-btn { background: #0f172a; color: #fff; gap: 6px; }
 }
 
 .content {

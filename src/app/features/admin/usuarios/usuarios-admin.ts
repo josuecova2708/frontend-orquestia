@@ -10,13 +10,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { AuthService } from '../../../shared/services/auth';
 import { ApiService } from '../../../shared/services/api';
 import { UsuarioResponse, Departamento } from '../../../shared/models/interfaces';
+import { TopNavbarComponent } from '../../../shared/components/top-navbar/top-navbar.component';
 
 @Component({
   selector: 'orq-usuarios-admin',
   standalone: true,
   imports: [
     FormsModule, MatToolbarModule, MatButtonModule, MatIconModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule
+    MatFormFieldModule, MatInputModule, MatSelectModule, TopNavbarComponent
   ],
   templateUrl: './usuarios-admin.html',
   styleUrl: './usuarios-admin.scss'

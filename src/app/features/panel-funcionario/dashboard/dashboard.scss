@@ -452,6 +452,7 @@
   border: 1px solid rgba(99, 102, 241, 0.2);
   border-radius: 0.75rem;
   padding: 1rem 1.25rem;
+  flex-wrap: wrap;
 }
 
 .portal-cliente-left {
@@ -459,6 +460,7 @@
   align-items: flex-start;
   gap: 0.875rem;
   min-width: 0;
+  flex: 1 1 300px;
 }
 
 .portal-cliente-icon {
@@ -508,6 +510,9 @@
 .btn-copiar {
   flex-shrink: 0;
   transition: all 0.2s;
+  @media (max-width: 600px) {
+    width: 100%;
+  }
 }
 
 .btn-copiado {

@@ -38,34 +38,60 @@
         }
       }
       @if (auth.user()?.rol === 'ADMIN') {
-        <div class="nav-tab" [class.active]="isActive('/administradores')" (click)="router.navigate(['/administradores'])">
-          <mat-icon>admin_panel_settings</mat-icon>
-          <span>Administradores</span>
+        <!-- Gestion Administrativa -->
+        <div class="nav-tab" [matMenuTriggerFor]="adminMenu" [class.active]="isActive('/administradores') || isActive('/usuarios') || isActive('/departamentos')">
+          <mat-icon>manage_accounts</mat-icon>
+          <span>Gestión Administrativa</span>
+          <mat-icon style="font-size: 16px; margin-left: -4px;">arrow_drop_down</mat-icon>
         </div>
-        <div class="nav-tab" [class.active]="isActive('/usuarios')" (click)="router.navigate(['/usuarios'])">
-          <mat-icon>group</mat-icon>
-          <span>Funcionarios</span>
+        <mat-menu #adminMenu="matMenu">
+          <button mat-menu-item (click)="router.navigate(['/administradores'])">
+            <mat-icon>admin_panel_settings</mat-icon>
+            <span>Administradores</span>
+          </button>
+          <button mat-menu-item (click)="router.navigate(['/usuarios'])">
+            <mat-icon>group</mat-icon>
+            <span>Funcionarios</span>
+          </button>
+          <button mat-menu-item (click)="router.navigate(['/departamentos'])">
+            <mat-icon>corporate_fare</mat-icon>
+            <span>Departamentos</span>
+          </button>
+        </mat-menu>
+
+        <!-- Gestion de Politicas de Negocio -->
+        <div class="nav-tab" [matMenuTriggerFor]="politicasMenu" [class.active]="isActive('/ejecuciones') || isActive('/sgd')">
+          <mat-icon>policy</mat-icon>
+          <span>Gestión de Políticas</span>
+          <mat-icon style="font-size: 16px; margin-left: -4px;">arrow_drop_down</mat-icon>
         </div>
-        <div class="nav-tab" [class.active]="isActive('/departamentos')" (click)="router.navigate(['/departamentos'])">
-          <mat-icon>corporate_fare</mat-icon>
-          <span>Departamentos</span>
+        <mat-menu #politicasMenu="matMenu">
+          <button mat-menu-item (click)="router.navigate(['/ejecuciones'])">
+            <mat-icon>play_circle</mat-icon>
+            <span>Ejecuciones</span>
+          </button>
+          <button mat-menu-item (click)="router.navigate(['/sgd'])">
+            <mat-icon>folder_special</mat-icon>
+            <span>Documentos</span>
+          </button>
+        </mat-menu>
+
+        <!-- Gestion BI -->
+        <div class="nav-tab" [matMenuTriggerFor]="biMenu" [class.active]="isActive('/reportes') || isActive('/prediccion')">
+          <mat-icon>query_stats</mat-icon>
+          <span>Gestión BI</span>
+          <mat-icon style="font-size: 16px; margin-left: -4px;">arrow_drop_down</mat-icon>
         </div>
-        <div class="nav-tab" [class.active]="isActive('/ejecuciones')" (click)="router.navigate(['/ejecuciones'])">
-          <mat-icon>play_circle</mat-icon>
-          <span>Ejecuciones</span>
-        </div>
-        <div class="nav-tab" [class.active]="isActive('/sgd')" (click)="router.navigate(['/sgd'])">
-          <mat-icon>folder_special</mat-icon>
-          <span>Documentos</span>
-        </div>
-        <div class="nav-tab" [class.active]="isActive('/reportes')" (click)="router.navigate(['/reportes'])">
-          <mat-icon>analytics</mat-icon>
-          <span>Reportes</span>
-        </div>
-        <div class="nav-tab" [class.active]="isActive('/prediccion')" (click)="router.navigate(['/prediccion'])">
-          <mat-icon>psychology</mat-icon>
-          <span>Predicción IA</span>
-        </div>
+        <mat-menu #biMenu="matMenu">
+          <button mat-menu-item (click)="router.navigate(['/reportes'])">
+            <mat-icon>analytics</mat-icon>
+            <span>Reportes</span>
+          </button>
+          <button mat-menu-item (click)="router.navigate(['/prediccion'])">
+            <mat-icon>psychology</mat-icon>
+            <span>Predicción IA</span>
+          </button>
+        </mat-menu>
       }
     </div>
 

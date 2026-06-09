@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
 import { RouterModule, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth';
@@ -12,7 +13,7 @@ import { Notificacion } from '../../models/interfaces';
 @Component({
   selector: 'app-top-navbar',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, RouterModule],
+  imports: [CommonModule, MatIconModule, MatButtonModule, MatMenuModule, RouterModule],
   templateUrl: './top-navbar.html',
   styleUrl: './top-navbar.scss'
 })

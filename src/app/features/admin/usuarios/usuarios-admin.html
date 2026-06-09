@@ -1,19 +1,22 @@
 <div class="usuarios-page">
 
-  <mat-toolbar class="toolbar">
-    <button mat-icon-button (click)="router.navigate(['/dashboard'])">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    <span class="title">Gestión de Funcionarios</span>
-    <span class="spacer"></span>
-    @if (!showForm()) {
-      <button mat-flat-button (click)="abrirFormulario()">
-        <mat-icon>person_add</mat-icon> Nuevo funcionario
-      </button>
-    }
-  </mat-toolbar>
-
+  <app-top-navbar></app-top-navbar>
   <div class="content">
+
+    <div class="page-header">
+      <div>
+        <h2>
+          <mat-icon>group</mat-icon>
+          Funcionarios
+        </h2>
+        <p class="hint">Gestiona el acceso de los empleados de tu empresa al sistema.</p>
+      </div>
+      @if (!showForm()) {
+        <button mat-flat-button (click)="abrirFormulario()" class="action-btn">
+          <mat-icon>person_add</mat-icon> Nuevo funcionario
+        </button>
+      }
+    </div>
 
     <!-- FORMULARIO CREAR FUNCIONARIO -->
     @if (showForm()) {
