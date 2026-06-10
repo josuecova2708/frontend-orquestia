@@ -237,6 +237,7 @@ export class PanelClienteDashboard implements OnInit, OnDestroy {
     switch (tipo) {
       case 'TRAMITE_FINALIZADO': return 'task_alt';
       case 'TRAMITE_AVANZO':     return 'trending_up';
+      case 'ACCION_REQUERIDA':   return 'assignment_ind';
       default:                   return 'notifications';
     }
   }
