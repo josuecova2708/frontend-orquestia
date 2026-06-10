@@ -186,6 +186,7 @@ export interface Documento {
   procesoId?: string;
   clienteId?: string;
   tareaLabel?: string;
+  departamentoId?: string;
   tipo: 'ENTRADA' | 'TAREA' | 'GENERADO' | 'CORPORATIVO';
   creadoPor: string;
   creadoPorNombre: string;

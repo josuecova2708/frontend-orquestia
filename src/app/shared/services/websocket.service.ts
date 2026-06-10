@@ -18,7 +18,9 @@ export interface DiagramaEvent {
   data: Record<string, unknown>;
 }
 
-export type UsuarioEventTipo = 'TAREA_ASIGNADA' | 'PROCESO_ASIGNADO' | 'DEPT_INVITACION';
+export type UsuarioEventTipo =
+  | 'TAREA_ASIGNADA' | 'PROCESO_ASIGNADO' | 'DEPT_INVITACION'
+  | 'TRAMITE_AVANZO' | 'TRAMITE_FINALIZADO';
 export interface UsuarioEvent {
   tipo: UsuarioEventTipo;
   [key: string]: unknown;

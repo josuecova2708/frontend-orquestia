@@ -71,4 +71,14 @@ export class DocumentoService {
   eliminar(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`, { headers: this.headers() });
   }
+
+  // El admin concede edición a un funcionario sobre este documento
+  concederEdicion(id: string, usuarioId: string): Observable<Documento> {
+    return this.http.post<Documento>(`${this.baseUrl}/${id}/permisos/conceder`, { usuarioId }, { headers: this.headers() });
+  }
+
+  // El admin revoca la edición concedida a un funcionario
+  revocarEdicion(id: string, usuarioId: string): Observable<Documento> {
+    return this.http.delete<Documento>(`${this.baseUrl}/${id}/permisos/${usuarioId}`, { headers: this.headers() });
+  }
 }

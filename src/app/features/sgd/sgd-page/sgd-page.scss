@@ -430,6 +430,32 @@
 }
 .dm-vacio { font-size: 0.85rem; color: #64748b; margin: 0; }
 
+/* Permisos de edición */
+.dm-permisos-hint {
+  display: flex; align-items: flex-start; gap: 0.4rem;
+  font-size: 0.78rem; color: #64748b; margin: 0 0 0.75rem; line-height: 1.4;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; color: #94a3b8; flex-shrink: 0; margin-top: 1px; }
+}
+.dm-permisos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.dm-permiso-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.45rem 0.6rem; border: 1px solid #eef2f7; border-radius: 8px;
+}
+.dm-permiso-user {
+  display: flex; align-items: center; gap: 0.45rem; font-size: 0.86rem; color: #1e293b;
+  mat-icon { font-size: 18px; width: 18px; height: 18px; color: #94a3b8; }
+}
+.dm-permiso-badge.depto {
+  font-size: 0.72rem; color: #475569; background: #f1f5f9;
+  padding: 3px 9px; border-radius: 999px; font-weight: 600;
+}
+.dm-permiso-btn {
+  height: 30px; line-height: 30px; font-size: 0.78rem;
+  mat-icon { font-size: 15px; width: 15px; height: 15px; margin-right: 2px; }
+  &.revocar { color: #15803d; border-color: #bbf7d0; background: #f0fdf4; }
+  &.conceder { color: #475569; }
+}
+
 .dm-audit { list-style: none; margin: 0; padding: 0; }
 .dm-audit-item {
   display: flex;

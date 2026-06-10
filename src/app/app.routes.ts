@@ -132,6 +132,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/admin/usuarios/usuarios-admin').then(m => m.UsuariosAdmin)
   },
   {
+    path: 'clientes',
+    canActivate: [adminGuard],
+    loadComponent: () => import('./features/admin/clientes/clientes-admin').then(m => m.ClientesAdmin)
+  },
+  {
     path: 'administradores',
     canActivate: [adminGuard],
     loadComponent: () => import('./features/admin/administradores/administradores').then(m => m.AdministradoresAdmin)

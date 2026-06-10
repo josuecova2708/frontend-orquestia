@@ -1,0 +1,64 @@
+<app-top-navbar></app-top-navbar>
+
+<div class="clientes-page">
+  <div class="content">
+
+    <div class="page-header">
+      <div>
+        <h2>Clientes</h2>
+        <p class="hint">Personas registradas que han interactuado con tu empresa.</p>
+      </div>
+      <div class="search-box">
+        <mat-icon>search</mat-icon>
+        <input type="text" placeholder="Buscar por nombre o email…"
+               [value]="busqueda()" (input)="busqueda.set($any($event.target).value)">
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="estado"><div class="spinner"></div><p>Cargando clientes…</p></div>
+    } @else if (clientesFiltrados().length === 0) {
+      <div class="estado vacio">
+        <mat-icon>group_off</mat-icon>
+        <p>{{ busqueda() ? 'Sin resultados para tu búsqueda.' : 'Aún no hay clientes registrados.' }}</p>
+      </div>
+    } @else {
+      <div class="tabla-wrap">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Email</th>
+              <th>Registrado</th>
+              <th class="centro">Trámites</th>
+              <th class="centro">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of clientesFiltrados(); track c.id) {
+              <tr>
+                <td>
+                  <div class="cli">
+                    <div class="cli-avatar">{{ iniciales(c) }}</div>
+                    <span class="cli-nombre">{{ c.nombre }} {{ c.apellido }}</span>
+                  </div>
+                </td>
+                <td class="email">{{ c.email }}</td>
+                <td>{{ c.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+                <td class="centro">
+                  <span class="badge-tramites">{{ tramitesDe(c.id) }}</span>
+                </td>
+                <td class="centro">
+                  <span class="badge-estado" [class.activo]="c.activo" [class.inactivo]="!c.activo">
+                    {{ c.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <span class="total">{{ clientesFiltrados().length }} cliente{{ clientesFiltrados().length !== 1 ? 's' : '' }}</span>
+    }
+  </div>
+</div>

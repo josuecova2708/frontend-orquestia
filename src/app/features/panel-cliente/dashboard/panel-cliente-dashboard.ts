@@ -1,13 +1,16 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, signal } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule, SlicePipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../../shared/services/auth';
-import { MotorService } from '../../../shared/services/motor';
+import { MotorService, TramiteDetalle, TramiteTareaDetalle } from '../../../shared/services/motor';
 import { DocumentoService } from '../../../shared/services/documento';
 import { IaService } from '../../../shared/services/ia.service';
-import { InstanciaProceso, SeguimientoTramite, TareaInstancia, CampoFormulario, Documento } from '../../../shared/models/interfaces';
+import { NotificacionService } from '../../../shared/services/notificacion.service';
+import { WebSocketService } from '../../../shared/services/websocket.service';
+import { InstanciaProceso, TareaInstancia, CampoFormulario, Documento, Notificacion } from '../../../shared/models/interfaces';
 import { acceptDe, archivoPermitido, etiquetaTipos } from '../../../shared/utils/tipos-archivo';
 
 @Component({
@@ -17,10 +20,16 @@ import { acceptDe, archivoPermitido, etiquetaTipos } from '../../../shared/utils
   templateUrl: './panel-cliente-dashboard.html',
   styleUrl: './panel-cliente-dashboard.scss'
 })
-export class PanelClienteDashboard implements OnInit {
+export class PanelClienteDashboard implements OnInit, OnDestroy {
   instancias = signal<InstanciaProceso[]>([]);
   loading = signal(true);
   tramiteIniciado = signal(false);
+
+  // ── Notificaciones + tiempo real (WebSocket) ────────────────────────────────
+  notificaciones = signal<Notificacion[]>([]);
+  panelNotifAbierto = signal(false);
+  aviso = signal('');                  // toast transitorio al recibir un evento
+  private wsSub: Subscription | null = null;
 
   // Vista activa del portal: trámites o documentos
   vista = signal<'tramites' | 'documentos'>('tramites');
@@ -47,9 +56,9 @@ export class PanelClienteDashboard implements OnInit {
     return Array.from(grupos.values());
   });
 
-  // Seguimiento expandible
+  // Seguimiento expandible (detalle con formularios llenados)
   expandido = signal<string | null>(null);
-  seguimientos = signal<Record<string, SeguimientoTramite>>({});
+  detalles = signal<Record<string, TramiteDetalle>>({});
   cargandoSeguimiento = signal<string | null>(null);
 
   // ── Acciones pendientes (tareas de autoservicio) ────────────────────────────
@@ -75,6 +84,8 @@ export class PanelClienteDashboard implements OnInit {
     private motor: MotorService,
     private docService: DocumentoService,
     private ia: IaService,
+    private notifService: NotificacionService,
+    private wsService: WebSocketService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
@@ -87,6 +98,37 @@ export class PanelClienteDashboard implements OnInit {
 
     this.cargarTramites();
     this.cargarAcciones();
+    this.cargarNotificaciones();
+
+    // Tiempo real: avisos cuando un funcionario avanza o finaliza el trámite del cliente
+    const user = this.auth.user();
+    const token = this.auth.token();
+    if (user && token) {
+      this.wsSub = this.wsService.conectarUsuario(user.userId, token).subscribe(evento => {
+        if (evento.tipo === 'TRAMITE_AVANZO' || evento.tipo === 'TRAMITE_FINALIZADO') {
+          this.aviso.set(evento.tipo === 'TRAMITE_FINALIZADO'
+            ? '¡Tu trámite fue completado!'
+            : `Avanzó tu trámite: ${evento['nodoLabel'] ?? 'una actividad'}`);
+          setTimeout(() => this.aviso.set(''), 6000);
+          this.refrescarTodo(evento['instanciaId'] as string | undefined);
+        }
+      });
+    }
+  }
+
+  ngOnDestroy() {
+    this.wsSub?.unsubscribe();
+    this.wsService.desconectarUsuario();
+  }
+
+  /** Refresca trámites, acciones, notificaciones y el detalle abierto (si aplica). */
+  private refrescarTodo(instanciaId?: string) {
+    this.cargarTramites();
+    this.cargarAcciones();
+    this.cargarNotificaciones();
+    if (instanciaId && this.expandido() === instanciaId) {
+      this.cargarDetalle(instanciaId);
+    }
   }
 
   private cargarTramites() {
@@ -150,12 +192,52 @@ export class PanelClienteDashboard implements OnInit {
   toggleSeguimiento(inst: InstanciaProceso) {
     if (this.expandido() === inst.id) { this.expandido.set(null); return; }
     this.expandido.set(inst.id);
-    if (!this.seguimientos()[inst.id]) {
-      this.cargandoSeguimiento.set(inst.id);
-      this.motor.trackInstancia(inst.id).subscribe({
-        next: (seg) => { this.seguimientos.update(m => ({ ...m, [inst.id]: seg })); this.cargandoSeguimiento.set(null); },
-        error: () => this.cargandoSeguimiento.set(null)
-      });
+    if (!this.detalles()[inst.id]) {
+      this.cargarDetalle(inst.id);
+    }
+  }
+
+  private cargarDetalle(instanciaId: string) {
+    this.cargandoSeguimiento.set(instanciaId);
+    this.motor.obtenerDetalleTramite(instanciaId).subscribe({
+      next: (det) => { this.detalles.update(m => ({ ...m, [instanciaId]: det })); this.cargandoSeguimiento.set(null); },
+      error: () => this.cargandoSeguimiento.set(null)
+    });
+  }
+
+  // ── Notificaciones ──────────────────────────────────────────────────────────
+
+  private cargarNotificaciones() {
+    this.notifService.listar().subscribe({
+      next: (list) => this.notificaciones.set(list)
+    });
+  }
+
+  get noLeidas(): number {
+    return this.notificaciones().filter(n => !n.leida).length;
+  }
+
+  togglePanelNotif() { this.panelNotifAbierto.update(v => !v); }
+  cerrarPanelNotif() { this.panelNotifAbierto.set(false); }
+
+  leerNotificacion(n: Notificacion) {
+    if (n.leida) return;
+    this.notifService.marcarLeida(n.id).subscribe({
+      next: (upd) => this.notificaciones.update(list => list.map(x => x.id === n.id ? upd : x))
+    });
+  }
+
+  leerTodas() {
+    this.notifService.marcarTodasLeidas().subscribe({
+      next: () => this.notificaciones.update(list => list.map(n => ({ ...n, leida: true })))
+    });
+  }
+
+  iconoNotif(tipo: string): string {
+    switch (tipo) {
+      case 'TRAMITE_FINALIZADO': return 'task_alt';
+      case 'TRAMITE_AVANZO':     return 'trending_up';
+      default:                   return 'notifications';
     }
   }
 
@@ -166,6 +248,31 @@ export class PanelClienteDashboard implements OnInit {
       case 'RECHAZADA':   return 'cancel';
       default:            return 'radio_button_unchecked';
     }
+  }
+
+  // ── Render de los formularios llenados por cada funcionario ──────────────────
+
+  /** Pares {label, valor} de lo que llenó el funcionario, ocultando variables internas. */
+  datosDeTarea(t: TramiteTareaDetalle): { label: string; valor: unknown }[] {
+    const labels = new Map((t.formularioCampos ?? []).map(c => [c.nombre, c.label]));
+    return Object.entries(t.datos ?? {})
+      .filter(([k]) => !k.startsWith('__'))   // ocultar internos (ej. __retorno_)
+      .map(([k, valor]) => ({ label: labels.get(k) ?? k, valor }));
+  }
+
+  esGrid(val: unknown): boolean {
+    return Array.isArray(val) && val.length > 0 && Array.isArray(val[0]);
+  }
+  asGrid(val: unknown): string[][] {
+    return val as string[][];
+  }
+  esArchivo(val: unknown): boolean {
+    return typeof val === 'string' && val.startsWith('http');
+  }
+  formatValor(val: unknown): string {
+    if (val === null || val === undefined || val === '') return '—';
+    if (typeof val === 'boolean') return val ? 'Sí' : 'No';
+    return String(val);
   }
 
   // ── Acciones de autoservicio ────────────────────────────────────────────────
@@ -291,8 +398,9 @@ export class PanelClienteDashboard implements OnInit {
         this.cerrarAccion();
         this.cargarAcciones();
         this.cargarTramites();
-        // refrescar seguimiento abierto si corresponde
-        this.seguimientos.update(m => { const n = { ...m }; delete n[accion.instanciaId]; return n; });
+        // Invalida el detalle cacheado; si está abierto, lo recarga.
+        this.detalles.update(m => { const n = { ...m }; delete n[accion.instanciaId]; return n; });
+        if (this.expandido() === accion.instanciaId) this.cargarDetalle(accion.instanciaId);
       },
       error: (err) => {
         this.guardando.set(false);

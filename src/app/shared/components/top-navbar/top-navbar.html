@@ -39,7 +39,7 @@
       }
       @if (auth.user()?.rol === 'ADMIN') {
         <!-- Gestion Administrativa -->
-        <div class="nav-tab" [matMenuTriggerFor]="adminMenu" [class.active]="isActive('/administradores') || isActive('/usuarios') || isActive('/departamentos')">
+        <div class="nav-tab" [matMenuTriggerFor]="adminMenu" [class.active]="isActive('/administradores') || isActive('/usuarios') || isActive('/departamentos') || isActive('/clientes')">
           <mat-icon>manage_accounts</mat-icon>
           <span>Gestión Administrativa</span>
           <mat-icon style="font-size: 16px; margin-left: -4px;">arrow_drop_down</mat-icon>
@@ -52,6 +52,10 @@
           <button mat-menu-item (click)="router.navigate(['/usuarios'])">
             <mat-icon>group</mat-icon>
             <span>Funcionarios</span>
+          </button>
+          <button mat-menu-item (click)="router.navigate(['/clientes'])">
+            <mat-icon>people_alt</mat-icon>
+            <span>Clientes</span>
           </button>
           <button mat-menu-item (click)="router.navigate(['/departamentos'])">
             <mat-icon>corporate_fare</mat-icon>

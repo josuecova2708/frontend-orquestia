@@ -557,3 +557,80 @@
     &:focus { background: #eff6ff; }
   }
 }
+
+/* ── Aviso en vivo (WebSocket) ──────────────────────────────────────────────── */
+.aviso-vivo {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;
+  border-radius: 10px; padding: 0.7rem 1rem; margin-bottom: 1rem;
+  font-size: 0.9rem; font-weight: 500;
+  animation: aviso-in 0.25s ease;
+  mat-icon { font-size: 20px; width: 20px; height: 20px; color: #10b981; }
+}
+@keyframes aviso-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+/* ── Campana de notificaciones ──────────────────────────────────────────────── */
+.notif-wrapper { position: relative; }
+.notif-btn {
+  position: relative; background: none; border: none; cursor: pointer;
+  color: #64748b; padding: 6px; border-radius: 8px; display: flex;
+  &:hover { color: #1e293b; background: #f1f5f9; }
+  &.has-unread { color: #2563eb; }
+  mat-icon { font-size: 22px; width: 22px; height: 22px; }
+}
+.notif-badge {
+  position: absolute; top: 0; right: 0; background: #ef4444; color: #fff;
+  font-size: 0.6rem; font-weight: 700; min-width: 15px; height: 15px;
+  border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 3px;
+}
+.notif-backdrop { position: fixed; inset: 0; z-index: 40; }
+.notif-panel {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 41;
+  width: 320px; max-height: 420px; overflow-y: auto;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(15,23,42,0.18);
+}
+.notif-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.7rem 0.9rem; border-bottom: 1px solid #eef2f7;
+  font-weight: 700; color: #0f172a; font-size: 0.9rem;
+  .notif-leer-todas { background: none; border: none; color: #2563eb; font-size: 0.74rem; cursor: pointer; }
+}
+.notif-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+  padding: 2rem; color: #94a3b8;
+  mat-icon { font-size: 30px; width: 30px; height: 30px; }
+  span { font-size: 0.82rem; }
+}
+.notif-item {
+  display: flex; align-items: flex-start; gap: 0.55rem; padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid #f1f5f9; cursor: pointer; position: relative;
+  &:hover { background: #f8fafc; }
+  &.no-leida { background: #f5f8ff; }
+  .notif-item-icon { font-size: 19px; width: 19px; height: 19px; color: #2563eb; margin-top: 1px; }
+  .notif-item-body { flex: 1; min-width: 0;
+    p { margin: 0; font-size: 0.84rem; color: #1e293b; line-height: 1.35; }
+    span { font-size: 0.72rem; color: #94a3b8; }
+  }
+  .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: #2563eb; margin-top: 5px; flex-shrink: 0; }
+}
+
+/* ── Formularios llenados dentro del timeline del seguimiento ────────────────── */
+.ti-form {
+  margin-top: 0.5rem; padding: 0.55rem 0.7rem;
+  background: #f8fafc; border: 1px solid #eef2f7; border-radius: 8px;
+  display: flex; flex-direction: column; gap: 0.45rem;
+}
+.ti-campo { display: flex; flex-direction: column; gap: 2px; }
+.ti-campo-label { font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.03em; }
+.ti-campo-valor { font-size: 0.86rem; color: #1e293b; font-weight: 500; }
+.ti-campo-archivo {
+  display: inline-flex; align-items: center; gap: 0.25rem; width: fit-content;
+  color: #2563eb; font-size: 0.84rem; text-decoration: none;
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  &:hover { text-decoration: underline; }
+}
+.ti-grid {
+  border-collapse: collapse; font-size: 0.8rem; margin-top: 2px;
+  td { border: 1px solid #e2e8f0; padding: 3px 8px; color: #1e293b; }
+}

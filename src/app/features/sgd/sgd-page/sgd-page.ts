@@ -38,7 +38,9 @@ export class SgdPage implements OnInit {
   todosLosDocs  = signal<Documento[]>([]);
   procesos      = signal<Proceso[]>([]);
   clientes      = signal<UsuarioResponse[]>([]);
+  funcionarios  = signal<UsuarioResponse[]>([]); // para conceder edición de documentos
   instanciasMap = signal<Record<string, InstanciaProceso[]>>({}); // clienteId → instancias
+  guardandoPermiso = signal<string | null>(null); // userId cuyo permiso se está cambiando
 
   // ── Estado del árbol sidebar ──────────────────────────────────────────────
   procesosExpanded = signal(true);
@@ -143,9 +145,12 @@ export class SgdPage implements OnInit {
       });
     }
 
-    // La lista de clientes se necesita para el árbol "Por cliente" en ambos roles
+    // La lista de usuarios sirve para el árbol "Por cliente" y para conceder edición
     this.apiService.getFuncionarios(empresaId).subscribe({
-      next: usuarios => this.clientes.set(usuarios.filter(u => u.rol === 'CLIENTE'))
+      next: usuarios => {
+        this.clientes.set(usuarios.filter(u => u.rol === 'CLIENTE'));
+        this.funcionarios.set(usuarios.filter(u => u.rol === 'FUNCIONARIO' || u.rol === 'DISEÑADOR'));
+      }
     });
 
     this.procesoService.listar(empresaId).subscribe({
@@ -312,6 +317,46 @@ export class SgdPage implements OnInit {
   esEditable(doc: Documento): boolean {
     const ext = doc.nombre.split('.').pop()?.toLowerCase() ?? '';
     return ['docx', 'xlsx', 'pptx', 'doc', 'xls', 'odt', 'ods'].includes(ext);
+  }
+
+  // ── Permisos de edición (espejo de la regla del backend) ───────────────────
+
+  /** ¿El usuario actual puede editar este documento? (admin, su depto, o permiso explícito) */
+  puedeEditar(doc: Documento): boolean {
+    const u = this.auth.user();
+    if (!u) return false;
+    if (u.rol === 'ADMIN') return true;
+    if (doc.departamentoId && doc.departamentoId === u.departamentoId) return true;
+    return (doc.permisos ?? []).some(p =>
+      p.usuarioId === u.userId && (p.tipo === 'ESCRITURA' || p.tipo === 'ADMIN'));
+  }
+
+  /** Un funcionario del mismo depto del documento ya edita por defecto (no se le concede). */
+  editaPorDepto(doc: Documento, f: UsuarioResponse): boolean {
+    return !!doc.departamentoId && doc.departamentoId === f.departamentoId;
+  }
+
+  /** ¿Tiene un permiso explícito de edición concedido por el admin? */
+  tieneEdicionConcedida(doc: Documento, userId: string): boolean {
+    return (doc.permisos ?? []).some(p =>
+      p.usuarioId === userId && (p.tipo === 'ESCRITURA' || p.tipo === 'ADMIN'));
+  }
+
+  /** El admin concede/revoca la edición a un funcionario. */
+  toggleEdicion(doc: Documento, f: UsuarioResponse) {
+    if (this.guardandoPermiso()) return;
+    this.guardandoPermiso.set(f.id);
+    const obs = this.tieneEdicionConcedida(doc, f.id)
+      ? this.docService.revocarEdicion(doc.id, f.id)
+      : this.docService.concederEdicion(doc.id, f.id);
+    obs.subscribe({
+      next: actualizado => {
+        this.docDetalle.set(actualizado);
+        this.todosLosDocs.update(list => list.map(d => d.id === actualizado.id ? actualizado : d));
+        this.guardandoPermiso.set(null);
+      },
+      error: () => this.guardandoPermiso.set(null)
+    });
   }
 
   iconoPorDoc(doc: Documento): string {

@@ -1,8 +1,28 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth';
-import { InstanciaProceso, TareaInstancia, SeguimientoTramite } from '../models/interfaces';
+import { InstanciaProceso, TareaInstancia, SeguimientoTramite, CampoFormulario } from '../models/interfaces';
 import { environment } from '../../../environments/environment';
+
+/** Detalle de una tarea del trámite con el formulario llenado por el funcionario. */
+export interface TramiteTareaDetalle {
+  nodoLabel: string;
+  estado: string;
+  ejecutadoPor: string | null;
+  fechaCreacion: string;
+  fechaCompletado: string | null;
+  formularioCampos: CampoFormulario[] | null;
+  datos: Record<string, unknown>;
+}
+
+export interface TramiteDetalle {
+  id: string;
+  procesoNombre: string;
+  estado: string;
+  fechaInicio: string;
+  fechaFin: string | null;
+  tareas: TramiteTareaDetalle[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class MotorService {
@@ -45,6 +65,14 @@ export class MotorService {
   // Seguimiento (timeline de pasos) de un trámite — endpoint público, sin datos sensibles
   trackInstancia(instanciaId: string) {
     return this.http.get<SeguimientoTramite>(`${this.baseUrl}/public/instancias/${instanciaId}`);
+  }
+
+  // Detalle del trámite del cliente con los formularios llenados por cada funcionario
+  obtenerDetalleTramite(instanciaId: string) {
+    return this.http.get<TramiteDetalle>(
+      `${this.baseUrl}/cliente/tramites/${instanciaId}/detalle`,
+      { headers: this.headers() }
+    );
   }
 
   // Acciones de autoservicio pendientes del cliente (aceptar condiciones, firmar, etc.)

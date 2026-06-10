@@ -169,9 +169,15 @@
                   <mat-icon>info</mat-icon>
                 </button>
                 @if (esEditable(doc)) {
-                  <button mat-icon-button (click)="abrirEditor(doc)" matTooltip="Editar en OnlyOffice">
-                    <mat-icon>edit_document</mat-icon>
-                  </button>
+                  @if (puedeEditar(doc)) {
+                    <button mat-icon-button (click)="abrirEditor(doc)" matTooltip="Editar en OnlyOffice">
+                      <mat-icon>edit_document</mat-icon>
+                    </button>
+                  } @else {
+                    <button mat-icon-button (click)="abrirEditor(doc)" matTooltip="Ver en OnlyOffice (solo lectura)">
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                  }
                 }
                 <button mat-icon-button (click)="descargar(doc)" matTooltip="Descargar">
                   <mat-icon>download</mat-icon>
@@ -221,6 +227,47 @@
             }
           </div>
         </div>
+
+        <!-- Permisos de edición (solo admin, documentos editables) -->
+        @if (esAdmin() && esEditable(doc)) {
+          <div class="dm-seccion">
+            <h4>Permisos de edición</h4>
+            <p class="dm-permisos-hint">
+              <mat-icon>info</mat-icon>
+              Los funcionarios del departamento de origen ya pueden editar. Aquí concedes
+              edición a otros funcionarios.
+            </p>
+            @if (funcionarios().length === 0) {
+              <p class="dm-vacio">No hay funcionarios para asignar.</p>
+            } @else {
+              <ul class="dm-permisos">
+                @for (f of funcionarios(); track f.id) {
+                  <li class="dm-permiso-item">
+                    <div class="dm-permiso-user">
+                      <mat-icon>person</mat-icon>
+                      <span>{{ f.nombre }} {{ f.apellido }}</span>
+                    </div>
+                    @if (editaPorDepto(doc, f)) {
+                      <span class="dm-permiso-badge depto">Edita por su departamento</span>
+                    } @else if (tieneEdicionConcedida(doc, f.id)) {
+                      <button mat-stroked-button class="dm-permiso-btn revocar"
+                              [disabled]="guardandoPermiso() === f.id"
+                              (click)="toggleEdicion(doc, f)">
+                        <mat-icon>check</mat-icon> Puede editar
+                      </button>
+                    } @else {
+                      <button mat-stroked-button class="dm-permiso-btn conceder"
+                              [disabled]="guardandoPermiso() === f.id"
+                              (click)="toggleEdicion(doc, f)">
+                        <mat-icon>add</mat-icon> Conceder
+                      </button>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        }
 
         <!-- Historial de interacciones -->
         <div class="dm-seccion">

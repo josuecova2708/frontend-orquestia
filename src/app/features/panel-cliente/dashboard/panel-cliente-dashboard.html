@@ -10,6 +10,42 @@
       <span>Orquestia</span>
     </div>
     <div class="header-user">
+      <!-- Campana de notificaciones -->
+      <div class="notif-wrapper">
+        <button class="notif-btn" (click)="togglePanelNotif()" [class.has-unread]="noLeidas > 0" title="Notificaciones">
+          <mat-icon>notifications</mat-icon>
+          @if (noLeidas > 0) {
+            <span class="notif-badge">{{ noLeidas > 9 ? '9+' : noLeidas }}</span>
+          }
+        </button>
+        @if (panelNotifAbierto()) {
+          <div class="notif-backdrop" (click)="cerrarPanelNotif()"></div>
+          <div class="notif-panel">
+            <div class="notif-panel-header">
+              <span>Notificaciones</span>
+              @if (noLeidas > 0) {
+                <button class="notif-leer-todas" (click)="leerTodas()">Marcar todas leídas</button>
+              }
+            </div>
+            <div class="notif-list">
+              @if (notificaciones().length === 0) {
+                <div class="notif-empty"><mat-icon>notifications_none</mat-icon><span>Sin notificaciones</span></div>
+              }
+              @for (n of notificaciones(); track n.id) {
+                <div class="notif-item" [class.no-leida]="!n.leida" (click)="leerNotificacion(n)">
+                  <mat-icon class="notif-item-icon">{{ iconoNotif(n.tipo) }}</mat-icon>
+                  <div class="notif-item-body">
+                    <p>{{ n.mensaje }}</p>
+                    <span>{{ n.fecha | date:'dd/MM HH:mm' }}</span>
+                  </div>
+                  @if (!n.leida) { <div class="notif-dot"></div> }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
       <span class="user-name">{{ auth.user()?.nombre }} {{ auth.user()?.apellido }}</span>
       <button class="btn-logout" (click)="logout()">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -21,6 +57,13 @@
   </header>
 
   <main class="cliente-main">
+    @if (aviso()) {
+      <div class="aviso-vivo">
+        <mat-icon>campaign</mat-icon>
+        {{ aviso() }}
+      </div>
+    }
+
     @if (tramiteIniciado()) {
       <div class="banner-exito">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -118,27 +161,52 @@
               </button>
             </div>
 
-            <!-- Seguimiento (timeline) -->
+            <!-- Seguimiento: pasos + formularios llenados por cada funcionario -->
             @if (expandido() === inst.id) {
               <div class="seguimiento">
                 @if (cargandoSeguimiento() === inst.id) {
                   <div class="seg-cargando"><div class="spinner-ring small"></div> Cargando seguimiento...</div>
-                } @else if (seguimientos()[inst.id]; as seg) {
-                  @if (seg.timeline.length === 0) {
+                } @else if (detalles()[inst.id]; as det) {
+                  @if (det.tareas.length === 0) {
                     <p class="seg-vacio">El trámite aún no tiene pasos registrados.</p>
                   } @else {
                     <ul class="timeline">
-                      @for (paso of seg.timeline; track $index) {
+                      @for (paso of det.tareas; track $index) {
                         <li class="timeline-item" [attr.data-estado]="paso.estado">
                           <mat-icon class="ti-icono">{{ iconoPaso(paso.estado) }}</mat-icon>
                           <div class="ti-cuerpo">
                             <span class="ti-label">{{ paso.nodoLabel }}</span>
                             <span class="ti-estado">
                               {{ paso.estado }}
-                              @if (paso.fechaCompletado) {
-                                · {{ paso.fechaCompletado | date:'dd/MM/yy HH:mm' }}
-                              }
+                              @if (paso.ejecutadoPor) { · {{ paso.ejecutadoPor }} }
+                              @if (paso.fechaCompletado) { · {{ paso.fechaCompletado | date:'dd/MM/yy HH:mm' }} }
                             </span>
+
+                            <!-- Formulario llenado por el funcionario en este paso -->
+                            @if (paso.estado === 'COMPLETADA' && datosDeTarea(paso).length > 0) {
+                              <div class="ti-form">
+                                @for (campo of datosDeTarea(paso); track $index) {
+                                  <div class="ti-campo">
+                                    <span class="ti-campo-label">{{ campo.label }}</span>
+                                    @if (esGrid(campo.valor)) {
+                                      <table class="ti-grid">
+                                        @for (fila of asGrid(campo.valor); track $index) {
+                                          <tr>
+                                            @for (celda of fila; track $index) { <td>{{ celda }}</td> }
+                                          </tr>
+                                        }
+                                      </table>
+                                    } @else if (esArchivo(campo.valor)) {
+                                      <a class="ti-campo-archivo" [href]="campo.valor" target="_blank">
+                                        <mat-icon>attach_file</mat-icon> Ver archivo
+                                      </a>
+                                    } @else {
+                                      <span class="ti-campo-valor">{{ formatValor(campo.valor) }}</span>
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            }
                           </div>
                         </li>
                       }
