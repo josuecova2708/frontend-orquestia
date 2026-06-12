@@ -61,6 +61,10 @@ export class DocumentoService {
     return this.http.get<{ url: string }>(`${this.baseUrl}/${id}/descargar`, { headers: this.headers() });
   }
 
+  obtenerUrlDescargaVersion(id: string, version: number): Observable<{ url: string }> {
+    return this.http.get<{ url: string }>(`${this.baseUrl}/${id}/versiones/${version}/descargar`, { headers: this.headers() });
+  }
+
   obtenerEditorConfig(id: string, soloLectura = false): Observable<OnlyOfficeConfig> {
     return this.http.get<OnlyOfficeConfig>(
       `${this.baseUrl}/${id}/editor-config?soloLectura=${soloLectura}`,

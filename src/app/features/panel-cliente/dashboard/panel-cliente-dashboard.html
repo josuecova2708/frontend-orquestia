@@ -321,6 +321,17 @@
                   }
                 </select>
               }
+              @case ('CASILLAS') {
+                <div class="ma-casillas">
+                  @for (op of campo.opciones ?? []; track op) {
+                    <label class="ma-casilla" [class.marcada]="casillaMarcada(campo.nombre, op)">
+                      <input type="checkbox" [checked]="casillaMarcada(campo.nombre, op)"
+                             (change)="toggleCasilla(campo.nombre, op)">
+                      {{ op }}
+                    </label>
+                  }
+                </div>
+              }
               @case ('NUMERO') {
                 <input type="number" [value]="getRespuesta(campo.nombre)"
                        (input)="setRespuesta(campo.nombre, $any($event.target).value)">

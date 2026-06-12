@@ -273,6 +273,7 @@ export class PanelClienteDashboard implements OnInit, OnDestroy {
   formatValor(val: unknown): string {
     if (val === null || val === undefined || val === '') return '—';
     if (typeof val === 'boolean') return val ? 'Sí' : 'No';
+    if (Array.isArray(val)) return val.join(', ');
     return String(val);
   }
 
@@ -328,6 +329,16 @@ export class PanelClienteDashboard implements OnInit, OnDestroy {
 
   setRespuesta(campo: string, value: unknown) {
     this.respuestas = { ...this.respuestas, [campo]: value };
+  }
+
+  // ── CASILLAS (selección múltiple / checklist) ──────────────────────────────
+  casillaMarcada(campo: string, opcion: string): boolean {
+    return ((this.respuestas[campo] as string[]) ?? []).includes(opcion);
+  }
+  toggleCasilla(campo: string, opcion: string) {
+    const actual = (this.respuestas[campo] as string[]) ?? [];
+    const nuevo = actual.includes(opcion) ? actual.filter(o => o !== opcion) : [...actual, opcion];
+    this.respuestas = { ...this.respuestas, [campo]: nuevo };
   }
 
   getUploadEstado(campo: string): string {
@@ -387,6 +398,7 @@ export class PanelClienteDashboard implements OnInit, OnDestroy {
     const incompleto = this.campos().some(c => {
       if (!c.requerido) return false;
       const v = this.respuestas[c.nombre];
+      if (Array.isArray(v)) return v.length === 0;
       return v === undefined || v === null || v === '';
     });
     if (incompleto) { this.errorAccion.set('Completa todos los campos requeridos.'); return; }

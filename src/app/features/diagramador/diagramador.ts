@@ -427,7 +427,7 @@ export class Diagramador implements OnInit, OnDestroy {
       tipo: this.campoForm.tipo,
       label: this.campoForm.label.trim(),
       requerido: this.campoForm.requerido,
-      opciones: this.campoForm.tipo === 'OPCIONES'
+      opciones: (this.campoForm.tipo === 'OPCIONES' || this.campoForm.tipo === 'CASILLAS')
         ? this.campoForm.opcionesTexto.split(',').map(s => s.trim()).filter(Boolean) : [],
       mimeTypesPermitidos: this.campoForm.tipo === 'ARCHIVO' ? this.campoForm.mimeTypes : [],
       columnas: esGrid ? this.campoForm.columnasTexto.split(',').map(s => s.trim()).filter(Boolean) : [],

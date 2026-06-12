@@ -80,6 +80,30 @@ export class SgdPage implements OnInit {
     return docs;
   });
 
+  // ── Agrupación por formato (Word, PDF, Excel, PowerPoint, Imágenes, Videos) ──
+  private readonly CATEGORIAS = [
+    { key: 'word',   label: 'Word',       icon: 'article',           exts: ['doc', 'docx', 'odt', 'rtf', 'txt'] },
+    { key: 'pdf',    label: 'PDF',        icon: 'picture_as_pdf',    exts: ['pdf'] },
+    { key: 'excel',  label: 'Excel',      icon: 'table_chart',       exts: ['xls', 'xlsx', 'ods', 'csv'] },
+    { key: 'ppt',    label: 'PowerPoint', icon: 'slideshow',         exts: ['ppt', 'pptx', 'odp'] },
+    { key: 'imagen', label: 'Imágenes',   icon: 'image',             exts: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'] },
+    { key: 'video',  label: 'Videos',     icon: 'videocam',          exts: ['mp4', 'webm', 'avi', 'mov', 'mkv'] },
+    { key: 'otros',  label: 'Otros',      icon: 'insert_drive_file', exts: [] },
+  ];
+
+  private categoriaDe(doc: Documento): string {
+    const ext = doc.nombre.split('.').pop()?.toLowerCase() ?? '';
+    return this.CATEGORIAS.find(c => c.exts.includes(ext))?.key ?? 'otros';
+  }
+
+  /** Documentos filtrados, agrupados y ordenados por formato (solo categorías con docs). */
+  documentosPorCategoria = computed(() => {
+    const docs = this.documentosFiltrados();
+    return this.CATEGORIAS
+      .map(c => ({ label: c.label, icon: c.icon, key: c.key, docs: docs.filter(d => this.categoriaDe(d) === c.key) }))
+      .filter(g => g.docs.length > 0);
+  });
+
   // ── Título del panel derecho ──────────────────────────────────────────────
   tituloPanelDerecho = computed(() => {
     const v = this.vista();
@@ -259,6 +283,19 @@ export class SgdPage implements OnInit {
 
   abrirEditor(doc: Documento) {
     this.router.navigate(['/editor-documento', doc.id]);
+  }
+
+  // ── Versiones ─────────────────────────────────────────────────────────────
+
+  /** Versiones de la más reciente a la más antigua. */
+  versionesOrdenadas(doc: Documento) {
+    return [...(doc.versiones ?? [])].sort((a, b) => b.version - a.version);
+  }
+
+  descargarVersion(doc: Documento, version: number) {
+    this.docService.obtenerUrlDescargaVersion(doc.id, version).subscribe({
+      next: res => window.open(res.url, '_blank')
+    });
   }
 
   // ── Detalles / historial de interacciones ─────────────────────────────────

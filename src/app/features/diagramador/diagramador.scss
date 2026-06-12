@@ -886,6 +886,7 @@
   border-radius: 16px;
   width: 560px;
   max-width: calc(100vw - 32px);
+  max-height: 90vh;
   box-shadow: 0 20px 60px rgba(0,0,0,0.25);
   display: flex;
   flex-direction: column;
@@ -921,6 +922,7 @@
 .ia-modal-body {
   padding: 20px 24px;
   flex: 1;
+  overflow-y: auto;
 }
 
 .ia-hint {
@@ -1058,8 +1060,8 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
   margin-bottom: 1.25rem;
 }
@@ -1073,12 +1075,12 @@
 .cliente-toggle-label {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #e5e7eb;
+  color: #1e293b;
 }
 
 .cliente-toggle-hint {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .toggle-switch {
@@ -1119,7 +1121,7 @@
   .requisitos-titulo {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #e5e7eb;
+    color: #1e293b;
     margin: 0 0 0.25rem;
   }
 }
@@ -1136,8 +1138,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 0.375rem;
   padding: 0.6rem 0.75rem;
 
@@ -1151,12 +1153,12 @@
   .requisito-nombre {
     font-size: 0.85rem;
     font-weight: 500;
-    color: #e5e7eb;
+    color: #1e293b;
   }
 
   .requisito-desc {
     font-size: 0.75rem;
-    color: #6b7280;
+    color: #64748b;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1189,15 +1191,15 @@
 }
 
 .nuevo-requisito-form {
-  background: rgba(255,255,255,0.03);
-  border: 1px dashed rgba(255,255,255,0.1);
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
   border-radius: 0.5rem;
   padding: 0.875rem;
 
   .nuevo-req-titulo {
     font-size: 0.78rem;
     font-weight: 500;
-    color: #9ca3af;
+    color: #475569;
     margin: 0 0 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1213,17 +1215,17 @@
 
 .ia-input {
   width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
   border-radius: 0.375rem;
   padding: 0.5rem 0.75rem;
-  color: #e5e7eb;
+  color: #1e293b;
   font-size: 0.85rem;
   outline: none;
   box-sizing: border-box;
 
-  &::placeholder { color: #4b5563; }
-  &:focus { border-color: rgba(99,102,241,0.5); }
+  &::placeholder { color: #94a3b8; }
+  &:focus { border-color: #6366f1; }
 }
 
 .requisito-check-label {
@@ -1231,7 +1233,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.82rem;
-  color: #9ca3af;
+  color: #475569;
   cursor: pointer;
 
   input[type="checkbox"] { cursor: pointer; }

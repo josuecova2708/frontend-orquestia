@@ -279,9 +279,13 @@
 
 // ─── GRID DE DOCUMENTOS ──────────────────────────────────────────────────────
 
-.docs-grid {
+.docs-scroll {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
+}
+
+.docs-grid {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -429,6 +433,37 @@
   b { font-size: 0.85rem; color: #1e293b; font-weight: 600; }
 }
 .dm-vacio { font-size: 0.85rem; color: #64748b; margin: 0; }
+
+/* Historial de versiones */
+.dm-versiones { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.dm-version {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.4rem 0.6rem; border: 1px solid #eef2f7; border-radius: 8px;
+  &.actual { background: #f0fdf4; border-color: #bbf7d0; }
+}
+.dm-version-info { display: flex; flex-direction: column; gap: 1px; }
+.dm-version-num { font-size: 0.85rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.4rem; }
+.dm-version-badge {
+  font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
+  color: #15803d; background: #dcfce7; padding: 1px 6px; border-radius: 999px;
+}
+.dm-version-meta { font-size: 0.74rem; color: #94a3b8; }
+
+/* Agrupación de documentos por formato */
+.docs-categoria { margin-bottom: 1.5rem; }
+.docs-categoria-head {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin: 0 0 0.75rem; padding-bottom: 0.4rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.82rem; font-weight: 700; color: #475569;
+  text-transform: uppercase; letter-spacing: 0.03em;
+  mat-icon { font-size: 18px; width: 18px; height: 18px; color: #94a3b8; }
+  .docs-categoria-count {
+    margin-left: auto; text-transform: none; letter-spacing: 0;
+    background: #f1f5f9; color: #64748b; border-radius: 999px;
+    font-size: 0.7rem; font-weight: 600; padding: 1px 8px;
+  }
+}
 
 /* Permisos de edición */
 .dm-permisos-hint {

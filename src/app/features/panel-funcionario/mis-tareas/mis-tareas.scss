@@ -409,6 +409,11 @@ $radius: 8px;
     &.active { border-color: $blue; background: $blue; color: #fff; }
     &:hover:not(.active) { border-color: #94a3b8; }
   }
+
+  .casilla-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
+  }
 }
 
 .modal-footer {

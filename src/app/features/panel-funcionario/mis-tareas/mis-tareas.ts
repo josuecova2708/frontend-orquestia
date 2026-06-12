@@ -343,6 +343,7 @@ export class MisTareas implements OnInit, OnDestroy {
     const incompleto = this.campos().some(c => {
       if (!c.requerido) return false;
       const v = this.respuestas[c.nombre];
+      if (Array.isArray(v)) return v.length === 0;
       return v === undefined || v === null || v === '';
     });
     if (incompleto) {
@@ -414,6 +415,16 @@ export class MisTareas implements OnInit, OnDestroy {
 
   setRespuesta(campo: string, value: unknown) {
     this.respuestas = { ...this.respuestas, [campo]: value };
+  }
+
+  // ── CASILLAS (selección múltiple / checklist) ──────────────────────────────
+  casillaMarcada(campo: string, opcion: string): boolean {
+    return ((this.respuestas[campo] as string[]) ?? []).includes(opcion);
+  }
+  toggleCasilla(campo: string, opcion: string) {
+    const actual = (this.respuestas[campo] as string[]) ?? [];
+    const nuevo = actual.includes(opcion) ? actual.filter(o => o !== opcion) : [...actual, opcion];
+    this.respuestas = { ...this.respuestas, [campo]: nuevo };
   }
 
   // ── GRID (tabla NxN) ──────────────────────────────────────────────────────

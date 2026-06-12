@@ -132,6 +132,7 @@
       }
 
       <!-- Grid de documentos -->
+      <div class="docs-scroll">
       @if (documentosFiltrados().length === 0) {
         <div class="empty-state">
           <mat-icon>folder_open</mat-icon>
@@ -144,8 +145,15 @@
           }
         </div>
       } @else {
-        <div class="docs-grid">
-          @for (doc of documentosFiltrados(); track doc.id) {
+        @for (grupo of documentosPorCategoria(); track grupo.key) {
+        <div class="docs-categoria">
+          <div class="docs-categoria-head">
+            <mat-icon>{{ grupo.icon }}</mat-icon>
+            <span>{{ grupo.label }}</span>
+            <span class="docs-categoria-count">{{ grupo.docs.length }}</span>
+          </div>
+          <div class="docs-grid">
+          @for (doc of grupo.docs; track doc.id) {
             <div class="doc-card">
               <div class="doc-card-icon">
                 <mat-icon>{{ iconoPorDoc(doc) }}</mat-icon>
@@ -188,8 +196,11 @@
               </div>
             </div>
           }
+          </div>
         </div>
+        }
       }
+      </div>
 
     </main>
 
@@ -227,6 +238,28 @@
             }
           </div>
         </div>
+
+        <!-- Historial de versiones -->
+        @if ((doc.versiones?.length ?? 0) > 0) {
+          <div class="dm-seccion">
+            <h4>Historial de versiones</h4>
+            <ul class="dm-versiones">
+              @for (v of versionesOrdenadas(doc); track v.version) {
+                <li class="dm-version" [class.actual]="v.version === doc.version">
+                  <div class="dm-version-info">
+                    <span class="dm-version-num">v{{ v.version }}
+                      @if (v.version === doc.version) { <span class="dm-version-badge">actual</span> }
+                    </span>
+                    <span class="dm-version-meta">{{ v.editorNombre || 'Editor' }} · {{ v.fecha | date:'dd/MM/yy HH:mm' }}</span>
+                  </div>
+                  <button mat-icon-button matTooltip="Descargar esta versión" (click)="descargarVersion(doc, v.version)">
+                    <mat-icon>download</mat-icon>
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
+        }
 
         <!-- Permisos de edición (solo admin, documentos editables) -->
         @if (esAdmin() && esEditable(doc)) {

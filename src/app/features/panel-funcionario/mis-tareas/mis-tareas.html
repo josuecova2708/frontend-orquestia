@@ -211,6 +211,21 @@
                   </div>
                 }
 
+                @case ('CASILLAS') {
+                  <div class="opciones-group">
+                    @for (op of campo.opciones; track op) {
+                      <button
+                        class="opcion-btn casilla-btn"
+                        [class.active]="casillaMarcada(campo.nombre, op)"
+                        (click)="toggleCasilla(campo.nombre, op)"
+                      >
+                        <mat-icon>{{ casillaMarcada(campo.nombre, op) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                        {{ op }}
+                      </button>
+                    }
+                  </div>
+                }
+
                 @case ('ARCHIVO') {
                   <div class="archivo-upload">
                     @if (getUploadEstado(campo.nombre) === 'uploading') {

@@ -191,6 +191,7 @@ export class EjecucionesPage implements OnInit, OnDestroy {
     if (typeof val === 'boolean') return val ? 'Sí' : 'No';
     if (typeof val === 'string' && (val.startsWith('http://') || val.startsWith('https://')))
       return '(archivo adjunto)';
+    if (Array.isArray(val)) return val.join(', ');
     return String(val);
   }
 

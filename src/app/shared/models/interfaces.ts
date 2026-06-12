@@ -70,10 +70,10 @@ export interface Departamento {
 // Un campo del formulario dinámico embebido en una Actividad
 export interface CampoFormulario {
   nombre: string;      // Clave de la variable (ej: "decision")
-  tipo: 'TEXTO' | 'NUMERO' | 'BOOLEANO' | 'OPCIONES' | 'FECHA' | 'ARCHIVO' | 'GRID';
+  tipo: 'TEXTO' | 'NUMERO' | 'BOOLEANO' | 'OPCIONES' | 'CASILLAS' | 'FECHA' | 'ARCHIVO' | 'GRID';
   label: string;       // Texto visible
   requerido: boolean;
-  opciones?: string[]; // Solo para tipo OPCIONES
+  opciones?: string[]; // Para tipo OPCIONES (selección única) y CASILLAS (selección múltiple)
   mimeTypesPermitidos?: string[]; // Solo para tipo ARCHIVO: extensiones permitidas (vacío = todo)
   columnas?: string[]; // Solo para tipo GRID: encabezados de columna
   filas?: number;      // Solo para tipo GRID: número de filas
@@ -193,8 +193,18 @@ export interface Documento {
   fechaCreacion: string;
   ultimaEdicion?: string;
   ultimoEditorNombre?: string;
+  version?: number;
+  versiones?: VersionDocumento[];
   permisos: PermisoDocumento[];
   auditLog: AuditEntry[];
+}
+
+export interface VersionDocumento {
+  version: number;
+  key: string;
+  fecha: string;
+  editorId?: string;
+  editorNombre?: string;
 }
 
 export interface PermisoDocumento {

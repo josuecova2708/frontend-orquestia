@@ -558,6 +558,16 @@
   }
 }
 
+/* ── Casillas (checklist) ───────────────────────────────────────────────────── */
+.ma-casillas { display: flex; flex-direction: column; gap: 0.4rem; }
+.ma-casilla {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.7rem; border: 1px solid #e2e8f0; border-radius: 8px;
+  font-size: 0.9rem; color: #1e293b; cursor: pointer;
+  input { width: 17px; height: 17px; accent-color: #2563eb; }
+  &.marcada { background: #eff6ff; border-color: #bfdbfe; }
+}
+
 /* ── Aviso en vivo (WebSocket) ──────────────────────────────────────────────── */
 .aviso-vivo {
   display: flex; align-items: center; gap: 0.5rem;

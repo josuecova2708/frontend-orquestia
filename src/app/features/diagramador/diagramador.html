@@ -398,14 +398,15 @@
                         <mat-option value="TEXTO">Texto libre</mat-option>
                         <mat-option value="NUMERO">Número</mat-option>
                         <mat-option value="BOOLEANO">Sí / No (booleano)</mat-option>
-                        <mat-option value="OPCIONES">Lista de opciones</mat-option>
+                        <mat-option value="OPCIONES">Lista de opciones (selección única)</mat-option>
+                        <mat-option value="CASILLAS">Casillas / checklist (selección múltiple)</mat-option>
                         <mat-option value="FECHA">Fecha</mat-option>
                         <mat-option value="ARCHIVO">Archivo (imagen / PDF)</mat-option>
                         <mat-option value="GRID">Tabla / Grid</mat-option>
                       </mat-select>
                     </mat-form-field>
 
-                    @if (campoForm.tipo === 'OPCIONES') {
+                    @if (campoForm.tipo === 'OPCIONES' || campoForm.tipo === 'CASILLAS') {
                       <mat-form-field appearance="outline" class="w-100">
                         <mat-label>Opciones (separadas por coma)</mat-label>
                         <input matInput [(ngModel)]="campoForm.opcionesTexto" placeholder="Aprobado, Rechazado, Pendiente">
